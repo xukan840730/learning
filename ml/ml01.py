@@ -24,6 +24,15 @@ def newton_opt(xa, ya, max_iters):
 
     return theta, ll
 
+def test_func(xa, ya):
+    xm = np.matrix(xa)
+    ym = np.matrix(ya)
+
+    ym01 = np.where(ym > 0, ym, 0)
+    #print ym01
+
+
+
 def main():
     x = np.loadtxt('logistic_x.txt')
     y = np.loadtxt('logistic_y.txt')
@@ -34,6 +43,8 @@ def main():
 
     # theta = np.matrix([[-2.6205, 0.7604, 1.1719]]), # result from anser
     theta, ll = newton_opt(X, Y, 20)
+
+    test_func(X, Y)
 
     t2 = np.dot(X, theta)
     hypoY = 1 / (1 + np.exp(-t2))
