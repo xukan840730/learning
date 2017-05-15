@@ -24,14 +24,33 @@ def newton_opt(xa, ya, max_iters):
 
     return theta, ll
 
-def test_func(xa, ya):
+def test_func(xa, ya, max_iters):
     xm = np.matrix(xa)
     ym = np.matrix(ya)
 
     ym01 = np.where(ym > 0, ym, 0)
-    #print ym01
+
+    mm = xm.shape[0]
+    nn = xm.shape[1]
+
+    theta = np.ones((nn, 1))
+
+    alpha = 0.05
+
+    for j in range(0, max_iters):
+        for i in range(0, mm):
+            margins = np.dot(xm[i], theta)
+            #print margins
+            hypo = 1.0 / (1 + np.exp(-margins))
+            t1 = (ym01[i] - hypo)
+            t2 = t1 * xm[i]
+            theta = theta + alpha * t2.transpose()
 
 
+    #hypoY = 1.0 / (1 + np.exp(-(xm * theta)))
+    #print hypoY
+
+    return theta
 
 def main():
     x = np.loadtxt('logistic_x.txt')
@@ -42,11 +61,11 @@ def main():
     Y = y.reshape((y.size, 1))
 
     # theta = np.matrix([[-2.6205, 0.7604, 1.1719]]), # result from anser
-    theta, ll = newton_opt(X, Y, 20)
+    thetaN, ll = newton_opt(X, Y, 20)
 
-    test_func(X, Y)
+    thetaS = test_func(X, Y, 100)
 
-    t2 = np.dot(X, theta)
+    t2 = np.dot(X, thetaN)
     hypoY = 1 / (1 + np.exp(-t2))
 
     compY = np.append(np.reshape(Y, (Y.size, 1)), hypoY, axis=1)
@@ -64,12 +83,19 @@ def main():
 
     x1 = np.linspace(xmin1, xmax1)
 
-    theta0 = theta[0, 0]
-    theta1 = theta[1, 0]
-    theta2 = theta[2, 0]
-    x2 = -(theta0 / theta2) - (theta1 / theta2) * x1
+    thetaN0 = thetaN[0, 0]
+    thetaN1 = thetaN[1, 0]
+    thetaN2 = thetaN[2, 0]
+    xn2 = -(thetaN0 / thetaN2) - (thetaN1 / thetaN2) * x1
 
-    plt.plot(x1, x2)
+    plt.plot(x1, xn2)
+
+    thetaS0 = thetaS[0, 0]
+    thetaS1 = thetaS[1, 0]
+    thetaS2 = thetaS[2, 0]
+    xs2 = -(thetaS0 / thetaS2) - (thetaS1 / thetaS2) * x1
+
+    plt.plot(x1, xs2)
 
     plt.show()
 
