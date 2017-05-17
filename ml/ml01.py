@@ -24,7 +24,8 @@ def newton_opt(xa, ya, max_iters):
 
     return theta, ll
 
-def test_func(xa, ya, max_iters):
+# map -1 to 0 and use sigmoid func to maximize likelihood
+def test_func1(xa, ya, max_iters):
     xm = np.matrix(xa)
     ym = np.matrix(ya)
 
@@ -52,6 +53,43 @@ def test_func(xa, ya, max_iters):
 
     return theta
 
+# minimize (y - h(x))^2
+def test_func2(xa, ya, max_iters):
+    xm = np.matrix(xa)
+    ym = np.matrix(ya)
+
+    ym01 = np.where(ym > 0, ym, 0)
+
+    mm = xm.shape[0]
+    nn = xm.shape[1]
+
+    theta = np.ones((nn, 1))
+
+    # partial der tj = -2 * (y - g(theta'*x))*g(theta'*x)*(1-g(theta'x))*xj
+
+    alpha = 0.05
+
+    for j in range(0, max_iters):
+        for i in range(0, mm):
+            margins = xm[i] * theta
+            hypo = 1.0 / (1.0 + np.exp(-margins))
+            t1 = -2.0*(ym01[i] - hypo)*hypo*(1-hypo)
+            t2 = t1 * xm[i]
+            theta = theta - alpha * t2.transpose()
+
+    return theta
+
+def print_and_compare(X, Y, theta):
+    t2 = X * theta
+    hypoY = 1 / (1 + np.exp(-t2))
+    compY = np.append(np.reshape(Y, (Y.size, 1)), hypoY, axis=1)
+    ym01 = np.where(Y > 0, Y, 0)
+    error = np.absolute(ym01 - hypoY)
+    error = np.where(error > 0.5, 1, 0)
+    num_error = np.count_nonzero(error)
+    print compY
+    print num_error
+
 def main():
     x = np.loadtxt('logistic_x.txt')
     y = np.loadtxt('logistic_y.txt')
@@ -62,15 +100,15 @@ def main():
 
     # theta = np.matrix([[-2.6205, 0.7604, 1.1719]]), # result from anser
     thetaN, ll = newton_opt(X, Y, 20)
+    thetaS = test_func1(X, Y, 100)
+    thetaLS = test_func2(X, Y, 100)
 
-    thetaS = test_func(X, Y, 100)
+    print thetaN
+    print thetaS
+    print thetaLS
 
-    t2 = np.dot(X, thetaN)
-    hypoY = 1 / (1 + np.exp(-t2))
-
-    compY = np.append(np.reshape(Y, (Y.size, 1)), hypoY, axis=1)
-
-    #print compY
+    print_and_compare(X, Y, thetaN)
+    print_and_compare(X, Y, thetaLS)
 
     mask0 = np.array(Y).flatten() <= 0
     mask1 = np.array(Y).flatten() > 0
@@ -96,6 +134,13 @@ def main():
     xs2 = -(thetaS0 / thetaS2) - (thetaS1 / thetaS2) * x1
 
     plt.plot(x1, xs2)
+
+    thetaLS0 = thetaLS[0, 0]
+    thetaLS1 = thetaLS[1, 0]
+    thetaLS2 = thetaLS[2, 0]
+    xls2 = -(thetaLS0 / thetaLS2) - (thetaLS1 / thetaLS2) * x1
+
+    plt.plot(x1, xls2)
 
     plt.show()
 
