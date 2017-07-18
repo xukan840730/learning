@@ -61,7 +61,11 @@ def test_func2(xa, ya, max_iters):
 
     theta = np.zeros((nn, 1))
 
-    # partial der tj = -2 * (y - g(theta'*x))*g(theta'*x)*(1-g(theta'x))*xj
+    alpha = 0.2
+    hypo = np.zeros((mm, 1))
+    t1 = np.zeros((mm, 1))
+    t2 = np.zeros((mm, nn))
+    t3 = np.zeros((1, nn))
 
     alpha = 0.05
 
