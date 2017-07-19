@@ -8,10 +8,9 @@ def lin_reg(xa, ya):
     ym = np.matrix(ya)
 
     t1 = xm.transpose() * xm
-    t2 = linalg.inv(t1)
-    t3 = xm.transpose()
+    t2 = xm.transpose() * ym
 
-    theta = t2 * t3 * ym
+    theta = linalg.solve(t1, t2)
     return theta
 
 # weighted linear regression
@@ -35,10 +34,9 @@ def weighted_lin_reg(xa, ya, tau):
         Wi = np.diagflat(wi)
 
         t1 = xm.transpose() * Wi * xm
-        t2 = linalg.inv(t1)
-        t3 = xm.transpose()
+        t2 = xm.transpose() * Wi * ym
 
-        thetaI = t2 * t3 * Wi * ym
+        thetaI = linalg.solve(t1, t2)
         thetaM[:, i] = thetaI.flatten()
 
     return thetaM
