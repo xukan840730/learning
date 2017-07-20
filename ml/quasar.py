@@ -71,9 +71,8 @@ def problem1(lambdas, y):
     plt.plot(lambdas, est_y_lr, 'r', label='Regression Line')
     plt.plot(lambdas, est_y_weighted, 'b', label='Weighted Regression')
 
-def problem2(lambdas, qso):
+def smooth_qso(lambdas, qso, tau):
     smoothed = qso
-    tau = 5
 
     num_samples = qso.shape[0]
     num_features = qso.shape[1]
@@ -85,10 +84,39 @@ def problem2(lambdas, qso):
         smoothed[ii, :] = ysmoothed.transpose()
         print("sample:", ii, " is done!")
 
-    # plotting
-    for ii in range(0, 10):
-        l = str(ii)
-        plt.plot(lambdas, smoothed[ii, :], label=l)
+    return smoothed
+
+def ker(t):
+    tt = 1 - t
+    idx = tt < 0.0
+    tt[idx] = 0.0
+    return tt
+
+def problem3(lambdas, smoothed_qso):
+    rt_idx = lambdas >= 1300
+    lt_idx = lambdas < 1200
+    qso_right = smoothed_qso[:, rt_idx]
+    qso_left = smoothed_qso[:, lt_idx]
+
+    mm = smoothed_qso.shape[0]
+
+    k = 3
+
+    for jj in range(0, mm):
+        qso_diff = qso_right - qso_right[jj, :]
+        metric_d = np.sum(qso_diff * qso_diff, axis=1)
+        h = np.max(metric_d)
+
+        sorted_idx = np.argsort(metric_d)
+        sorted_right = qso_right[sorted_idx]
+        sorted_left = qso_left[sorted_idx]
+        neighb_qso = sorted_right[1:1+k, :]
+        sorted_diff = metric_d[sorted_idx]
+        neighb_diff = sorted_diff[1:1+k]
+
+        t2 = np.sum(ker(neighb_diff / h))
+
+    print('done')
 
 def main():
     raw_data = np.loadtxt('quasar_train.csv', delimiter=',')
@@ -96,10 +124,12 @@ def main():
     train_qso = raw_data[1:, :]
 
     train_data0 = train_qso[0, :]
-    problem1(lambdas, train_data0)
-    problem2(lambdas, train_qso)
+    #problem1(lambdas, train_data0)
 
-    plt.legend()
+    smoothed_train = smooth_qso(lambdas, train_qso, 5)
+    problem3(lambdas, smoothed_train)
+
+    #plt.legend()
     plt.show()
 
 # test module
