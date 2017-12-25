@@ -41,7 +41,7 @@ plt.figure(figsize=(9,9))
 pos=nx.spring_layout(DG,iterations=10)
 nx.draw(DG,pos,alpha=0.4,edge_color='r',font_size=16,with_labels=True)
 plt.savefig('link_graph.png')
-#plt.show()
+plt.show()
 
 #import cPickle as pickle
 #pickle.dump(DG, open('DG.pkl', 'w'))
@@ -56,4 +56,11 @@ for pred, succ in DG.adj.items():
     for s, edata in succ.items():
         T[f2i[pred], f2i[s]] = edata['weight']
 
-print T
+E = np.ones(T.shape) / NX
+epsilon = 0.01
+L = T + epsilon * E
+G = np.matrix(np.zeros(L.shape))
+for i in range(0, NX):
+    G[i,:] = L[i,:] / np.sum(L[i,:])
+
+print(G)
