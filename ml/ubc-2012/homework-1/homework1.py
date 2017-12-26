@@ -41,12 +41,12 @@ num_fnames = len(fnames)
 links = html_to_links(fnames)
 edges = links_to_edges(links)
 
+# f2i : fname to index
+f2i = dict((fn, i) for i, fn in enumerate(fnames))
+
 def pagerank(fnames, edges):
     NX = len(fnames)
     T = np.matrix(np.zeros((NX, NX)))
-
-    # f2i : fname to index
-    f2i = dict((fn, i) for i, fn in enumerate(fnames))
 
     for e in edges:
         T[f2i[e[0]], f2i[e[1]]] = e[2]['weight']
@@ -88,8 +88,11 @@ def evol(p, G, num_iter):
     # print evol2
     return evol1
 
-def plt_mat_g(num_fnames, G, num_iter):
-    p = rand_norm_p(num_fnames)
+p = rand_norm_p(num_fnames)
+r = p.copy()
+r = np.dot(r, G**num_iter)
+
+def plt_mat_g(num_fnames, G, num_iter, p):
     evolution = evol(p, G, num_iter)
 
     x = np.array(range(1, num_iter + 1))
@@ -110,5 +113,39 @@ def plt_mat_g(num_fnames, G, num_iter):
     plt.show()
 
 # plot evolution
-plt_mat_g(num_fnames, G, num_iter)
+#plt_mat_g(num_fnames, G, num_iter, p)
 
+def create_revise_dict(fnames):
+    revind = {}
+
+    for fn in fnames:
+        f = open(fn)
+        for line in f.readlines():
+            for token in line.split():
+                if token in revind:
+                    if fn in revind[token]:
+                        revind[token][fn] += 1
+                    else:
+                        revind[token][fn] = 1
+                else:
+                    revind[token] = {fn:1}
+
+    return revind
+
+revind = create_revise_dict(fnames)
+
+def get_page_rank(fname):
+    return r[0, f2i[fname]] # r is a matrix
+
+#print get_page_rank(fnames[0], f2i)
+
+# test final result
+check_key = 'film'
+if check_key in revind:
+    fkeys = revind[check_key].keys()
+    sorted_fkeys = sorted(fkeys, key=get_page_rank, reverse=True)
+
+    result = []
+    for fn in sorted_fkeys:
+        result.append((fn, revind[check_key][fn], get_page_rank(fn)))
+    print result
