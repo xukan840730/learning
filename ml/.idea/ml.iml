@@ -4,6 +4,7 @@
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/ubc-2012/homework-1" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/stanford-08" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/ubc-2012/homework-1/pagerank" isTestSource="false" />
     </content>
     <orderEntry type="jdk" jdkName="Python 2.7.10 (/System/Library/Frameworks/Python.framework/Versions/2.7/bin/python2.7)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />

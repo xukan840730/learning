@@ -148,4 +148,5 @@ if check_key in revind:
     result = []
     for fn in sorted_fkeys:
         result.append((fn, revind[check_key][fn], get_page_rank(fn)))
-    print result
+    for r in result:
+        print(r)
