@@ -15,8 +15,8 @@
       <file leaf-file-name="homework1.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/ubc-2012/homework-1/pagerank/homework1.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="0">
-              <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+            <state relative-caret-position="123">
+              <caret line="31" column="41" lean-forward="false" selection-start-line="31" selection-start-column="36" selection-end-line="31" selection-end-column="41" />
               <folding>
                 <element signature="e#0#31#0" expanded="true" />
               </folding>
@@ -24,35 +24,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="problem2-4.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="problem2-4.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/ubc-2012/homework-1/misc/problem2-4.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="345">
-              <caret line="23" column="19" lean-forward="false" selection-start-line="23" selection-start-column="19" selection-end-line="23" selection-end-column="19" />
-              <folding>
-                <element signature="e#0#18#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="homework2-5.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/ubc-2012/homework-1/homework2-5/homework2-5.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="15">
-              <caret line="2" column="30" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="2" selection-end-column="30" />
-              <folding>
-                <element signature="e#0#31#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="hist.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/broadgame/hist.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="353">
-              <caret line="57" column="10" lean-forward="true" selection-start-line="57" selection-start-column="10" selection-end-line="57" selection-end-column="10" />
+            <state relative-caret-position="300">
+              <caret line="20" column="20" lean-forward="true" selection-start-line="20" selection-start-column="20" selection-end-line="20" selection-end-column="20" />
               <folding>
                 <element signature="e#0#18#0" expanded="true" />
               </folding>
@@ -63,10 +39,22 @@
       <file leaf-file-name="problem2-1-2-3.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/ubc-2012/homework-1/misc/problem2-1-2-3.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="246">
-              <caret line="63" column="14" lean-forward="false" selection-start-line="63" selection-start-column="14" selection-end-line="63" selection-end-column="14" />
+            <state relative-caret-position="270">
+              <caret line="63" column="3" lean-forward="false" selection-start-line="63" selection-start-column="3" selection-end-line="63" selection-end-column="3" />
               <folding>
                 <element signature="e#0#18#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="homework2-5.py" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/ubc-2012/homework-1/homework2-5/homework2-5.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="256">
+              <caret line="56" column="65" lean-forward="false" selection-start-line="56" selection-start-column="65" selection-end-line="56" selection-end-column="65" />
+              <folding>
+                <element signature="e#0#31#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -89,7 +77,6 @@
       <find>print_and</find>
       <find>test_func1</find>
       <find>weighted_lin_reg</find>
-      <find>items</find>
       <find>nx</find>
       <find>Nx</find>
       <find>range</find>
@@ -102,6 +89,9 @@
       <find>open</find>
       <find>revind</find>
       <find>subpl</find>
+      <find>items</find>
+      <find>act</find>
+      <find>acting</find>
     </findStrings>
   </component>
   <component name="IdeDocumentHistory">
@@ -119,8 +109,8 @@
         <option value="$PROJECT_DIR$/ubc-2012/homework-1/pagerank/homework1.py" />
         <option value="$PROJECT_DIR$/ubc-2012/homework-1/misc/misc.py" />
         <option value="$PROJECT_DIR$/ubc-2012/homework-1/misc/problem2-4.py" />
-        <option value="$PROJECT_DIR$/ubc-2012/homework-1/homework2-5/homework2-5.py" />
         <option value="$PROJECT_DIR$/broadgame/hist.py" />
+        <option value="$PROJECT_DIR$/ubc-2012/homework-1/homework2-5/homework2-5.py" />
       </list>
     </option>
   </component>
@@ -267,7 +257,7 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Python.hist">
+  <component name="RunManager" selected="Python.homework2-5">
     <configuration default="false" name="homework1" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -450,8 +440,8 @@
     </list>
     <recent_temporary>
       <list size="5">
-        <item index="0" class="java.lang.String" itemvalue="Python.hist" />
-        <item index="1" class="java.lang.String" itemvalue="Python.homework2-5" />
+        <item index="0" class="java.lang.String" itemvalue="Python.homework2-5" />
+        <item index="1" class="java.lang.String" itemvalue="Python.hist" />
         <item index="2" class="java.lang.String" itemvalue="Python.problem2-4" />
         <item index="3" class="java.lang.String" itemvalue="Python.misc" />
         <item index="4" class="java.lang.String" itemvalue="Python.homework1" />
@@ -482,10 +472,10 @@
   <component name="ToolWindowManager">
     <frame x="0" y="23" width="1280" height="723" extended-state="6" />
     <layout>
-      <window_info id="Project" active="true" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.246875" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.246875" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.3149847" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="true" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.3149847" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32874617" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
@@ -522,7 +512,7 @@
           </properties>
         </breakpoint>
       </default-breakpoints>
-      <option name="time" value="52" />
+      <option name="time" value="53" />
     </breakpoint-manager>
     <watches-manager />
   </component>
@@ -603,26 +593,6 @@
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/ubc-2012/homework-1/misc/misc.py" />
-    <entry file="file://$PROJECT_DIR$/ubc-2012/homework-1/pagerank/homework1.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding>
-            <element signature="e#0#31#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/ubc-2012/homework-1/homework2-5/homework2-5.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="15">
-          <caret line="2" column="30" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="2" selection-end-column="30" />
-          <folding>
-            <element signature="e#0#31#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/broadgame/hist.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="353">
@@ -635,8 +605,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/ubc-2012/homework-1/misc/problem2-1-2-3.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="246">
-          <caret line="63" column="14" lean-forward="false" selection-start-line="63" selection-start-column="14" selection-end-line="63" selection-end-column="14" />
+        <state relative-caret-position="270">
+          <caret line="63" column="3" lean-forward="false" selection-start-line="63" selection-start-column="3" selection-end-line="63" selection-end-column="3" />
           <folding>
             <element signature="e#0#18#0" expanded="true" />
           </folding>
@@ -645,10 +615,30 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/ubc-2012/homework-1/misc/problem2-4.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="345">
-          <caret line="23" column="19" lean-forward="false" selection-start-line="23" selection-start-column="19" selection-end-line="23" selection-end-column="19" />
+        <state relative-caret-position="300">
+          <caret line="20" column="20" lean-forward="true" selection-start-line="20" selection-start-column="20" selection-end-line="20" selection-end-column="20" />
           <folding>
             <element signature="e#0#18#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ubc-2012/homework-1/pagerank/homework1.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="123">
+          <caret line="31" column="41" lean-forward="false" selection-start-line="31" selection-start-column="36" selection-end-line="31" selection-end-column="41" />
+          <folding>
+            <element signature="e#0#31#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ubc-2012/homework-1/homework2-5/homework2-5.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="256">
+          <caret line="56" column="65" lean-forward="false" selection-start-line="56" selection-start-column="65" selection-end-line="56" selection-end-column="65" />
+          <folding>
+            <element signature="e#0#31#0" expanded="true" />
           </folding>
         </state>
       </provider>
