@@ -21,30 +21,24 @@ final_score = {}
 player_index = {}
 broadgame_index = {}
 
-ip = 0
-for pp in players:
+for ip, pp in enumerate(players):
     final_score[pp] = 0
     player_index[pp] = ip
-    ip += 1
 
-ibg = 0
-for bg in broadgames:
+for ibg, bg in enumerate(broadgames):
     broadgame_index[bg] = ibg
-    ibg += 1
 
 score_table = np.zeros((nplayers, ngames + 1))
 score_per_broadgame = np.zeros((nbroadgames, nplayers))
 
-ig = 1
-for game in games:
+for ig, game in enumerate(games):
     for r in range(0, len(game[1])):
         pp = game[1][r]
         final_score[pp] += rewards[r]
         pp_index = player_index[pp]
         bg_index = broadgame_index[game[0]]
-        score_table[pp_index, ig] = final_score[pp]
+        score_table[pp_index, ig + 1] = final_score[pp]
         score_per_broadgame[bg_index, pp_index] += rewards[r]
-    ig += 1
 
 print(final_score)
 print(score_table)
