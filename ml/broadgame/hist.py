@@ -2,7 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 players = ["kan", "lin", "hao", "fang"]
-broadgames = ["zoo", "catan", "powergrid"]
+colors = ['r', 'g', 'b', 'y']
+broadgames = ["zoo", "catan", "powergrid", "pureto-rico"]
 rewards = [30, 0, -10, -20]
 
 games = [("zoo", ("lin", "kan", "fang", "hao")),
@@ -11,7 +12,9 @@ games = [("zoo", ("lin", "kan", "fang", "hao")),
         ("powergrid", ("hao", "lin", "kan", "fang")),
         ("powergrid", ("hao", "kan", "fang", "lin")),
         ("catan", ("fang", "hao", "lin", "kan")),
-        ("zoo", ("lin", "hao", "fang", "kan"))]
+        ("zoo", ("lin", "hao", "fang", "kan")),
+        #("pureto-rico", ("lin", "hao", "fang", "kan")),
+         ]
 
 nplayers = len(players)
 ngames = len(games)
@@ -45,8 +48,27 @@ print(score_table)
 
 print score_per_broadgame
 
+plt.subplot(2, 2, 1)
 for x in range(0, nplayers):
-    plt.plot(score_table[x, :], label=players[x], lw=2)
+    plt.plot(score_table[x, :], label=players[x], lw=2, color=colors[x])
 
 plt.legend()
+
+fig, ax = plt.subplots()
+bg_ind = np.arange(nbroadgames)
+width = 0.2       # the width of the bars
+
+#yerr = np.ones((nbroadgames))
+rects = []
+for ip, pp in enumerate(players):
+    r = ax.bar(bg_ind + width * ip, score_per_broadgame[:, ip], width, color=colors[ip])
+    rects.append(r)
+
+ax.set_ylabel('Scores')
+ax.set_title('Scores by game and player')
+ax.set_xticks(bg_ind + width / 2)
+ax.set_xticklabels(broadgames)
+
+ax.legend(rects, players)
+
 plt.show()
