@@ -17,9 +17,10 @@
 
 import numpy as np
 
+# TODO: use numpy array
 # index 0 is sad, 1 is happy
 
-# theta = p(xt | xt_1), transition probablity table
+# theta = p(xt | xt-1), transition probablity table
 theta = ((0.8, 0.2), (0.1, 0.9))
 # phi = p(yt | xt), observation probablity table
 phi = ((0.1, 0.2, 0.4, 0, 0.3),
@@ -27,9 +28,40 @@ phi = ((0.1, 0.2, 0.4, 0, 0.3),
 
 px0 = (0.4, 0.6)
 
-def HMM(px0, theta, phi, y, T):
-    print px0
-    print theta
-    print phi
+def HMM(px0, theta, phi, y):
+    T = len(y)
 
-HMM(px0, theta, phi, 1, 2)
+    px = list(px0)
+    px_updated = []
+    for kind in range(0, len(px)):
+        px_updated.append(0)
+
+    for t in range(0, T):
+
+        if t != 0:
+            # prediction, P(xt | y1:t-1)
+            for kind1 in range(0, len(theta)):
+                t_sum = 0
+
+                for kind2 in range(0, len(theta)):
+                    t1 = theta[kind2][kind1]
+                    t2 = px[kind2]
+                    t_sum += t1 * t2
+
+                px_updated[kind1] = t_sum
+            px = px_updated
+
+        # bayes updates:
+        for kind1 in range(0, len(theta)):
+            t1 = phi[kind1][y[t]] * px[kind1]
+            t3 = 0
+            for kind2 in range(0, len(theta)):
+                t3 += phi[kind2][y[t]] * px[kind2]
+
+            px_updated[kind1] = t1 / t3
+        px = px_updated
+
+    return px
+
+px = HMM(px0, theta, phi, (3, 3, 0, 4, 2))
+print px
