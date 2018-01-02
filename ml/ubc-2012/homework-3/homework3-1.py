@@ -17,51 +17,49 @@
 
 import numpy as np
 
-# TODO: use numpy array
 # index 0 is sad, 1 is happy
 
 # theta = p(xt | xt-1), transition probablity table
-theta = ((0.8, 0.2), (0.1, 0.9))
+theta = np.array([[0.8, 0.2],
+                  [0.1, 0.9]])
 # phi = p(yt | xt), observation probablity table
-phi = ((0.1, 0.2, 0.4, 0, 0.3),
-       (0.3, 0, 0.3, .3, 0.1))
+phi = np.array([[0.1, 0.2, 0.4, 0, 0.3],
+                [0.3, 0, 0.3, .3, 0.1]])
 
-px0 = (0.4, 0.6)
+px0 = np.array([0.4, 0.6])
 
 def HMM(px0, theta, phi, y):
     T = len(y)
 
-    px = list(px0)
-    px_updated = []
-    for kind in range(0, len(px)):
-        px_updated.append(0)
+    nx = theta.shape[0]
+    px = np.zeros((T, nx))
+    px_y_t_1 = px0 # P(xt| y1:t-1)
 
     for t in range(0, T):
 
         if t != 0:
             # prediction, P(xt | y1:t-1)
-            for kind1 in range(0, len(theta)):
+            for kind1 in range(0, nx):
                 t_sum = 0
 
-                for kind2 in range(0, len(theta)):
+                for kind2 in range(0, nx):
                     t1 = theta[kind2][kind1]
-                    t2 = px[kind2]
+                    t2 = px[t-1][kind2]
                     t_sum += t1 * t2
 
-                px_updated[kind1] = t_sum
-            px = px_updated
+                px_y_t_1[kind1] = t_sum
 
         # bayes updates:
-        for kind1 in range(0, len(theta)):
-            t1 = phi[kind1][y[t]] * px[kind1]
+        for kind1 in range(0, nx):
+            t1 = phi[kind1][y[t]] * px_y_t_1[kind1]
             t3 = 0
-            for kind2 in range(0, len(theta)):
-                t3 += phi[kind2][y[t]] * px[kind2]
+            for kind2 in range(0, nx):
+                t3 += phi[kind2][y[t]] * px_y_t_1[kind2]
 
-            px_updated[kind1] = t1 / t3
-        px = px_updated
+            px[t][kind1] = t1 / t3
 
     return px
 
 px = HMM(px0, theta, phi, (3, 3, 0, 4, 2))
+#px = HMM(px0, theta, phi, (3,0,))
 print px
