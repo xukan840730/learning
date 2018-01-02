@@ -13,7 +13,10 @@ games = [("zoo", ("lin", "kan", "fang", "hao")),
         ("powergrid", ("hao", "kan", "fang", "lin")),
         ("catan", ("fang", "hao", "lin", "kan")),
         ("zoo", ("lin", "hao", "fang", "kan")),
-        #("pureto-rico", ("lin", "hao", "fang", "kan")),
+        ("zoo", ("fang", "lin", "hao", "kan")),
+        ("catan", ("kan", "lin", "hao", "fang"), (30, -5, -5, -20)),
+        ("zoo", ("kan", "lin", "hao", "fang")),
+        #("pureto-rico", ("kan", "lin", "hao", "fang")),
          ]
 
 nplayers = len(players)
@@ -35,13 +38,16 @@ score_table = np.zeros((nplayers, ngames + 1))
 score_per_broadgame = np.zeros((nbroadgames, nplayers))
 
 for ig, game in enumerate(games):
-    for r in range(0, len(game[1])):
-        pp = game[1][r]
-        final_score[pp] += rewards[r]
+    for pp_rank in range(0, len(game[1])):
+        pp = game[1][pp_rank]
+        score_this_game = rewards[pp_rank]
+        if len(game) > 2:
+            score_this_game = game[2][pp_rank]
+        final_score[pp] += score_this_game
         pp_index = player_index[pp]
         bg_index = broadgame_index[game[0]]
         score_table[pp_index, ig + 1] = final_score[pp]
-        score_per_broadgame[bg_index, pp_index] += rewards[r]
+        score_per_broadgame[bg_index, pp_index] += score_this_game
 
 print(final_score)
 print(score_table)
@@ -52,7 +58,7 @@ plt.subplot(2, 2, 1)
 for x in range(0, nplayers):
     plt.plot(score_table[x, :], label=players[x], lw=2, color=colors[x])
 
-plt.legend()
+#plt.legend()
 
 fig, ax = plt.subplots()
 bg_ind = np.arange(nbroadgames)
@@ -69,6 +75,6 @@ ax.set_title('Scores by game and player')
 ax.set_xticks(bg_ind + width / 2)
 ax.set_xticklabels(broadgames)
 
-ax.legend(rects, players)
+#ax.legend(rects, players)
 
 plt.show()
