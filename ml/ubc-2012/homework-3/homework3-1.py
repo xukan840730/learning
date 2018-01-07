@@ -13,9 +13,10 @@
 # P(CR | S) = 20%, O(CR | H) = 0%
 # P(SL | S) = 40%, P(SL | H) = 30%
 # P(SO | S) = 0%, P(SO | H) = 30%
-# P(W | S) = 30%, P(W | H) = 10%
+# P(WTV | S) = 30%, P(W | H) = 10%
 
 import numpy as np
+import math as math
 
 # index 0 is sad, 1 is happy
 
@@ -26,40 +27,39 @@ theta = np.array([[0.8, 0.2],
 phi = np.array([[0.1, 0.2, 0.4, 0, 0.3],
                 [0.3, 0, 0.3, .3, 0.1]])
 
+actions = ("CO", "CR", "SL", "SO", "WTV")
+action_to_idx = {}
+for idx, action in enumerate(actions):
+    action_to_idx[action] = idx
+
 px0 = np.array([0.4, 0.6])
 
-def HMM(px0, theta, phi, y):
-    T = len(y)
+def HMM(px0, theta, phi, actions):
+    T = len(actions)
 
     nx = theta.shape[0]
+    ny = phi.shape[1]
     px = np.zeros((T, nx))
     px_y_t_1 = px0 # P(xt| y1:t-1)
 
     for t in range(0, T):
 
         if t != 0:
-            # prediction, P(xt | y1:t-1)
+            # prediction, P(xt | y1:t-1) = sum over xt-1 [ P(xt | xt-1) * P(xt-1 | y1:t-1) ]
             for kind1 in range(0, nx):
-                t_sum = 0
+                t3 = np.dot(theta[:, kind1], px[t-1])
+                px_y_t_1[kind1] = t3
 
-                for kind2 in range(0, nx):
-                    t1 = theta[kind2][kind1]
-                    t2 = px[t-1][kind2]
-                    t_sum += t1 * t2
-
-                px_y_t_1[kind1] = t_sum
-
-        # bayes updates:
+        # bayes updates: P(xt | y1:t) = [P(yt | xt) * P(xt | y1:t-1)] / [sum over xt P(yt | xt) * P(xt | y1:t-1)]
         for kind1 in range(0, nx):
-            t1 = phi[kind1][y[t]] * px_y_t_1[kind1]
-            t3 = 0
-            for kind2 in range(0, nx):
-                t3 += phi[kind2][y[t]] * px_y_t_1[kind2]
-
-            px[t][kind1] = t1 / t3
+            action_name = actions[t]
+            act_idx = action_to_idx[action_name]
+            assert(act_idx >= 0 and act_idx < ny)
+            t1 = phi[kind1][act_idx] * px_y_t_1[kind1]
+            t4 = np.dot(phi[:, act_idx], px_y_t_1)
+            px[t][kind1] = t1 / t4
 
     return px
 
-px = HMM(px0, theta, phi, (3, 3, 0, 4, 2))
-#px = HMM(px0, theta, phi, (3,0,))
+px = HMM(px0, theta, phi, ("SO", "SO", "CO", "WTV", "SL"))
 print px
