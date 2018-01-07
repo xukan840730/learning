@@ -11,7 +11,7 @@
       <sourceFolder url="file://$MODULE_DIR$/ubc-2012/homework-3" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/ubc-2012" isTestSource="false" />
     </content>
-    <orderEntry type="jdk" jdkName="Python 2.7.10 (/System/Library/Frameworks/Python.framework/Versions/2.7/bin/python2.7)" jdkType="Python SDK" />
+    <orderEntry type="jdk" jdkName="Python 3.5.1 (C:\Users\xukan840730\AppData\Local\Programs\Python\Python35-32\python.exe)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
   <component name="TestRunnerService">

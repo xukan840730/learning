@@ -19,47 +19,77 @@ import numpy as np
 import math as math
 
 # index 0 is sad, 1 is happy
+hidden_states = ("sad", "happy")
+actions = ("CO", "CR", "SL", "SO", "WTV")
 
 # theta = p(xt | xt-1), transition probablity table
 theta = np.array([[0.8, 0.2],
                   [0.1, 0.9]])
 # phi = p(yt | xt), observation probablity table
 phi = np.array([[0.1, 0.2, 0.4, 0, 0.3],
-                [0.3, 0, 0.3, .3, 0.1]])
+                [0.3, 0, 0.3, 0.3, 0.1]])
 
-actions = ("CO", "CR", "SL", "SO", "WTV")
 action_to_idx = {}
 for idx, action in enumerate(actions):
     action_to_idx[action] = idx
 
 px0 = np.array([0.4, 0.6])
 
-def HMM(px0, theta, phi, actions):
+def HMM(px0, trans_prob, obser_prob, actions):
     T = len(actions)
 
-    nx = theta.shape[0]
-    ny = phi.shape[1]
-    px = np.zeros((T, nx))
-    px_y_t_1 = px0 # P(xt| y1:t-1)
+    nx = trans_prob.shape[0]
+    ny = obser_prob.shape[1]
+    px = np.zeros((nx, T))
+    px_y_t_1 = px0.copy() # P(xt| y1:t-1)
+
+    max_prob = np.zeros((nx, T))
+    max_path = np.zeros((nx, T), dtype=int)
 
     for t in range(0, T):
+        action_name = actions[t]
+        act_idx = action_to_idx[action_name]
+        assert (act_idx >= 0 and act_idx < ny)
 
+        # prediction, P(xt | y1:t-1) = sum over xt-1 [ P(xt | xt-1) * P(xt-1 | y1:t-1) ]
         if t != 0:
-            # prediction, P(xt | y1:t-1) = sum over xt-1 [ P(xt | xt-1) * P(xt-1 | y1:t-1) ]
             for kind1 in range(0, nx):
-                t3 = np.dot(theta[:, kind1], px[t-1])
-                px_y_t_1[kind1] = t3
+                px_y_t_1[kind1] = np.dot(trans_prob[:, kind1], px[:, t-1])
 
         # bayes updates: P(xt | y1:t) = [P(yt | xt) * P(xt | y1:t-1)] / [sum over xt P(yt | xt) * P(xt | y1:t-1)]
         for kind1 in range(0, nx):
-            action_name = actions[t]
-            act_idx = action_to_idx[action_name]
-            assert(act_idx >= 0 and act_idx < ny)
-            t1 = phi[kind1][act_idx] * px_y_t_1[kind1]
-            t4 = np.dot(phi[:, act_idx], px_y_t_1)
-            px[t][kind1] = t1 / t4
+            t1 = obser_prob[kind1][act_idx] * px_y_t_1[kind1]
+            t4 = np.dot(obser_prob[:, act_idx], px_y_t_1)
+            px[kind1][t] = t1 / t4
 
-    return px
+        # calculate the max probability and path
+        if t == 0:
+            for ix in range(0, nx):
+                max_prob[ix][t] = obser_prob[ix][act_idx] * px0[ix]
+                max_path[ix][t] = ix
+        else:
+            for ix in range(0, nx):
+                new_max_prob = np.zeros((nx))
+                for ipath in range(0, nx): # iterate previous max_path
+                    t1 = obser_prob[ix][act_idx]
+                    t2 = trans_prob[ipath][ix]
+                    t3 = max_prob[ipath][t-1]
+                    new_max_prob[ipath] = t1 * t2 * t3
+                max_prob[ix][t] = np.max(new_max_prob)
+                max_path[ix][t] = np.argmax(new_max_prob)
 
-px = HMM(px0, theta, phi, ("SO", "SO", "CO", "WTV", "SL"))
-print px
+    return px, max_prob, max_path
+
+#px, max_prob, max_path = HMM(px0, theta, phi, ("SO", "SO", "CO", "WTV", "SL"))
+px, max_prob, max_path = HMM(px0, theta, phi, ("CO", "WTV", "CR", "CO", "SO"))
+print(px)
+print(max_prob)
+print(max_path)
+
+final_path_idx = np.argmax(max_prob[:,max_prob.shape[1]-1])
+final_path = max_path[final_path_idx, :]
+print(final_path)
+final_path_states = []
+for i in final_path:
+    final_path_states.append(hidden_states[i])
+print(final_path_states)
