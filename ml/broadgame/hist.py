@@ -6,7 +6,8 @@ colors = ['r', 'g', 'b', 'y']
 broadgames = ["zoo", "catan", "powergrid", "pureto-rico"]
 rewards = [30, 0, -10, -20]
 
-games = [("zoo", ("lin", "kan", "fang", "hao")),
+games = [
+        ("zoo", ("lin", "kan", "fang", "hao")),
         ("zoo", ("hao", "kan", "fang", "lin")),
         ("catan", ("fang", "lin", "kan", "hao")),
         ("powergrid", ("hao", "lin", "kan", "fang")),
@@ -16,7 +17,8 @@ games = [("zoo", ("lin", "kan", "fang", "hao")),
         ("zoo", ("fang", "lin", "hao", "kan")),
         ("catan", ("kan", "lin", "hao", "fang"), (30, -5, -5, -20)),
         ("zoo", ("kan", "lin", "hao", "fang")),
-        #("pureto-rico", ("kan", "lin", "hao", "fang")),
+        ("pureto-rico", ("fang", "kan", "lin", "hao")),
+        ("pureto-rico", ("hao", "lin", "fang", "kan")),
          ]
 
 nplayers = len(players)
@@ -54,11 +56,11 @@ print(score_table)
 
 print score_per_broadgame
 
-plt.subplot(2, 2, 1)
+#plt.subplot(2, 2, 1)
 for x in range(0, nplayers):
     plt.plot(score_table[x, :], label=players[x], lw=2, color=colors[x])
 
-#plt.legend()
+plt.legend()
 
 fig, ax = plt.subplots()
 bg_ind = np.arange(nbroadgames)
@@ -75,6 +77,6 @@ ax.set_title('Scores by game and player')
 ax.set_xticks(bg_ind + width / 2)
 ax.set_xticklabels(broadgames)
 
-#ax.legend(rects, players)
+ax.legend(rects, players)
 
 plt.show()
