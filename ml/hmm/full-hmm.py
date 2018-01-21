@@ -37,6 +37,27 @@ for idx, action in enumerate(actions):
 # prior_init_prob = P(q1 = Si), prior initial probability matrix
 prior_init_prob = np.array([0.4, 0.6])
 
-def full_hmm:
+# hidden markov model:
+# lambda = { init-prob, trans-prob, emission-prob }
+def Hmm(prior_init_prob, prior_trans_prob, prior_emis_prob, action_seq):
+
+    T = len(action_seq)
+
+    if T == 0:
+        return 0
+
+    num_states = prior_emis_prob.shape[0]
+    num_observ = prior_emis_prob.shape[1]
+
+    # forward probability alpha_t(i) = P(O_1:t, qt = Si | lambda)
+    fwd_probs = np.zeros((num_states, T))
+    # backward probablity beta_t(i) = P(O_t+1:T, qt = Si | lambda)
+    bwd_probs = np.zeros((num_states, T))
+
+    # fwd_probs 0 = init_prob
+
     return 0
 
+
+tt = Hmm(prior_init_prob, prior_trans_prob, prior_emis_prob, ("CO", "WTV", "CR", "CO", "SO"))
+print(tt)
