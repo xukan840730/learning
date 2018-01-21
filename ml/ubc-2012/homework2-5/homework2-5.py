@@ -31,8 +31,8 @@ for fn in fnames:
 
             fname_total_words[fn] += 1
 
-print fname_total_words
-print revind
+print(fname_total_words)
+print(revind)
 
 # term frequency-inverse document frequency
 # term frequency:
@@ -40,10 +40,10 @@ print revind
 # inverse document frequency:
 #   log(number of documents in D / (1 + number of documents word w appears in)
 def tfidf(revind, fnames, fname_total_words, word):
-    print "tfidf for word:%s" % word
+    print("tfidf for word:%s" % word)
     wstem = stemmer.stem(word)
     if wstem != word:
-        print "word '%s' stemmed to '%s'" % (word, wstem)
+        print("word '%s' stemmed to '%s'" % (word, wstem))
 
     t1 = 1.0
     if wstem in revind:
@@ -54,7 +54,7 @@ def tfidf(revind, fnames, fname_total_words, word):
         for fn, count in revind[wstem].items():
             tf = float(count) / float(fname_total_words[fn])
             tf_idf = tf * idf
-            print "TF-IDF for '%s', count:%d = %f" % (fn, count, tf_idf)
+            print("TF-IDF for '%s', count:%d = %f" % (fn, count, tf_idf))
 
 tfidf(revind, fnames, fname_total_words, 'acting')
 tfidf(revind, fnames, fname_total_words, 'awards')

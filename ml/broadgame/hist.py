@@ -54,7 +54,7 @@ for ig, game in enumerate(games):
 print(final_score)
 print(score_table)
 
-print score_per_broadgame
+print(score_per_broadgame)
 
 #plt.subplot(2, 2, 1)
 for x in range(0, nplayers):
