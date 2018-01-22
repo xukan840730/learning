@@ -83,6 +83,7 @@ def HMM(px0, trans_prob, obser_prob, actions):
 #px, max_prob, max_path = HMM(px0, theta, phi, ("SO", "SO", "CO", "WTV", "SL"))
 px, max_prob, max_path = HMM(px0, theta, phi, ("CO", "WTV", "CR", "CO", "SO"))
 print(px)
+#print(fwd_prob)
 print(max_prob)
 print(max_path)
 

@@ -49,15 +49,66 @@ def Hmm(prior_init_prob, prior_trans_prob, prior_emis_prob, action_seq):
     num_states = prior_emis_prob.shape[0]
     num_observ = prior_emis_prob.shape[1]
 
+    action_seq_idx = []
+    for act_name in action_seq:
+        action_seq_idx.append(action_to_idx[act_name])
+
     # forward probability alpha_t(i) = P(O_1:t, qt = Si | lambda)
     fwd_probs = np.zeros((num_states, T))
     # backward probablity beta_t(i) = P(O_t+1:T, qt = Si | lambda)
     bwd_probs = np.zeros((num_states, T))
 
-    # fwd_probs 0 = init_prob
+    # fwd_probs(i, 0) = init_prob(i) * emis_prob(i, O0)
+    act_idx_0 = action_seq_idx[0]
+    fwd_probs[:, 0] = prior_init_prob * prior_emis_prob[:, act_idx_0]
 
-    return 0
+    # calculate fwd_probs(i, t), 1 <= t <= T - 1
+    for t in range(1, T):
+        act_idx = action_seq_idx[t]
+
+        for istate in range(num_states):
+            t1 = np.dot(fwd_probs[:, t-1], prior_trans_prob[:, istate])
+            fwd_probs[istate][t] = t1 * prior_emis_prob[istate, act_idx]
+
+    # bwd_probs(i, T-1) = 1.0
+    bwd_probs[:, T-1] = 1.0
+
+    # calculate bwd_probs(i, t),
+    for t in range(T-2, -1, -1):
+        t_plus_1 = t + 1
+        act_idx_plus_1 = action_seq_idx[t_plus_1]
+        for istate in range(num_states):
+            ss = 0.0
+            for jstate in range(num_states):
+                s1 = prior_trans_prob[istate][jstate]
+                s2 = prior_emis_prob[jstate][act_idx_plus_1]
+                s3 = bwd_probs[jstate][t_plus_1]
+                ss += s1 * s2 * s3
+            bwd_probs[istate, t] = ss
+
+    return fwd_probs, bwd_probs
+
+fwd_probs, bwd_probs = Hmm(prior_init_prob, prior_trans_prob, prior_emis_prob, ("CO", "WTV", "CR", "CO", "SO"))
+#print(fwd_probs)
+#print(bwd_probs)
 
 
-tt = Hmm(prior_init_prob, prior_trans_prob, prior_emis_prob, ("CO", "WTV", "CR", "CO", "SO"))
-print(tt)
+num_states = len(hidden_states)
+num_actions = len(actions)
+
+
+for i0 in range(num_actions):
+    total_prob = 0
+    for i1 in range(num_actions):
+        for i2 in range(num_actions):
+            for i3 in range(num_actions):
+                action_seq = (actions[i0], actions[i1], actions[i2], actions[i3])
+                #print(action_seq)
+                fwd_probs, bwd_probs = Hmm(prior_init_prob,
+                                           prior_trans_prob,
+                                           prior_emis_prob,
+                                           action_seq)
+                ss = np.dot(bwd_probs[:, 0], prior_init_prob)
+                total_prob += ss
+    print(total_prob)
+#print(total_prob)
