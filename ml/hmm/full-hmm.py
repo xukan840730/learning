@@ -39,7 +39,7 @@ prior_init_prob = np.array([0.4, 0.6])
 
 # hidden markov model:
 # lambda = { init-prob, trans-prob, emission-prob }
-def Hmm(prior_init_prob, prior_trans_prob, prior_emis_prob, action_seq):
+def HmmFwdBwd(prior_init_prob, prior_trans_prob, prior_emis_prob, action_seq):
 
     T = len(action_seq)
 
@@ -88,27 +88,78 @@ def Hmm(prior_init_prob, prior_trans_prob, prior_emis_prob, action_seq):
 
     return fwd_probs, bwd_probs
 
-fwd_probs, bwd_probs = Hmm(prior_init_prob, prior_trans_prob, prior_emis_prob, ("CO", "WTV", "CR", "CO", "SO"))
-#print(fwd_probs)
-#print(bwd_probs)
+def HmmTrain(prior_init_prob, prior_trans_prob, prior_emis_prob, train_seq):
+    T = len(train_seq)
+    num_states = prior_emis_prob.shape[0]
+    num_actions = prior_emis_prob.shape[1]
 
+    init_prob = prior_init_prob.copy()
+    trans_prob = prior_trans_prob.copy()
+    emis_prob = prior_emis_prob.copy()
+
+    fwd_probs, bwd_probs = HmmFwdBwd(init_prob, trans_prob, emis_prob, train_seq)
+
+    prob_train_seq = np.sum(fwd_probs[:, T-1])
+
+    # sigma(i, j, t): P(qt = Si, qt+1 = Sj | O, lambda)
+    sigma = np.zeros((num_states, num_states, T-1))
+    for istate in range(num_states):
+        for jstate in range(num_states):
+            for t in range(T-1):
+                act_idx = action_to_idx[train_seq[t+1]]
+                t1 = emis_prob[jstate, act_idx]
+                sigma[istate, jstate, t] = fwd_probs[istate, t] * trans_prob[istate, jstate] * t1 * bwd_probs[jstate, t+1] / prob_train_seq
+    print("sigma:")
+    print(sigma)
+
+    # gamma(i, t) = P(qt = Si | O, lambda)
+    gamma = np.zeros((num_states, T-1))
+    for t in range(T-1):
+        for istate in range(num_states):
+            gamma[istate, t] = np.sum(sigma[istate, :, t])
+    print("gamma:")
+    print(gamma)
+
+    new_init_prob = np.zeros(init_prob.shape)
+    new_init_prob = gamma[:, 0]
+    print("new-init-prob:")
+    print(new_init_prob)
+
+    new_trans_prob = np.zeros(trans_prob.shape)
+    for istate in range(num_states):
+        for jstate in range(num_states):
+            new_trans_prob[istate, jstate] = np.sum(sigma[istate, jstate, :]) / np.sum(gamma[istate, :])
+    print("new-trans-prob:")
+    print(new_trans_prob)
+
+    new_emis_prob = np.zeros(emis_prob.shape)
+    for jstate in range(num_states):
+        for kaction in range(num_actions):
+            p = 0.0
+            for t in range(T-1):
+                act_idx = action_to_idx[train_seq[t]]
+                if act_idx == kaction:
+                    p += gamma[jstate, t]
+            new_emis_prob[jstate, kaction] = p / np.sum(gamma[jstate, :])
+    print(new_emis_prob)
 
 num_states = len(hidden_states)
 num_actions = len(actions)
 
+HmmTrain(prior_init_prob, prior_trans_prob, prior_emis_prob, ("CO", "WTV", "CR", "CO", "SO"))
 
-for i0 in range(num_actions):
-    total_prob = 0
-    for i1 in range(num_actions):
-        for i2 in range(num_actions):
-            for i3 in range(num_actions):
-                action_seq = (actions[i0], actions[i1], actions[i2], actions[i3])
-                #print(action_seq)
-                fwd_probs, bwd_probs = Hmm(prior_init_prob,
-                                           prior_trans_prob,
-                                           prior_emis_prob,
-                                           action_seq)
-                ss = np.dot(bwd_probs[:, 0], prior_init_prob)
-                total_prob += ss
-    print(total_prob)
-#print(total_prob)
+
+# for i0 in range(num_actions):
+#     total_prob = 0
+#     for i1 in range(num_actions):
+#         for i2 in range(num_actions):
+#             for i3 in range(num_actions):
+#                 action_seq = (actions[i0], actions[i1], actions[i2], actions[i3])
+#                 #print(action_seq)
+#                 fwd_probs, bwd_probs = Hmm(prior_init_prob,
+#                                            prior_trans_prob,
+#                                            prior_emis_prob,
+#                                            action_seq)
+#                 ss = np.dot(bwd_probs[:, 0], prior_init_prob)
+#                 total_prob += ss
+#     print(total_prob)
