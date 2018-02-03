@@ -45,6 +45,7 @@ for y, cls in enumerate(classes):
             plt.title(cls)
 plt.show()
 
+
 # Subsample the data for more efficient code execution in this exercise
 num_training = 5000
 mask = range(num_training)
@@ -63,10 +64,36 @@ print(X_train.shape)
 print(X_test.shape)
 
 from cs231n.classifiers import KNearestNeighbor
-
 # Create a kNN classifier instance.
 # Remember that training a kNN classifier is a noop:
 # the Classifier simply remembers the data and does no further processing
 classifier = KNearestNeighbor()
 classifier.train(X_train, y_train)
 
+# Open cs231n/classifiers/k_nearest_neighbor.py and implement
+# compute_distances_two_loops.
+
+# Test your implementation:
+dists = classifier.compute_distances_two_loops(X_test)
+print(dists.shape)
+
+
+# We can visualize the distance matrix: each row is a single test example and
+# its distances to training examples
+plt.imshow(dists, interpolation='none')
+plt.show()
+
+
+# Now implement the function predict_labels and run the code below:
+# We use k = 1 (which is Nearest Neighbor).
+y_test_pred = classifier.predict_labels(dists, k=1)
+
+# Compute and print the fraction of correctly predicted examples
+num_correct = np.sum(y_test_pred == y_test)
+accuracy = float(num_correct) / num_test
+print('Got %d / %d correct => accuracy: %f' % (num_correct, num_test, accuracy))
+
+y_test_pred = classifier.predict_labels(dists, k=5)
+num_correct = np.sum(y_test_pred == y_test)
+accuracy = float(num_correct) / num_test
+print('Got %d / %d correct => accuracy: %f' % (num_correct, num_test, accuracy))
