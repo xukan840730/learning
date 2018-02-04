@@ -84,10 +84,10 @@ print('Test data shape: ', X_test.shape)
 print('Test labels shape: ', y_test.shape)
 
 # Preprocessing: reshape the image data into rows
-X_train = np.reshape(X_train, (X_train.shape[0], -1))
-X_val = np.reshape(X_val, (X_val.shape[0], -1))
-X_test = np.reshape(X_test, (X_test.shape[0], -1))
-X_dev = np.reshape(X_dev, (X_dev.shape[0], -1))
+X_train = np.reshape(X_train, (X_train.shape[0], -1)).astype('float')
+X_val = np.reshape(X_val, (X_val.shape[0], -1)).astype('float')
+X_test = np.reshape(X_test, (X_test.shape[0], -1)).astype('float')
+X_dev = np.reshape(X_dev, (X_dev.shape[0], -1)).astype('float')
 
 # As a sanity check, print out the shapes of the data
 print('Training data shape: ', X_train.shape)
@@ -117,3 +117,14 @@ X_test = np.hstack([X_test, np.ones((X_test.shape[0], 1))])
 X_dev = np.hstack([X_dev, np.ones((X_dev.shape[0], 1))])
 
 print(X_train.shape, X_val.shape, X_test.shape, X_dev.shape)
+
+
+# Evaluate the naive implementation of the loss we provided for you:
+from cs231n.classifiers.linear_svm import svm_loss_naive
+import time
+
+# generate a random SVM weight matrix of small numbers
+W = np.random.randn(X_train.shape[1], num_classes) * 0.0001
+
+loss, grad = svm_loss_naive(W, X_dev, y_dev, 0.00001)
+print('loss: %f' % (loss, ))
