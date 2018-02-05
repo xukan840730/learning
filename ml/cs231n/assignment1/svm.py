@@ -84,10 +84,10 @@ print('Test data shape: ', X_test.shape)
 print('Test labels shape: ', y_test.shape)
 
 # Preprocessing: reshape the image data into rows
-X_train = np.reshape(X_train, (X_train.shape[0], -1)).astype('float')
-X_val = np.reshape(X_val, (X_val.shape[0], -1)).astype('float')
-X_test = np.reshape(X_test, (X_test.shape[0], -1)).astype('float')
-X_dev = np.reshape(X_dev, (X_dev.shape[0], -1)).astype('float')
+X_train = np.reshape(X_train, (X_train.shape[0], -1)).astype('int16')
+X_val = np.reshape(X_val, (X_val.shape[0], -1)).astype('int16')
+X_test = np.reshape(X_test, (X_test.shape[0], -1)).astype('int16')
+X_dev = np.reshape(X_dev, (X_dev.shape[0], -1)).astype('int16')
 
 # As a sanity check, print out the shapes of the data
 print('Training data shape: ', X_train.shape)
@@ -97,26 +97,31 @@ print('dev data shape: ', X_dev.shape)
 
 # Preprocessing: subtract the mean image
 # first: compute the image mean based on the training data
-mean_image = np.mean(X_train, axis=0)
+mean_image = np.mean(X_train, axis=0).astype('float16')
 print(mean_image[:10]) # print a few of the elements
-plt.figure(figsize=(4,4))
+plt.figure(figsize=(6,4))
 plt.imshow(mean_image.reshape((32,32,3)).astype('uint8')) # visualize the mean image
 plt.show()
 
 # second: subtract the mean image from train and test data
-X_train -= mean_image
+X_train = X_train.astype('float16')
+X_val = X_val.astype('float16')
+X_test = X_test.astype('float16')
+X_dev = X_dev.astype('float16')
+X_train = X_train - mean_image
 X_val -= mean_image
 X_test -= mean_image
 X_dev -= mean_image
 
 # third: append the bias dimension of ones (i.e. bias trick) so that our SVM
 # only has to worry about optimizing a single weight matrix W.
-X_train = np.hstack([X_train, np.ones((X_train.shape[0], 1))])
-X_val = np.hstack([X_val, np.ones((X_val.shape[0], 1))])
-X_test = np.hstack([X_test, np.ones((X_test.shape[0], 1))])
+# X_train = np.hstack([X_train, np.ones((X_train.shape[0], 1))])
+# X_val = np.hstack([X_val, np.ones((X_val.shape[0], 1))])
+# X_test = np.hstack([X_test, np.ones((X_test.shape[0], 1))])
 X_dev = np.hstack([X_dev, np.ones((X_dev.shape[0], 1))])
-
-print(X_train.shape, X_val.shape, X_test.shape, X_dev.shape)
+print(X_dev.shape)
+#
+# print(X_train.shape, X_val.shape, X_test.shape, X_dev.shape)
 
 
 # Evaluate the naive implementation of the loss we provided for you:
@@ -124,7 +129,7 @@ from cs231n.classifiers.linear_svm import svm_loss_naive
 import time
 
 # generate a random SVM weight matrix of small numbers
-W = np.random.randn(X_train.shape[1], num_classes) * 0.0001
+W = np.random.randn(X_dev.shape[1], num_classes) * 0.0001
 
 loss, grad = svm_loss_naive(W, X_dev, y_dev, 0.00001)
 print('loss: %f' % (loss, ))
