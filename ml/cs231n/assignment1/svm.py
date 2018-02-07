@@ -115,13 +115,11 @@ X_dev -= mean_image
 
 # third: append the bias dimension of ones (i.e. bias trick) so that our SVM
 # only has to worry about optimizing a single weight matrix W.
-# X_train = np.hstack([X_train, np.ones((X_train.shape[0], 1))])
-# X_val = np.hstack([X_val, np.ones((X_val.shape[0], 1))])
-# X_test = np.hstack([X_test, np.ones((X_test.shape[0], 1))])
+X_train = np.hstack([X_train, np.ones((X_train.shape[0], 1))])
+X_val = np.hstack([X_val, np.ones((X_val.shape[0], 1))])
+X_test = np.hstack([X_test, np.ones((X_test.shape[0], 1))])
 X_dev = np.hstack([X_dev, np.ones((X_dev.shape[0], 1))])
-print(X_dev.shape)
-#
-# print(X_train.shape, X_val.shape, X_test.shape, X_dev.shape)
+print(X_train.shape, X_val.shape, X_test.shape, X_dev.shape)
 
 
 # Evaluate the naive implementation of the loss we provided for you:
@@ -157,7 +155,7 @@ grad_numerical = grad_check_sparse(f, W, grad)
 # Next implement the function svm_loss_vectorized; for now only compute the loss;
 # we will implement the gradient in a moment.
 tic = time.time()
-loss_naive, grad_naive = svm_loss_naive(W, X_dev, y_dev, 0.00001)
+loss_naive, _ = svm_loss_naive(W, X_dev, y_dev, 0.00001)
 toc = time.time()
 print('Naive loss: %e computed in %fs' % (loss_naive, toc - tic))
 
@@ -169,3 +167,51 @@ print('Vectorized loss: %e computed in %fs' % (loss_vectorized, toc - tic))
 
 # The losses should match but your vectorized implementation should be much faster.
 print('difference: %f' % (loss_naive - loss_vectorized))
+
+
+# Complete the implementation of svm_loss_vectorized, and compute the gradient
+# of the loss function in a vectorized way.
+
+# The naive implementation and the vectorized implementation should match, but
+# the vectorized version should still be much faster.
+tic = time.time()
+_, grad_naive = svm_loss_naive(W, X_dev, y_dev, 0.00001)
+toc = time.time()
+print('Naive loss and gradient: computed in %fs' % (toc - tic))
+
+tic = time.time()
+_, grad_vectorized = svm_loss_vectorized(W, X_dev, y_dev, 0.00001)
+toc = time.time()
+print('Vectorized loss and gradient: computed in %fs' % (toc - tic))
+
+# The loss is a single number, so it is easy to compare the values computed
+# by the two implementations. The gradient on the other hand is a matrix, so
+# we use the Frobenius norm to compare them.
+difference = np.linalg.norm(grad_naive - grad_vectorized, ord='fro')
+print('difference: %f' % difference)
+
+
+
+# In the file linear_classifier.py, implement SGD in the function
+# LinearClassifier.train() and then run it with the code below.
+from cs231n.classifiers import LinearSVM
+svm = LinearSVM()
+tic = time.time()
+loss_hist = svm.train(X_train, y_train, learning_rate=1e-7, reg=5e4,
+                      num_iters=1500, verbose=True)
+toc = time.time()
+print('That took %fs' % (toc - tic))
+
+# A useful debugging strategy is to plot the loss as a function of
+# iteration number:
+plt.plot(loss_hist)
+plt.xlabel('Iteration number')
+plt.ylabel('Loss value')
+plt.show()
+
+# Write the LinearSVM.predict function and evaluate the performance on both the
+# training and validation set
+y_train_pred = svm.predict(X_train)
+print('training accuracy: %f' % (np.mean(y_train == y_train_pred), ))
+y_val_pred = svm.predict(X_val)
+print('validation accuracy: %f' % (np.mean(y_val == y_val_pred), ))

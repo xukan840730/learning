@@ -83,8 +83,7 @@ def svm_loss_vectorized(W, X, y, reg):
 
   margins = scores - correct_class_scores + 1
   margins[margins < 0] = 0
-  for i in range(num_train):
-    margins[i, y[i]] = 0
+  margins[np.arange(num_train), y] = 0
 
   loss = np.sum(margins)
   loss /= num_train
@@ -105,8 +104,19 @@ def svm_loss_vectorized(W, X, y, reg):
   # to reuse some of the intermediate values that you used to compute the     #
   # loss.                                                                     #
   #############################################################################
-  pass
-  #############################################################################
+  # Fully vectorized version. Roughly 10x faster.
+  X_mask = np.zeros(margins.shape)
+  # column maps to class, row maps to sample; a value v in X_mask[i, j]
+  # adds a row sample i to column class j with multiple of v
+  X_mask[margins > 0] = 1
+  # for each sample, find the total number of classes where margin > 0
+  incorrect_counts = np.sum(X_mask, axis=1)
+  X_mask[np.arange(num_train), y] = -incorrect_counts
+  dW = X.T.dot(X_mask)
+
+  dW /= num_train # average out weights
+  dW += reg*W # regularize the weights
+  #   #############################################################################
   #                             END OF YOUR CODE                              #
   #############################################################################
 
