@@ -224,7 +224,9 @@ print('validation accuracy: %f' % (np.mean(y_val == y_val_pred), ))
 # learning_rates = [1e-7, 5e-5]
 # regularization_strengths = [5e4, 1e5]
 
-learning_rates = [1e-8, 1e-7, 2e-7]
+# learning_rates = [1e-8, 1e-7, 2e-7]
+# regularization_strengths = [1e4, 2e4, 3e4, 4e4, 5e4, 6e4, 7e4, 8e4, 1e5]
+learning_rates = [2e-7]
 regularization_strengths = [1e4, 2e4, 3e4, 4e4, 5e4, 6e4, 7e4, 8e4, 1e5]
 
 
