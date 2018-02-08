@@ -47,8 +47,8 @@ plt.show()
 # Split the data into train, val, and test sets. In addition we will
 # create a small development set as a subset of the training data;
 # we can use this for development so our code runs faster.
-num_training = 15000
-num_empty = 34000
+num_training = 10000
+num_empty = 39000
 num_validation = 1000
 num_test = 1000
 num_dev = 500
@@ -224,10 +224,11 @@ print('validation accuracy: %f' % (np.mean(y_val == y_val_pred), ))
 # learning_rates = [1e-7, 5e-5]
 # regularization_strengths = [5e4, 1e5]
 
-# learning_rates = [1e-8, 1e-7, 2e-7]
+learning_rates = [1e-8, 1e-7, 2e-7]
 # regularization_strengths = [1e4, 2e4, 3e4, 4e4, 5e4, 6e4, 7e4, 8e4, 1e5]
-learning_rates = [2e-7]
+# learning_rates = [2e-7]
 regularization_strengths = [1e4, 2e4, 3e4, 4e4, 5e4, 6e4, 7e4, 8e4, 1e5]
+#regularization_strengths = [1e4, 2e4]
 
 
 # results is dictionary mapping tuples of the form
@@ -254,7 +255,7 @@ best_svm = None  # The LinearSVM object that achieved the highest validation rat
 for l in learning_rates:
     for r in regularization_strengths:
         svm = LinearSVM()
-        svm.train(X_train, y_train, learning_rate=l, reg=r, num_iters=1500, batch_size=200)
+        svm.train(X_train, y_train, learning_rate=l, reg=r, num_iters=800, batch_size=200)
         y_train_pred = svm.predict(X_train)
         y_val_pred = svm.predict(X_val)
         training_accuracy = np.mean(y_train == y_train_pred)
@@ -319,3 +320,4 @@ for i in range(10):
     plt.imshow(wimg.astype('uint8'))
     plt.axis('off')
     plt.title(classes[i])
+plt.show()
