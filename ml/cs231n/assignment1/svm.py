@@ -47,14 +47,15 @@ plt.show()
 # Split the data into train, val, and test sets. In addition we will
 # create a small development set as a subset of the training data;
 # we can use this for development so our code runs faster.
-num_training = 49000
+num_training = 15000
+num_empty = 34000
 num_validation = 1000
 num_test = 1000
 num_dev = 500
 
 # Our validation set will be num_validation points from the original
 # training set.
-mask = range(num_training, num_training + num_validation)
+mask = range(num_training + num_empty, num_training + num_empty + num_validation)
 X_val = X_train[mask]
 y_val = y_train[mask]
 
@@ -97,17 +98,17 @@ print('dev data shape: ', X_dev.shape)
 
 # Preprocessing: subtract the mean image
 # first: compute the image mean based on the training data
-mean_image = np.mean(X_train, axis=0).astype('float16')
+mean_image = np.mean(X_train, axis=0).astype('float32')
 print(mean_image[:10]) # print a few of the elements
 plt.figure(figsize=(6,4))
 plt.imshow(mean_image.reshape((32,32,3)).astype('uint8')) # visualize the mean image
 plt.show()
 
 # second: subtract the mean image from train and test data
-X_train = X_train.astype('float16')
-X_val = X_val.astype('float16')
-X_test = X_test.astype('float16')
-X_dev = X_dev.astype('float16')
+X_train = X_train.astype('float32')
+X_val = X_val.astype('float32')
+X_test = X_test.astype('float32')
+X_dev = X_dev.astype('float32')
 X_train = X_train - mean_image
 X_val -= mean_image
 X_test -= mean_image

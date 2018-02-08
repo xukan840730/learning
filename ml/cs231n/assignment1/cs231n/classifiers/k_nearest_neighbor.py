@@ -64,7 +64,7 @@ class KNearestNeighbor(object):
     num_train = self.X_train.shape[0]
     dists = np.zeros((num_test, num_train))
     for i in range(num_test):
-      #print('calculating dist: i:', i)
+      print('calculating dist: i:', i)
       for j in range(num_train):
         #####################################################################
         # Compute the l2 distance between the ith test point and the jth    #
@@ -90,7 +90,7 @@ class KNearestNeighbor(object):
     num_train = self.X_train.shape[0]
     dists = np.zeros((num_test, num_train))
     for i in range(num_test):
-      #print('calculating dist: i:', i)
+      print('calculating dist: i:', i)
       #######################################################################
       # Compute the l2 distance between the ith test point and all training #
       # points, and store the result in dists[i, :].                        #
