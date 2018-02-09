@@ -30,12 +30,22 @@ def softmax_loss_naive(W, X, y, reg):
   # regularization!                                                           #
   #############################################################################
   num_train = X.shape[0]
-  scores = np.dot(X, W)
-  prob_raw = np.exp(scores)
-  prob_sum = np.sum(prob_raw, axis=1).reshape((prob_raw.shape[0], 1))
-  prob_norm = prob_raw / prob_sum
-  prob_y = prob_norm[np.arange(num_train), y]
-  loss = np.sum(-np.log(prob_y)) / num_train
+  num_classes = W.shape[1]
+
+  for i in range(num_train):
+    # Compute vector of scores
+    f_i = X[i].dot(W)
+
+    # Normalization trick to avoid numerical instability, per http://cs231n.github.io/linear-classify/#softmax
+    f_i -= np.max(f_i)
+
+    # Compute loss (and add to it, divided later)
+    f_exp = np.exp(f_i)
+    sum_j = np.sum(f_exp)
+    loss += -np.log(f_exp[y[i]] / sum_j)
+
+  loss /= num_train
+  loss += 0.5 * reg * np.sum(W * W)
   #############################################################################
   #                          END OF YOUR CODE                                 #
   #############################################################################
