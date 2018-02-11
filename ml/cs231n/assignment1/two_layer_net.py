@@ -36,6 +36,8 @@ def init_toy_data():
   np.random.seed(1)
   X = 10 * np.random.randn(num_inputs, input_size)
   y = np.array([0, 1, 2, 2, 1])
+  if y.shape[0] != num_inputs:
+    y = y[0:num_inputs]
   return X, y
 
 net = init_toy_model()
@@ -51,6 +53,8 @@ correct_scores = np.asarray([
   [-0.51590475, -1.01354314, -0.8504215 ],
   [-0.15419291, -0.48629638, -0.52901952],
   [-0.00618733, -0.12435261, -0.15226949]])
+if num_inputs != correct_scores.shape[0]:
+  correct_scores = correct_scores[0:num_inputs]
 print(correct_scores)
 
 # The difference should be very small. We get < 1e-7

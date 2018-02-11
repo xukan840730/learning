@@ -116,7 +116,7 @@ class TwoLayerNet(object):
     #############################################################################
     # compute the gradient on scores
     # vectorized approach:
-    dscores = probs
+    dscores = probs.copy()
     dscores[range(N), y] -= 1
     dscores /= N
 
@@ -131,18 +131,14 @@ class TwoLayerNet(object):
     grads['W1'] = np.dot(X.T, dhidden)
     grads['b1'] = np.sum(dhidden, axis=0)
 
-    # add regularization gradient contribution
-    grads['W2'] += reg * W2
-    grads['W1'] += reg * W1
-
     # naive approach:
-    ngrad_W2 = np.zeros(grads['W2'].shape)
     ngrad_W1 = np.zeros(grads['W1'].shape)
+    ngrad_W2 = np.zeros(grads['W2'].shape)
     ngrad_b1 = np.zeros(grads['b1'].shape)
     ngrad_b2 = np.zeros(grads['b2'].shape)
 
     for i in range(N):
-      df_dscore = probs[i]
+      df_dscore = probs[i].copy()
       df_dscore[y[i]] -= 1
       df_dscore /= N
 
@@ -150,26 +146,62 @@ class TwoLayerNet(object):
       # dscore_dW2 = a1.T
       # dscore_db2 = 1
       # df_dW2 = df_dscore * dscore_dW2
-      #scores_i = np.dot(a1[i], W2) + b2
-      t1 = a1[i].T.reshape((a1[i].size, 1))
-      t2 = df_dscore.reshape((1, df_dscore.size))
-      t3 = np.dot(t1, t2)
-      ngrad_W2 += t3
+      # scores_i = dot(a1[i], W2) + b2
+      ai = a1[i].copy()
+      t1 = np.dot(ai.reshape((ai.size, 1)), df_dscore.reshape((1, df_dscore.size)))
+      ngrad_W2 += t1
       ngrad_b2 += df_dscore
 
+      # next layer
+      # z1 = dot(X[i], W1) + b1
+      # a1[i] = maximum(z1, 0)
+      # dai_dzi = 1, if z1 > 0, else 0.
+
+      # dzi_db1 = 1
+      zi = z1[i]
+      dai_dzi = np.ones(ai.shape)
+      dai_dzi[zi <= 0] = 0
+
+      # df_db1 = df_dscore * dscore_dai * dai_dzi * dzi_db1
+      t2 = np.dot(df_dscore.reshape((1, df_dscore.size)), W2.T)
+      t3 = t2 * dai_dzi
+      df_db1 = t3 * 1
+      ngrad_b1 += df_db1.reshape(df_db1.size)
+
+      # df_dW1 = df_dscore * dscore_dai * dai_dzi * dzi_dW1
+      # dzi_dW1 = X[i].T
+      # dzi_dW1 = X[i]
+      df_dW1 = np.dot(X[i].T.reshape((X[i].size, 1)), t3)
+      ngrad_W1 += df_dW1
+
+    # add regularization gradient contribution
+    grads['W1'] += reg * W1
+    grads['W2'] += reg * W2
     ngrad_W1 += reg * W1
     ngrad_W2 += reg * W2
 
-    diff_W2 = grads['W2'] - ngrad_W2
-    print(diff_W2)
-    diff_b2 = grads['b2'] - ngrad_b2
-    print(diff_b2)
+    # compare difference
+    # diff_W1 = grads['W1'] - ngrad_W1
+    # print(diff_W1)
+    # diff_W2 = grads['W2'] - ngrad_W2
+    # print(diff_W2)
+    # diff_b1 = grads['b1'] - ngrad_b1
+    # print(diff_b1)
+    # diff_b2 = grads['b2'] - ngrad_b2
+    # print(diff_b2)
+
+    ngrads = {}
+    ngrads['W1'] = ngrad_W1
+    ngrads['W2'] = ngrad_W2
+    ngrads['b1'] = ngrad_b1
+    ngrads['b2'] = ngrad_b2
 
     #############################################################################
     #                              END OF YOUR CODE                             #
     #############################################################################
 
-    return loss, grads
+    #return loss, grads
+    return loss, ngrads
 
   def train(self, X, y, X_val, y_val,
             learning_rate=1e-3, learning_rate_decay=0.95,
