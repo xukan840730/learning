@@ -74,7 +74,9 @@ class TwoLayerNet(object):
     # Store the result in the scores variable, which should be an array of      #
     # shape (N, C).                                                             #
     #############################################################################
-    pass
+    z1 = np.dot(X, W1) + b1
+    a1 = np.maximum(0, z1)  # pass through ReLU activation function
+    scores = np.dot(a1, W2) + b2
     #############################################################################
     #                              END OF YOUR CODE                             #
     #############################################################################
@@ -92,7 +94,15 @@ class TwoLayerNet(object):
     # classifier loss. So that your results match ours, multiply the            #
     # regularization loss by 0.5                                                #
     #############################################################################
-    pass
+    # compute the class probabilities
+    exp_scores = np.exp(scores)
+    probs = exp_scores / np.sum(exp_scores, axis=1, keepdims=True)  # [N x K]
+
+    # average cross-entropy loss and regularization
+    corect_logprobs = -np.log(probs[range(N), y])
+    data_loss = np.sum(corect_logprobs) / N
+    reg_loss = 0.5 * reg * np.sum(W1 * W1) + 0.5 * reg * np.sum(W2 * W2)
+    loss = data_loss + reg_loss
     #############################################################################
     #                              END OF YOUR CODE                             #
     #############################################################################
@@ -104,7 +114,57 @@ class TwoLayerNet(object):
     # and biases. Store the results in the grads dictionary. For example,       #
     # grads['W1'] should store the gradient on W1, and be a matrix of same size #
     #############################################################################
-    pass
+    # compute the gradient on scores
+    # vectorized approach:
+    dscores = probs
+    dscores[range(N), y] -= 1
+    dscores /= N
+
+    # W2 and b2
+    grads['W2'] = np.dot(a1.T, dscores)
+    grads['b2'] = np.sum(dscores, axis=0)
+    # next backprop into hidden layer
+    dhidden = np.dot(dscores, W2.T)
+    # backprop the ReLU non-linearity
+    dhidden[a1 <= 0] = 0
+    # finally into W,b
+    grads['W1'] = np.dot(X.T, dhidden)
+    grads['b1'] = np.sum(dhidden, axis=0)
+
+    # add regularization gradient contribution
+    grads['W2'] += reg * W2
+    grads['W1'] += reg * W1
+
+    # naive approach:
+    ngrad_W2 = np.zeros(grads['W2'].shape)
+    ngrad_W1 = np.zeros(grads['W1'].shape)
+    ngrad_b1 = np.zeros(grads['b1'].shape)
+    ngrad_b2 = np.zeros(grads['b2'].shape)
+
+    for i in range(N):
+      df_dscore = probs[i]
+      df_dscore[y[i]] -= 1
+      df_dscore /= N
+
+      # score = dot(a1, W2) + b2
+      # dscore_dW2 = a1.T
+      # dscore_db2 = 1
+      # df_dW2 = df_dscore * dscore_dW2
+      #scores_i = np.dot(a1[i], W2) + b2
+      t1 = a1[i].T.reshape((a1[i].size, 1))
+      t2 = df_dscore.reshape((1, df_dscore.size))
+      t3 = np.dot(t1, t2)
+      ngrad_W2 += t3
+      ngrad_b2 += df_dscore
+
+    ngrad_W1 += reg * W1
+    ngrad_W2 += reg * W2
+
+    diff_W2 = grads['W2'] - ngrad_W2
+    print(diff_W2)
+    diff_b2 = grads['b2'] - ngrad_b2
+    print(diff_b2)
+
     #############################################################################
     #                              END OF YOUR CODE                             #
     #############################################################################
@@ -140,7 +200,7 @@ class TwoLayerNet(object):
     train_acc_history = []
     val_acc_history = []
 
-    for it in xrange(num_iters):
+    for it in range(num_iters):
       X_batch = None
       y_batch = None
 
@@ -169,7 +229,7 @@ class TwoLayerNet(object):
       #########################################################################
 
       if verbose and it % 100 == 0:
-        print 'iteration %d / %d: loss %f' % (it, num_iters, loss)
+        print('iteration %d / %d: loss %f' % (it, num_iters, loss))
 
       # Every epoch, check train and val accuracy and decay learning rate.
       if it % iterations_per_epoch == 0:
