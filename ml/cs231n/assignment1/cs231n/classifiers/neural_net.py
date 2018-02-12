@@ -97,6 +97,7 @@ class TwoLayerNet(object):
     # compute the class probabilities
     exp_scores = np.exp(scores)
     probs = exp_scores / np.sum(exp_scores, axis=1, keepdims=True)  # [N x K]
+    probs = np.maximum(probs, 0.000001)
 
     # average cross-entropy loss and regularization
     corect_logprobs = -np.log(probs[range(N), y])
@@ -131,77 +132,78 @@ class TwoLayerNet(object):
     grads['W1'] = np.dot(X.T, dhidden)
     grads['b1'] = np.sum(dhidden, axis=0)
 
-    # naive approach:
-    ngrad_W1 = np.zeros(grads['W1'].shape)
-    ngrad_W2 = np.zeros(grads['W2'].shape)
-    ngrad_b1 = np.zeros(grads['b1'].shape)
-    ngrad_b2 = np.zeros(grads['b2'].shape)
-
-    for i in range(N):
-      df_dscore = probs[i].copy()
-      df_dscore[y[i]] -= 1
-      df_dscore /= N
-
-      # score = dot(a1, W2) + b2
-      # dscore_dW2 = a1.T
-      # dscore_db2 = 1
-      # df_dW2 = df_dscore * dscore_dW2
-      # scores_i = dot(a1[i], W2) + b2
-      ai = a1[i].copy()
-      t1 = np.dot(ai.reshape((ai.size, 1)), df_dscore.reshape((1, df_dscore.size)))
-      ngrad_W2 += t1
-      ngrad_b2 += df_dscore
-
-      # next layer
-      # z1 = dot(X[i], W1) + b1
-      # a1[i] = maximum(z1, 0)
-      # dai_dzi = 1, if z1 > 0, else 0.
-
-      # dzi_db1 = 1
-      zi = z1[i]
-      dai_dzi = np.ones(ai.shape)
-      dai_dzi[zi <= 0] = 0
-
-      # df_db1 = df_dscore * dscore_dai * dai_dzi * dzi_db1
-      t2 = np.dot(df_dscore.reshape((1, df_dscore.size)), W2.T)
-      t3 = t2 * dai_dzi
-      df_db1 = t3 * 1
-      ngrad_b1 += df_db1.reshape(df_db1.size)
-
-      # df_dW1 = df_dscore * dscore_dai * dai_dzi * dzi_dW1
-      # dzi_dW1 = X[i].T
-      # dzi_dW1 = X[i]
-      df_dW1 = np.dot(X[i].T.reshape((X[i].size, 1)), t3)
-      ngrad_W1 += df_dW1
-
     # add regularization gradient contribution
     grads['W1'] += reg * W1
     grads['W2'] += reg * W2
-    ngrad_W1 += reg * W1
-    ngrad_W2 += reg * W2
 
-    # compare difference
-    # diff_W1 = grads['W1'] - ngrad_W1
-    # print(diff_W1)
-    # diff_W2 = grads['W2'] - ngrad_W2
-    # print(diff_W2)
-    # diff_b1 = grads['b1'] - ngrad_b1
-    # print(diff_b1)
-    # diff_b2 = grads['b2'] - ngrad_b2
-    # print(diff_b2)
-
-    ngrads = {}
-    ngrads['W1'] = ngrad_W1
-    ngrads['W2'] = ngrad_W2
-    ngrads['b1'] = ngrad_b1
-    ngrads['b2'] = ngrad_b2
+    # naive approach:
+    # ngrad_W1 = np.zeros(grads['W1'].shape)
+    # ngrad_W2 = np.zeros(grads['W2'].shape)
+    # ngrad_b1 = np.zeros(grads['b1'].shape)
+    # ngrad_b2 = np.zeros(grads['b2'].shape)
+    #
+    # for i in range(N):
+    #   df_dscore = probs[i].copy()
+    #   df_dscore[y[i]] -= 1
+    #   df_dscore /= N
+    #
+    #   # score = dot(a1, W2) + b2
+    #   # dscore_dW2 = a1.T
+    #   # dscore_db2 = 1
+    #   # df_dW2 = df_dscore * dscore_dW2
+    #   # scores_i = dot(a1[i], W2) + b2
+    #   ai = a1[i].copy()
+    #   t1 = np.dot(ai.reshape((ai.size, 1)), df_dscore.reshape((1, df_dscore.size)))
+    #   ngrad_W2 += t1
+    #   ngrad_b2 += df_dscore
+    #
+    #   # next layer
+    #   # z1 = dot(X[i], W1) + b1
+    #   # a1[i] = maximum(z1, 0)
+    #   # dai_dzi = 1, if z1 > 0, else 0.
+    #
+    #   # dzi_db1 = 1
+    #   zi = z1[i]
+    #   dai_dzi = np.ones(ai.shape)
+    #   dai_dzi[zi <= 0] = 0
+    #
+    #   # df_db1 = df_dscore * dscore_dai * dai_dzi * dzi_db1
+    #   t2 = np.dot(df_dscore.reshape((1, df_dscore.size)), W2.T)
+    #   t3 = t2 * dai_dzi
+    #   df_db1 = t3 * 1
+    #   ngrad_b1 += df_db1.reshape(df_db1.size)
+    #
+    #   # df_dW1 = df_dscore * dscore_dai * dai_dzi * dzi_dW1
+    #   # dzi_dW1 = X[i].T
+    #   # dzi_dW1 = X[i]
+    #   df_dW1 = np.dot(X[i].T.reshape((X[i].size, 1)), t3)
+    #   ngrad_W1 += df_dW1
+    #
+    # ngrad_W1 += reg * W1
+    # ngrad_W2 += reg * W2
+    #
+    # # compare difference
+    # # diff_W1 = grads['W1'] - ngrad_W1
+    # # print(diff_W1)
+    # # diff_W2 = grads['W2'] - ngrad_W2
+    # # print(diff_W2)
+    # # diff_b1 = grads['b1'] - ngrad_b1
+    # # print(diff_b1)
+    # # diff_b2 = grads['b2'] - ngrad_b2
+    # # print(diff_b2)
+    #
+    # ngrads = {}
+    # ngrads['W1'] = ngrad_W1
+    # ngrads['W2'] = ngrad_W2
+    # ngrads['b1'] = ngrad_b1
+    # ngrads['b2'] = ngrad_b2
 
     #############################################################################
     #                              END OF YOUR CODE                             #
     #############################################################################
 
-    #return loss, grads
-    return loss, ngrads
+    return loss, grads
+    # return loss, ngrads
 
   def train(self, X, y, X_val, y_val,
             learning_rate=1e-3, learning_rate_decay=0.95,
@@ -240,7 +242,9 @@ class TwoLayerNet(object):
       # TODO: Create a random minibatch of training data and labels, storing  #
       # them in X_batch and y_batch respectively.                             #
       #########################################################################
-      pass
+      ind = np.random.choice(num_train, batch_size)
+      X_batch = X[ind]
+      y_batch = y[ind]
       #########################################################################
       #                             END OF YOUR CODE                          #
       #########################################################################
@@ -255,7 +259,10 @@ class TwoLayerNet(object):
       # using stochastic gradient descent. You'll need to use the gradients   #
       # stored in the grads dictionary defined above.                         #
       #########################################################################
-      pass
+      self.params['W1'] += -learning_rate * grads['W1']
+      self.params['b1'] += -learning_rate * grads['b1']
+      self.params['W2'] += -learning_rate * grads['W2']
+      self.params['b2'] += -learning_rate * grads['b2']
       #########################################################################
       #                             END OF YOUR CODE                          #
       #########################################################################
@@ -300,7 +307,10 @@ class TwoLayerNet(object):
     ###########################################################################
     # TODO: Implement this function; it should be VERY simple!                #
     ###########################################################################
-    pass
+    z1 = X.dot(self.params['W1']) + self.params['b1']
+    a1 = np.maximum(0, z1)  # pass through ReLU activation function
+    scores = a1.dot(self.params['W2']) + self.params['b2']
+    y_pred = np.argmax(scores, axis=1)
     ###########################################################################
     #                              END OF YOUR CODE                           #
     ###########################################################################
