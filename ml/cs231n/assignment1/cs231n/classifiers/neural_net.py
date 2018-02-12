@@ -39,6 +39,8 @@ class TwoLayerNet(object):
     self.params['W2'] = std * np.random.randn(hidden_size, output_size)
     self.params['b2'] = np.zeros(output_size)
 
+    np.seterr(all='raise')
+
   def loss(self, X, y=None, reg=0.0):
     """
     Compute the loss and gradients for a two layer fully connected neural
@@ -95,7 +97,10 @@ class TwoLayerNet(object):
     # regularization loss by 0.5                                                #
     #############################################################################
     # compute the class probabilities
-    exp_scores = np.exp(scores)
+    tscores = scores.copy()
+    tscores = np.clip(tscores, -100, +100)
+    tscores -= np.max(tscores, axis=1, keepdims=True)  # max of every sample
+    exp_scores = np.exp(tscores)
     probs = exp_scores / np.sum(exp_scores, axis=1, keepdims=True)  # [N x K]
     probs = np.maximum(probs, 0.000001)
 

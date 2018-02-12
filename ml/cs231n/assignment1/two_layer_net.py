@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from cs231n.classifiers.neural_net import TwoLayerNet
 
 #%matplotlib inline
-plt.rcParams['figure.figsize'] = (10.0, 6.0) # set default size of plots
+plt.rcParams['figure.figsize'] = (10.0, 8.0) # set default size of plots
 plt.rcParams['image.interpolation'] = 'nearest'
 plt.rcParams['image.cmap'] = 'gray'
 
@@ -99,7 +99,7 @@ plt.show()
 from cs231n.data_utils import load_CIFAR10
 
 
-def get_CIFAR10_data(num_training=49000, num_validation=1000, num_test=1000):
+def get_CIFAR10_data(num_training=19000, num_empty = 30000, num_validation=1000, num_test=1000):
   """
   Load the CIFAR-10 dataset from disk and perform preprocessing to prepare
   it for the two-layer neural net classifier. These are the same steps as
@@ -110,7 +110,7 @@ def get_CIFAR10_data(num_training=49000, num_validation=1000, num_test=1000):
   X_train, y_train, X_test, y_test = load_CIFAR10(cifar10_dir)
 
   # Subsample the data
-  mask = range(num_training, num_training + num_validation)
+  mask = range(num_training + num_empty, num_training + num_empty + num_validation)
   X_val = X_train[mask]
   y_val = y_train[mask]
   mask = range(num_training)
@@ -121,11 +121,11 @@ def get_CIFAR10_data(num_training=49000, num_validation=1000, num_test=1000):
   y_test = y_test[mask]
 
   # Normalize the data: subtract the mean image
-  X_train = X_train.astype('float64')
-  X_val = X_val.astype('float64')
-  X_test = X_test.astype('float64')
+  X_train = X_train.astype('float')
+  X_val = X_val.astype('float')
+  X_test = X_test.astype('float')
   #X_dev = X_dev.astype('float64')
-  mean_image = np.mean(X_train, axis=0).astype('float64')
+  mean_image = np.mean(X_train, axis=0).astype('float')
   X_train -= mean_image
   X_val -= mean_image
   X_test -= mean_image
@@ -163,21 +163,23 @@ val_acc = (net.predict(X_val) == y_val).mean()
 print('Validation accuracy: ', val_acc)
 
 
-# Plot the loss function and train / validation accuracies
-plt.subplot(2, 1, 1)
-plt.plot(stats['loss_history'])
-plt.title('Loss history')
-plt.xlabel('Iteration')
-plt.ylabel('Loss')
+def show_stats(stats):
+  # Plot the loss function and train / validation accuracies
+  plt.subplot(2, 1, 1)
+  plt.plot(stats['loss_history'])
+  plt.title('Loss history')
+  plt.xlabel('Iteration')
+  plt.ylabel('Loss')
 
-plt.subplot(2, 1, 2)
-plt.plot(stats['train_acc_history'], label='train')
-plt.plot(stats['val_acc_history'], label='val')
-plt.title('Classification accuracy history')
-plt.xlabel('Epoch')
-plt.ylabel('Clasification accuracy')
-plt.show()
+  plt.subplot(2, 1, 2)
+  plt.plot(stats['train_acc_history'], label='train')
+  plt.plot(stats['val_acc_history'], label='val')
+  plt.title('Classification accuracy history')
+  plt.xlabel('Epoch')
+  plt.ylabel('Clasification accuracy')
+  plt.show()
 
+show_stats(stats)
 
 from cs231n.vis_utils import visualize_grid
 
@@ -194,16 +196,18 @@ show_net_weights(net)
 
 best_val = -1
 best_stats = None
-learning_rates = [1e-2, 1e-3]
-# hidden_sizes = [10, 50, 100, 500]
-hidden_sizes = [50]
-regularization_strengths = [0.4, 0.5, 0.6]
+# learning_rates = [0.0005, 0.001, 0.005]
+learning_rates = [0.001]
+# hidden_sizes = [50]
+hidden_sizes = [10, 50, 100]
+# regularization_strengths = [0.01, 0.05, 0.2]
+regularization_strengths = [0.05, 0.1]
 results = {}
 iters = 2000  # 100
 for lr in learning_rates:
   for rs in regularization_strengths:
     for hs in hidden_sizes:
-      print('calculating lr %e reg %f hs %f' % (lr, rs, hs))
+      print('calculating lr %f reg %f hs %f' % (lr, rs, hs))
       net = TwoLayerNet(input_size, hs, num_classes)
 
       # Train the network
@@ -218,7 +222,7 @@ for lr in learning_rates:
       acc_val = np.mean(y_val == y_val_pred)
 
       results[(lr, rs, hs)] = (acc_train, acc_val)
-      print('lr %e reg %f hs %f train accuracy: %f val accuracy: %f' % (lr, rs, hs, acc_train, acc_val))
+      print('lr %f reg %f hs %f train accuracy: %f val accuracy: %f' % (lr, rs, hs, acc_train, acc_val))
 
       if best_val < acc_val:
         best_stats = stats
@@ -228,6 +232,12 @@ for lr in learning_rates:
 # Print out results.
 for lr, reg, hs in sorted(results):
   train_accuracy, val_accuracy = results[(lr, reg, hs)]
-  print('lr %e reg %e hs %f train accuracy: %f val accuracy: %f' % (lr, reg, hs, train_accuracy, val_accuracy))
+  print('lr %f reg %f hs %f train accuracy: %f val accuracy: %f' % (lr, reg, hs, train_accuracy, val_accuracy))
 
-print('best validation accuracy achieved during cross-validation: %f' % best_val)
+print('best validation accuracy achieved during cross-validation: lr %f reg %f hs %f train accuracy: %f val accuracy: %f' % (lr, reg, hs, train_accuracy, val_accuracy))
+
+show_stats(best_stats)
+show_net_weights(best_net)
+
+test_acc = (best_net.predict(X_test) == y_test).mean()
+print('Test accuracy: ', test_acc)
