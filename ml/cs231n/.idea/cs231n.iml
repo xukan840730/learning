@@ -5,7 +5,7 @@
       <sourceFolder url="file://$MODULE_DIR$/assignment2" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/assignment1" isTestSource="false" />
     </content>
-    <orderEntry type="inheritedJdk" />
+    <orderEntry type="jdk" jdkName="Python 3.6.2 (/Library/Frameworks/Python.framework/Versions/3.6/bin/python3.6)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
   <component name="PyDocumentationSettings">
