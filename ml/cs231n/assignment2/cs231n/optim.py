@@ -76,7 +76,7 @@ def sgd_momentum(w, dw, config=None):
 
 
 
-def rmsprop(x, dx, config=None):
+def rmsprop(w, dw, config=None):
   """
   Uses the RMSProp update rule, which uses a moving average of squared gradient
   values to set adaptive per-parameter learning rates.
@@ -92,20 +92,26 @@ def rmsprop(x, dx, config=None):
   config.setdefault('learning_rate', 1e-2)
   config.setdefault('decay_rate', 0.99)
   config.setdefault('epsilon', 1e-8)
-  config.setdefault('cache', np.zeros_like(x))
+  config.setdefault('cache', np.zeros_like(w))
 
-  next_x = None
+  next_w = None
   #############################################################################
   # TODO: Implement the RMSprop update formula, storing the next value of x   #
   # in the next_x variable. Don't forget to update cache value stored in      #  
   # config['cache'].                                                          #
   #############################################################################
-  pass
+  cache = config['cache']
+  decay_rate = config['decay_rate']
+  eps = config['epsilon']
+  learning_rate = config['learning_rate']
+  cache = decay_rate * cache + (1 - decay_rate) * dw ** 2
+  next_w = -learning_rate * dw / (np.sqrt(cache) + eps) + w
+  config['cache'] = cache
   #############################################################################
   #                             END OF YOUR CODE                              #
   #############################################################################
 
-  return next_x, config
+  return next_w, config
 
 
 def adam(x, dx, config=None):
@@ -137,7 +143,21 @@ def adam(x, dx, config=None):
   # the next_x variable. Don't forget to update the m, v, and t variables     #
   # stored in config.                                                         #
   #############################################################################
-  pass
+  learning_rate, beta1, beta2, eps, m, v, t \
+    = config['learning_rate'], config['beta1'], config['beta2'], \
+      config['epsilon'], config['m'], config['v'], config['t']
+
+  t += 1
+  m = beta1 * m + (1 - beta1) * dx
+  v = beta2 * v + (1 - beta2) * (dx ** 2)
+
+  # bias correction:
+  mb = m / (1 - beta1 ** t)
+  vb = v / (1 - beta2 ** t)
+
+  next_x = -learning_rate * mb / (np.sqrt(vb) + eps) + x
+
+  config['m'], config['v'], config['t'] = m, v, t
   #############################################################################
   #                             END OF YOUR CODE                              #
   #############################################################################

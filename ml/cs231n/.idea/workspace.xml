@@ -15,7 +15,7 @@
         <entry file="file://$PROJECT_DIR$/assignment2/FullyConnectedNets.ipynb">
           <provider selected="true" editor-type-id="ipnb-editor">
             <state>
-              <selected id="27" />
+              <selected id="40" />
             </state>
           </provider>
         </entry>
@@ -23,8 +23,8 @@
       <file leaf-file-name="fully-connected-nets.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/assignment2/fully-connected-nets.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="333">
-              <caret line="330" column="75" lean-forward="true" selection-start-line="330" selection-start-column="75" selection-end-line="330" selection-end-column="75" />
+            <state relative-caret-position="281">
+              <caret line="27" column="17" lean-forward="false" selection-start-line="27" selection-start-column="17" selection-end-line="27" selection-end-column="17" />
               <folding>
                 <element signature="e#28#39#0" expanded="true" />
               </folding>
@@ -32,11 +32,21 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="optim.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="optim.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/assignment2/cs231n/optim.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="180">
-              <caret line="32" column="10" lean-forward="false" selection-start-line="32" selection-start-column="10" selection-end-line="32" selection-end-column="10" />
+            <state relative-caret-position="168">
+              <caret line="145" column="30" lean-forward="false" selection-start-line="145" selection-start-column="30" selection-end-line="145" selection-end-column="30" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="data_utils.py" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/assignment2/cs231n/data_utils.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="141">
+              <caret line="32" column="35" lean-forward="false" selection-start-line="32" selection-start-column="35" selection-end-line="32" selection-end-column="35" />
               <folding />
             </state>
           </provider>
@@ -121,6 +131,8 @@
       <find>iteritems</find>
       <find>num_layers ==</find>
       <find>loss =</find>
+      <find>num_empty</find>
+      <find>load</find>
     </findStrings>
   </component>
   <component name="IdeDocumentHistory">
@@ -130,8 +142,9 @@
         <option value="$PROJECT_DIR$/assignment2/cs231n/layers.py" />
         <option value="$PROJECT_DIR$/assignment2/cs231n/solver.py" />
         <option value="$PROJECT_DIR$/assignment2/cs231n/classifiers/fc_net.py" />
-        <option value="$PROJECT_DIR$/assignment2/fully-connected-nets.py" />
         <option value="$PROJECT_DIR$/assignment2/cs231n/optim.py" />
+        <option value="$PROJECT_DIR$/assignment2/fully-connected-nets.py" />
+        <option value="$PROJECT_DIR$/assignment2/cs231n/data_utils.py" />
       </list>
     </option>
   </component>
@@ -490,6 +503,14 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/assignment2/cs231n/optim.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="168">
+          <caret line="145" column="30" lean-forward="false" selection-start-line="145" selection-start-column="30" selection-end-line="145" selection-end-column="30" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/assignment2/FullyConnectedNets.ipynb">
       <provider selected="true" editor-type-id="ipnb-editor">
         <state>
@@ -499,18 +520,18 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/assignment2/fully-connected-nets.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="333">
-          <caret line="330" column="75" lean-forward="true" selection-start-line="330" selection-start-column="75" selection-end-line="330" selection-end-column="75" />
+        <state relative-caret-position="281">
+          <caret line="27" column="17" lean-forward="false" selection-start-line="27" selection-start-column="17" selection-end-line="27" selection-end-column="17" />
           <folding>
             <element signature="e#28#39#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/assignment2/cs231n/optim.py">
+    <entry file="file://$PROJECT_DIR$/assignment2/cs231n/data_utils.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="180">
-          <caret line="32" column="10" lean-forward="false" selection-start-line="32" selection-start-column="10" selection-end-line="32" selection-end-column="10" />
+        <state relative-caret-position="141">
+          <caret line="32" column="35" lean-forward="false" selection-start-line="32" selection-start-column="35" selection-end-line="32" selection-end-column="35" />
           <folding />
         </state>
       </provider>

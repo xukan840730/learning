@@ -329,3 +329,198 @@ expected_velocity = np.asarray([
 
 print('next_w error: ', rel_error(next_w, expected_next_w))
 print('velocity error: ', rel_error(expected_velocity, config['velocity']))
+
+num_train = 4000
+small_data = {
+    'X_train': data['X_train'][:num_train],
+    'y_train': data['y_train'][:num_train],
+    'X_val': data['X_val'],
+    'y_val': data['y_val'],
+}
+
+solvers = {}
+
+for update_rule in ['sgd', 'sgd_momentum']:
+    print('running with ', update_rule)
+    model = FullyConnectedNet([100, 100, 100, 100, 100], weight_scale=5e-2)
+
+    solver = Solver(model, small_data,
+                    num_epochs=5, batch_size=100,
+                    update_rule=update_rule,
+                    optim_config={
+                        'learning_rate': 1e-2,
+                    },
+                    verbose=True)
+    solvers[update_rule] = solver
+    solver.train()
+
+plt.subplot(3, 1, 1)
+plt.title('Training loss')
+plt.xlabel('Iteration')
+
+plt.subplot(3, 1, 2)
+plt.title('Training accuracy')
+plt.xlabel('Epoch')
+
+plt.subplot(3, 1, 3)
+plt.title('Validation accuracy')
+plt.xlabel('Epoch')
+
+for update_rule, solver in solvers.items():
+    plt.subplot(3, 1, 1)
+    plt.plot(solver.loss_history, 'o', label=update_rule)
+
+    plt.subplot(3, 1, 2)
+    plt.plot(solver.train_acc_history, '-o', label=update_rule)
+
+    plt.subplot(3, 1, 3)
+    plt.plot(solver.val_acc_history, '-o', label=update_rule)
+
+for i in [1, 2, 3]:
+    plt.subplot(3, 1, i)
+    plt.legend(loc='upper center', ncol=4)
+# plt.gcf().set_size_inches(15, 15)
+plt.show()
+
+
+# Test RMSProp implementation; you should see errors less than 1e-7
+from cs231n.optim import rmsprop
+
+N, D = 4, 5
+w = np.linspace(-0.4, 0.6, num=N*D).reshape(N, D)
+dw = np.linspace(-0.6, 0.4, num=N*D).reshape(N, D)
+cache = np.linspace(0.6, 0.9, num=N*D).reshape(N, D)
+
+config = {'learning_rate': 1e-2, 'cache': cache}
+next_w, _ = rmsprop(w, dw, config=config)
+
+expected_next_w = np.asarray([
+  [-0.39223849, -0.34037513, -0.28849239, -0.23659121, -0.18467247],
+  [-0.132737,   -0.08078555, -0.02881884,  0.02316247,  0.07515774],
+  [ 0.12716641,  0.17918792,  0.23122175,  0.28326742,  0.33532447],
+  [ 0.38739248,  0.43947102,  0.49155973,  0.54365823,  0.59576619]])
+expected_cache = np.asarray([
+  [ 0.5976,      0.6126277,   0.6277108,   0.64284931,  0.65804321],
+  [ 0.67329252,  0.68859723,  0.70395734,  0.71937285,  0.73484377],
+  [ 0.75037008,  0.7659518,   0.78158892,  0.79728144,  0.81302936],
+  [ 0.82883269,  0.84469141,  0.86060554,  0.87657507,  0.8926    ]])
+
+print('next_w error: ', rel_error(expected_next_w, next_w))
+print('cache error: ', rel_error(expected_cache, config['cache']))
+
+
+# Test Adam implementation; you should see errors around 1e-7 or less
+from cs231n.optim import adam
+
+N, D = 4, 5
+w = np.linspace(-0.4, 0.6, num=N*D).reshape(N, D)
+dw = np.linspace(-0.6, 0.4, num=N*D).reshape(N, D)
+m = np.linspace(0.6, 0.9, num=N*D).reshape(N, D)
+v = np.linspace(0.7, 0.5, num=N*D).reshape(N, D)
+
+config = {'learning_rate': 1e-2, 'm': m, 'v': v, 't': 5}
+next_w, _ = adam(w, dw, config=config)
+
+expected_next_w = np.asarray([
+  [-0.40094747, -0.34836187, -0.29577703, -0.24319299, -0.19060977],
+  [-0.1380274,  -0.08544591, -0.03286534,  0.01971428,  0.0722929],
+  [ 0.1248705,   0.17744702,  0.23002243,  0.28259667,  0.33516969],
+  [ 0.38774145,  0.44031188,  0.49288093,  0.54544852,  0.59801459]])
+expected_v = np.asarray([
+  [ 0.69966,     0.68908382,  0.67851319,  0.66794809,  0.65738853,],
+  [ 0.64683452,  0.63628604,  0.6257431,   0.61520571,  0.60467385,],
+  [ 0.59414753,  0.58362676,  0.57311152,  0.56260183,  0.55209767,],
+  [ 0.54159906,  0.53110598,  0.52061845,  0.51013645,  0.49966,   ]])
+expected_m = np.asarray([
+  [ 0.48,        0.49947368,  0.51894737,  0.53842105,  0.55789474],
+  [ 0.57736842,  0.59684211,  0.61631579,  0.63578947,  0.65526316],
+  [ 0.67473684,  0.69421053,  0.71368421,  0.73315789,  0.75263158],
+  [ 0.77210526,  0.79157895,  0.81105263,  0.83052632,  0.85      ]])
+
+print('next_w error: ', rel_error(expected_next_w, next_w))
+print('v error: ', rel_error(expected_v, config['v']))
+print('m error: ', rel_error(expected_m, config['m']))
+
+learning_rates = {'rmsprop': 1e-4, 'adam': 1e-3}
+for update_rule in ['adam', 'rmsprop']:
+    print('running with ', update_rule)
+    model = FullyConnectedNet([100, 100, 100, 100, 100], weight_scale=5e-2)
+
+    solver = Solver(model, small_data,
+                    num_epochs=5, batch_size=100,
+                    update_rule=update_rule,
+                    optim_config={
+                        'learning_rate': learning_rates[update_rule]
+                    },
+                    verbose=True)
+    solvers[update_rule] = solver
+    solver.train()
+
+
+plt.subplot(3, 1, 1)
+plt.title('Training loss')
+plt.xlabel('Iteration')
+
+plt.subplot(3, 1, 2)
+plt.title('Training accuracy')
+plt.xlabel('Epoch')
+
+plt.subplot(3, 1, 3)
+plt.title('Validation accuracy')
+plt.xlabel('Epoch')
+
+for update_rule, solver in solvers.items():
+    plt.subplot(3, 1, 1)
+    plt.plot(solver.loss_history, 'o', label=update_rule)
+
+    plt.subplot(3, 1, 2)
+    plt.plot(solver.train_acc_history, '-o', label=update_rule)
+
+    plt.subplot(3, 1, 3)
+    plt.plot(solver.val_acc_history, '-o', label=update_rule)
+
+for i in [1, 2, 3]:
+    plt.subplot(3, 1, i)
+    plt.legend(loc='upper center', ncol=4)
+# plt.gcf().set_size_inches(15, 15)
+plt.show()
+
+
+best_model = None
+################################################################################
+# TODO: Train the best FullyConnectedNet that you can on CIFAR-10. You might   #
+# batch normalization and dropout useful. Store your best model in the         #
+# best_model variable.                                                         #
+################################################################################
+weight_scale = 5e-2
+learning_rate = 1e-3
+model = FullyConnectedNet([100, 75, 50, 25],
+              weight_scale=weight_scale, dtype=np.float64)
+solver = Solver(model, data,
+                print_every=100, num_epochs=5, batch_size=200,
+                update_rule='adam',
+                optim_config={
+                  'learning_rate': learning_rate,
+                }
+         )
+solver.train()
+
+# accuracy is about 51%.
+best_model = model
+################################################################################
+#                              END OF YOUR CODE                                #
+################################################################################
+
+plt.plot(solver.loss_history, 'o')
+plt.title('Training loss history')
+plt.xlabel('Iteration')
+plt.ylabel('Training loss')
+plt.show()
+
+# place missing variables:
+X_test, X_val, y_test, y_val = data['X_test'], data['X_val'], data['y_test'], data['y_val']
+
+y_test_pred = np.argmax(best_model.loss(X_test), axis=1)
+y_val_pred = np.argmax(best_model.loss(X_val), axis=1)
+print('Validation set accuracy: ', (y_val_pred == y_val).mean())
+print('Test set accuracy: ', (y_test_pred == y_test).mean())
