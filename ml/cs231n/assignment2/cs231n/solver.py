@@ -14,7 +14,7 @@ class Solver(object):
   data to watch out for overfitting.
 
   To train a model, you will first construct a Solver instance, passing the
-  model, dataset, and various optoins (learning rate, batch size, etc) to the
+  model, dataset, and various options (learning rate, batch size, etc) to the
   constructor. You will then call the train() method to run the optimization
   procedure and train the model.
   
@@ -146,7 +146,7 @@ class Solver(object):
     # Make a deep copy of the optim_config for each parameter
     self.optim_configs = {}
     for p in self.model.params:
-      d = {k: v for k, v in self.optim_config.iteritems()}
+      d = {k: v for k, v in self.optim_config.items()}
       self.optim_configs[p] = d
 
 
@@ -166,7 +166,7 @@ class Solver(object):
     self.loss_history.append(loss)
 
     # Perform a parameter update
-    for p, w in self.model.params.iteritems():
+    for p, w in self.model.params.items():
       dw = grads[p]
       config = self.optim_configs[p]
       next_w, next_config = self.update_rule(w, dw, config)
@@ -200,11 +200,11 @@ class Solver(object):
       y = y[mask]
 
     # Compute predictions in batches
-    num_batches = N / batch_size
+    num_batches = int(N / batch_size)
     if N % batch_size != 0:
       num_batches += 1
     y_pred = []
-    for i in xrange(num_batches):
+    for i in range(num_batches):
       start = i * batch_size
       end = (i + 1) * batch_size
       scores = self.model.loss(X[start:end])
@@ -221,9 +221,9 @@ class Solver(object):
     """
     num_train = self.X_train.shape[0]
     iterations_per_epoch = max(num_train / self.batch_size, 1)
-    num_iterations = self.num_epochs * iterations_per_epoch
+    num_iterations = int(self.num_epochs * iterations_per_epoch)
 
-    for t in xrange(num_iterations):
+    for t in range(num_iterations):
       self._step()
 
       # Maybe print training loss
@@ -256,7 +256,7 @@ class Solver(object):
         if val_acc > self.best_val_acc:
           self.best_val_acc = val_acc
           self.best_params = {}
-          for k, v in self.model.params.iteritems():
+          for k, v in self.model.params.items():
             self.best_params[k] = v.copy()
 
     # At the end of training swap the best params into the model
