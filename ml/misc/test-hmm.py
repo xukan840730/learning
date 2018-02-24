@@ -44,11 +44,11 @@ model.covars_ = covars
 ###############################################################
 
 # Generate samples
-X, Z = model.sample(500)
+# X, Z = model.sample(500)
+X, Z = model.sample(100)
 
 # Plot the sampled data
-plt.plot(X[:, 0], X[:, 1], ".-", label="observations", ms=6,
-         mfc="orange", alpha=0.7)
+plt.plot(X[:, 0], X[:, 1], ".-", label="observations", ms=6, mfc="orange", alpha=0.7)
 
 # Indicate the component numbers
 for i, m in enumerate(means):
