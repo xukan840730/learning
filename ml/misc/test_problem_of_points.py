@@ -21,8 +21,8 @@ def p_sum_bino(n, m, p):
 pt = p_sum_bino(8, 6, 0.5)
 pw = p_sum_bino(8, 4, 0.5)
 pz = p_sum_bino(8, 0, 0.5)
-print pt
-print pw
-print pz
+print(pt)
+print(pw)
+print(pz)
 
-print p_bino(250, 5, 0.02)
+print(p_bino(250, 5, 0.02))

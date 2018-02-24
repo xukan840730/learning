@@ -36,3 +36,42 @@ close_v = close_v[1:]
 
 # Pack diff and volume for training.
 X = np.column_stack([diff, volume])
+
+
+print("fitting to HMM and decoding ...", end="")
+
+# Make an HMM instance and execute fit
+model = GaussianHMM(n_components=4, covariance_type="diag", n_iter=1000).fit(X)
+
+# Predict the optimal sequence of internal hidden state
+hidden_states = model.predict(X)
+
+print("done")
+
+
+print("Transition matrix")
+print(model.transmat_)
+print()
+
+print("Means and vars of each hidden state")
+for i in range(model.n_components):
+    print("{0}th hidden state".format(i))
+    print("mean = ", model.means_[i])
+    print("var = ", np.diag(model.covars_[i]))
+    print()
+
+fig, axs = plt.subplots(model.n_components, sharex=True, sharey=True)
+colours = cm.rainbow(np.linspace(0, 1, model.n_components))
+for i, (ax, colour) in enumerate(zip(axs, colours)):
+    # Use fancy indexing to plot data in each state.
+    mask = hidden_states == i
+    ax.plot_date(dates[mask], close_v[mask], ".-", c=colour)
+    ax.set_title("{0}th hidden state".format(i))
+
+    # Format the ticks.
+    ax.xaxis.set_major_locator(YearLocator())
+    ax.xaxis.set_minor_locator(MonthLocator())
+
+    ax.grid(True)
+
+plt.show()
