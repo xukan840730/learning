@@ -41,7 +41,8 @@ X = np.column_stack([diff, volume])
 print("fitting to HMM and decoding ...", end="")
 
 # Make an HMM instance and execute fit
-model = GaussianHMM(n_components=4, covariance_type="diag", n_iter=1000).fit(X)
+model = GaussianHMM(n_components=4, covariance_type="diag", n_iter=1000)
+model.fit(X)
 
 # Predict the optimal sequence of internal hidden state
 hidden_states = model.predict(X)
