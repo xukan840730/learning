@@ -36,3 +36,9 @@ ml/cs231n/.idea/workspace.xml
 ml/cs231n/.idea/cs231n.iml
 ml/cs231n/.idea/workspace.xml
 ml/cs231n/assignment1/.idea/assignment1.iml
+ml/.DS_Store
+*.xml
+ml/.idea/ml.iml
+ml/cs231n/.idea/workspace.xml
+ml/cs231n/assignment1/.idea/assignment1.iml
+ml/cs231n/assignment2/FullyConnectedNets.ipynb
