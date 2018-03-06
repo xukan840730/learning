@@ -26,6 +26,7 @@ games = [
         ("pureto-rico", ("kan", "lin", "hao", "fang")),
         ("pureto-rico", ("kan", "lin", "hao", "fang")),
         ("pureto-rico", ("kan", "fang", "hao", "lin")),
+        ("pureto-rico", ("hao", "kan", "fang", "lin")),
          ]
 
 nplayers = len(players)
