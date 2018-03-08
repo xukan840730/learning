@@ -171,6 +171,42 @@ dx = max_pool_backward_naive(dout, cache)
 print('Testing max_pool_backward_naive function:')
 print('dx error: ', rel_error(dx, dx_num))
 
+from cs231n.fast_layers import conv_forward_fast, conv_backward_fast
+from time import time
+
+x = np.random.randn(100, 3, 31, 31)
+w = np.random.randn(25, 3, 3, 3)
+b = np.random.randn(25,)
+dout = np.random.randn(100, 25, 16, 16)
+conv_param = {'stride': 2, 'pad': 1}
+
+t0 = time()
+out_naive, cache_naive = conv_forward_naive(x, w, b, conv_param)
+t1 = time()
+out_fast, cache_fast = conv_forward_fast(x, w, b, conv_param)
+t2 = time()
+
+print('Testing conv_forward_fast:')
+print('Naive: %fs' % (t1 - t0))
+print('Fast: %fs' % (t2 - t1))
+print('Speedup: %fx' % ((t1 - t0) / (t2 - t1)))
+print('Difference: ', rel_error(out_naive, out_fast))
+
+t0 = time()
+dx_naive, dw_naive, db_naive = conv_backward_naive(dout, cache_naive)
+t1 = time()
+dx_fast, dw_fast, db_fast = conv_backward_fast(dout, cache_fast)
+t2 = time()
+
+print('\nTesting conv_backward_fast:')
+print('Naive: %fs' % (t1 - t0))
+print('Fast: %fs' % (t2 - t1))
+print('Speedup: %fx' % ((t1 - t0) / (t2 - t1)))
+print('dx difference: ', rel_error(dx_naive, dx_fast))
+print('dw difference: ', rel_error(dw_naive, dw_fast))
+print('db difference: ', rel_error(db_naive, db_fast))
+
+
 
 from cs231n.layer_utils import conv_relu_pool_forward, conv_relu_pool_backward
 
@@ -243,3 +279,57 @@ for param_name in sorted(grads):
     param_grad_num = eval_numerical_gradient(f, model.params[param_name], verbose=False, h=1e-6)
     e = rel_error(param_grad_num, grads[param_name])
     print('%s max relative error: %e' % (param_name, rel_error(param_grad_num, grads[param_name])))
+
+
+num_train = 100
+small_data = {
+  'X_train': data['X_train'][:num_train],
+  'y_train': data['y_train'][:num_train],
+  'X_val': data['X_val'],
+  'y_val': data['y_val'],
+}
+
+model = ThreeLayerConvNet(weight_scale=1e-2)
+
+solver = Solver(model, small_data,
+                num_epochs=10, batch_size=50,
+                update_rule='adam',
+                optim_config={
+                  'learning_rate': 1e-3,
+                },
+                verbose=True, print_every=1)
+solver.train()
+
+plt.subplot(2, 1, 1)
+plt.plot(solver.loss_history, 'o')
+plt.xlabel('iteration')
+plt.ylabel('loss')
+
+plt.subplot(2, 1, 2)
+plt.plot(solver.train_acc_history, '-o')
+plt.plot(solver.val_acc_history, '-o')
+plt.legend(['train', 'val'], loc='upper left')
+plt.xlabel('epoch')
+plt.ylabel('accuracy')
+plt.show()
+
+
+model = ThreeLayerConvNet(weight_scale=0.001, hidden_dim=500, reg=0.001)
+
+solver = Solver(model, data,
+                num_epochs=1, batch_size=50,
+                update_rule='adam',
+                optim_config={
+                  'learning_rate': 1e-3,
+                },
+                verbose=True, print_every=20)
+solver.train()
+
+
+from cs231n.vis_utils import visualize_grid
+
+grid = visualize_grid(model.params['W1'].transpose(0, 2, 3, 1))
+plt.imshow(grid.astype('uint8'))
+plt.axis('off')
+plt.gcf().set_size_inches(5, 5)
+plt.show()
