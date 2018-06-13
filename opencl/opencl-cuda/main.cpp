@@ -16,7 +16,6 @@
 
 #include <OpenCL/opencl.h>
 #include <opencv2/core/core.hpp>
-//#include <opencv2/highgui/highgui.hpp>
 #include <opencv2/opencv.hpp>
 
 static char *
@@ -39,8 +38,6 @@ load_program_source(const char *filename)
 }
 
 int main(int argc, const char * argv[]) {
-    uchar4        *h_rgbaImage, *d_rgbaImage;
-    unsigned char *h_greyImage, *d_greyImage;
     
     std::string input_file;
     std::string output_file;
@@ -87,9 +84,6 @@ int main(int argc, const char * argv[]) {
     cl_command_queue commands;          // compute command queue
     cl_program program;                 // compute program
     cl_kernel kernel;                   // compute kernel
-    
-    size_t global;                      // global domain size for our calculation
-    size_t local;                       // local domain size for our calculation
     
     // Connect to a compute device
     int gpu = 1;
@@ -148,7 +142,7 @@ int main(int argc, const char * argv[]) {
     }
     
     // Create the compute kernel in the program we wish to run
-    kernel = clCreateKernel(program, "test", &err);
+    kernel = clCreateKernel(program, "grayscale", &err);
     if (!kernel || err != CL_SUCCESS)
     {
         printf("Error: Failed to create compute kernel!\n");
@@ -180,7 +174,8 @@ int main(int argc, const char * argv[]) {
     err = 0;
     err  = clSetKernelArg(kernel, 0, sizeof(cl_mem), &input);
     err |= clSetKernelArg(kernel, 1, sizeof(cl_mem), &output);
-    err |= clSetKernelArg(kernel, 2, sizeof(unsigned int), &numPixels);
+    err |= clSetKernelArg(kernel, 2, sizeof(unsigned int), &rawImage.width);
+    err |= clSetKernelArg(kernel, 3, sizeof(unsigned int), &rawImage.height);
     if (err != CL_SUCCESS)
     {
         printf("Error: Failed to set kernel arguments! %d\n", err);
@@ -188,18 +183,22 @@ int main(int argc, const char * argv[]) {
     }
     
     // Get the maximum work group size for executing the kernel on the device
-    err = clGetKernelWorkGroupInfo(kernel, device_id, CL_KERNEL_WORK_GROUP_SIZE, sizeof(local), &local, NULL);
-    if (err != CL_SUCCESS)
-    {
-        printf("Error: Failed to retrieve kernel work group info! %d\n", err);
-        exit(1);
-    }
+//    err = clGetKernelWorkGroupInfo(kernel, device_id, CL_KERNEL_WORK_GROUP_SIZE, sizeof(local), &local, NULL);
+//    if (err != CL_SUCCESS)
+//    {
+//        printf("Error: Failed to retrieve kernel work group info! %d\n", err);
+//        exit(1);
+//    }
     
     // Execute the kernel over the entire range of our 1d input data set
     // using the maximum number of work group items for this device
-    //global = numPixels / local;
-    global = (numPixels + 255) / 256 * 256;
-    err = clEnqueueNDRangeKernel(commands, kernel, 1, NULL, &global, &local, 0, NULL, NULL);
+
+    size_t localSize[] = {16, 16};
+    size_t globalSize[2];
+    globalSize[0] = (rawImage.width + localSize[0] - 1) / localSize[0] * localSize[0];
+    globalSize[1] = (rawImage.height + localSize[1] - 1) / localSize[1] * localSize[1];
+    
+    err = clEnqueueNDRangeKernel(commands, kernel, 2, NULL, globalSize, localSize, 0, NULL, NULL);
     if (err)
     {
         printf("Error: Failed to execute kernel!\n");

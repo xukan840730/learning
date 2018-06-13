@@ -20,17 +20,20 @@ square1(__global float* input,
 }
 
 __kernel void
-test(__global uchar4* input,
-     __global uchar* output,
-     const unsigned int count)
+grayscale(__global uchar4* input,
+          __global uchar* output,
+          const unsigned int numRows,
+          const unsigned int numCols)
 {
-    int gid = get_global_id(0);
-    if (gid < count)
+    int xind = get_global_id(0);
+    int yind = get_global_id(1);
+    if (xind < numRows && yind < numCols)
     {
-        uchar R = input[gid].x;
-        uchar G = input[gid].y;
-        uchar B = input[gid].z;
+        int ind = xind * numCols + yind;
+        uchar R = input[ind].x;
+        uchar G = input[ind].y;
+        uchar B = input[ind].z;
         // output = .299f * R + .587f * G + .114f * B
-        output[gid] = (uchar)(.299f * R + .587f * G + .114f * B);
+        output[ind] = (uchar)(.299f * R + .587f * G + .114f * B);
     }
 }

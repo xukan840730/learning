@@ -42,3 +42,11 @@ ml/.idea/ml.iml
 ml/cs231n/.idea/workspace.xml
 ml/cs231n/assignment1/.idea/assignment1.iml
 ml/cs231n/assignment2/FullyConnectedNets.ipynb
+*.xcuserstate
+*.xcuserstate
+*.xcuserstate
+opencl/opencl-cuda/hello.xcodeproj/project.xcworkspace/xcuserdata/kanxu.xcuserdatad/UserInterfaceState.xcuserstate
+opencl/opencl-cuda/hello.xcodeproj/project.xcworkspace/xcuserdata/kanxu.xcuserdatad/UserInterfaceState.xcuserstate
+*.xcuserstate
+*.xcbkptlist
+*.xcbkptlist
