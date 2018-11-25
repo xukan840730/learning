@@ -13,8 +13,3 @@ lane_image = np.copy(image)
 canny = canny(lane_image)
 cv2.imshow("result", canny)
 cv2.waitKey(0)
-
-
-# 1. design a polycurve/ polypath class
-# 2. design algorithm to find curved strip
-# 3. use segmentation to find lane block.
