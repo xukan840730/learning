@@ -3,3 +3,14 @@
 # 1. design a polycurve/ polypath class
 # 2. design algorithm to find curved strip
 # 3. use segmentation to find lane block.
+
+# 4. object class hierarchy:
+animal <- cat, dog
+animal has 4 legs, 1 body and 1 head (all connected)
+human has 2 legs, 2 hands, and 1 head (all connected)
+
+define leg: limb usually lower than body, long shape, has 1 thigh and 1 xiaotui
+define hand: limb at 1/3 obdy, long shape, has 1 forearm and 1 upperarm
+define body: big chunk, capsule shape
+
+define head: has 2 eyes, 1 nose, 1 mouth, skull shape.
