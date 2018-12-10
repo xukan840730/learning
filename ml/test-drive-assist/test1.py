@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 def canny(image):
     gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
     blur = cv2.GaussianBlur(gray, (5, 5), 0)
+    # canny = cv2.Canny(blur, 50, 150) ;; original value
     canny = cv2.Canny(blur, 20, 40)
     return canny
 
@@ -37,7 +38,6 @@ cv2.destroyAllWindows()
 #     cv2.destroyAllWindows()
 #
 #     canny_copy = new_canny
-
 
 # cv2.imshow("result", canny)
 # cv2.waitKey(0)

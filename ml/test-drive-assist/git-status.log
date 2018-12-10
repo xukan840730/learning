@@ -1,0 +1,63 @@
+On branch master
+Your branch and 'origin/master' have diverged,
+and have 1 and 2 different commits each, respectively.
+  (use "git pull" to merge the remote branch into yours)
+
+You have unmerged paths.
+  (fix conflicts and run "git commit")
+  (use "git merge --abort" to abort the merge)
+
+Changes to be committed:
+
+	new file:   ../misc/test-circle-dist.py
+	new file:   material-reg.pdf
+
+Unmerged paths:
+  (use "git add <file>..." to mark resolution)
+
+	both added:      .idea/test-drive-assist.iml
+	both modified:   test1.py
+	both modified:   test_image.jpg
+	both added:      test_image_small.jpg
+
+Changes not staged for commit:
+  (use "git add/rm <file>..." to update what will be committed)
+  (use "git checkout -- <file>..." to discard changes in working directory)
+
+	modified:   ../../.DS_Store
+	modified:   ../../.gitignore
+	modified:   ../.DS_Store
+	modified:   ../.idea/ml.iml
+	modified:   ../broadgame/hist.py
+	modified:   ../cs231n/.idea/workspace.xml
+	modified:   ../cs231n/assignment1/.idea/assignment1.iml
+	modified:   ../cs231n/assignment2/BatchNormalization.ipynb
+	modified:   ../cs231n/assignment2/ConvolutionalNetworks.ipynb
+	modified:   ../cs231n/assignment2/FullyConnectedNets.ipynb
+	modified:   ../tensorflow/test/test-placeholder.py
+	deleted:    ../../opencl/opencl-cuda/HW1.cpp
+	modified:   ../../opencl/opencl-cuda/hello.xcodeproj/project.pbxproj
+	modified:   ../../opencl/opencl-cuda/hello.xcodeproj/project.xcworkspace/xcuserdata/kanxu.xcuserdatad/UserInterfaceState.xcuserstate
+	modified:   ../../opencl/opencl-cuda/hello.xcodeproj/xcuserdata/kanxu.xcuserdatad/xcdebugger/Breakpoints_v2.xcbkptlist
+	deleted:    ../../opencl/opencl-cuda/hw1.h
+	modified:   ../../opencl/opencl-cuda/main.cpp
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+
+	../../cuda/
+	../darknet/
+	../misc/painless-q.py
+	../tensorflow/models/
+	../tensorflow/test/Story.txt~
+	../tensorflow/test/sentiment_set.pickle
+	../tensorflow/test/test-lr2.py
+	../tensorflow/test/test-tf-fetching.py
+	../tensorflow/test/tmp/
+	git-status.log
+	test_image.png
+	../../opencl/opencl-cuda/raw-image.cpp
+	../../opencl/opencl-cuda/raw-image.h
+	../../opencl/opencl-cuda/utils.cpp
+	../../opencl/opencl-cuda/utils.h
+
