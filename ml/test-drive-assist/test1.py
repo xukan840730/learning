@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
+import simple_math as sm
 
 def canny(image):
     gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
@@ -63,6 +64,12 @@ sample_points = retrieve_sample_points(tiny_canny, threshold)
 
 def generate_line_candidates(scatter_points):
     lines = ()
+
+    # brute force generate all lines
+    for ii in range(scatter_points.shape[0]):
+        for jj in range(ii, scatter_points.shape[0]):
+            line = ()
+
     return lines
 
 line_candidates = generate_line_candidates(sample_points)
