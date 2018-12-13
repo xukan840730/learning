@@ -8,21 +8,34 @@ def canny(image):
     blur = cv2.GaussianBlur(gray, (5, 5), 0)
     # canny = cv2.Canny(blur, 50, 150) ;; original value
     canny = cv2.Canny(blur, 20, 40)
+    # sobel = cv2.Sobel(blur, cv2.CV_64F, 1, 0, ksize=5)
     return canny
 
 image = cv2.imread('test_image_small.jpg')
-lane_image = np.copy(image)
-canny = canny(lane_image)
+image_gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
+image_blur_u8 = cv2.GaussianBlur(image_gray, (5, 5), 0)
+image_blur_f = image_blur_u8.astype(float) / 255.0
+# image_b, image_g, image_r = cv2.split(image)
+canny = canny(image)
+# sobelx_u8 = cv2.Sobel(image_blur, cv2.CV_8U, 1, 0, ksize=5)
+# sobely_u8 = cv2.Sobel(image_blur, cv2.CV_8U, 0, 1, ksize=5)
+sobelx_f = cv2.Sobel(image_blur_f, cv2.CV_64F, 1, 0, ksize=5)
+sobely_f = cv2.Sobel(image_blur_f, cv2.CV_64F, 0, 1, ksize=5)
+sobelx_sqr = sobelx_f * sobelx_f
+sobely_sqr = sobely_f * sobely_f
+sobel_grad_f = np.sqrt(sobelx_sqr + sobely_sqr)
+# sobel_grad_u8 = sobel_grad_f.astype(np.uint8)
 
-canny_copy = np.copy(canny)
-
-# cv2.imshow("result", canny_copy)
-# cv2.waitKey(0)
-# cv2.destroyAllWindows()
+cv2.imshow("image_gray", image_gray)
+cv2.imshow("sobelx", sobelx_f)
+cv2.imshow("sobely", sobely_f)
+# cv2.imshow("test_sobely", test_sobely)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
 
 # scaledown test: when scaled down to (60, 80), road can still be recognized
-# tiny_canny = cv2.resize(canny_copy, (0,0), fx=0.125, fy=0.125, interpolation=cv2.INTER_AREA)
-tiny_canny = cv2.resize(canny_copy, (0,0), fx=0.125, fy=0.125)
+# tiny_canny = cv2.resize(canny, (0,0), fx=0.125, fy=0.125, interpolation=cv2.INTER_AREA)
+tiny_canny = cv2.resize(canny, (0,0), fx=0.125, fy=0.125)
 
 title = "result_%d" % tiny_canny.shape[0]
 # cv2.imshow(title, tiny_canny)
