@@ -21,15 +21,33 @@ canny = canny(image)
 # sobely_u8 = cv2.Sobel(image_blur, cv2.CV_8U, 0, 1, ksize=5)
 sobelx_f = cv2.Sobel(image_blur_f, cv2.CV_64F, 1, 0, ksize=5)
 sobely_f = cv2.Sobel(image_blur_f, cv2.CV_64F, 0, 1, ksize=5)
-sobelx_sqr = sobelx_f * sobelx_f
-sobely_sqr = sobely_f * sobely_f
-sobel_grad_f = np.sqrt(sobelx_sqr + sobely_sqr)
+# sobelx_sqr = sobelx_f * sobelx_f
+# sobely_sqr = sobely_f * sobely_f
+# sobel_grad_f = np.sqrt(sobelx_sqr + sobely_sqr)
 # sobel_grad_u8 = sobel_grad_f.astype(np.uint8)
 
-cv2.imshow("image_gray", image_gray)
-cv2.imshow("sobelx", sobelx_f)
-cv2.imshow("sobely", sobely_f)
+sobelx_b = np.zeros(sobelx_f.shape)
+sobelx_g = np.zeros(sobelx_f.shape)
+sobelx_r = np.zeros(sobelx_f.shape)
+
+# fill content
+for ix in range(sobelx_f.shape[0]):
+    for iy in range(sobelx_f.shape[1]):
+        if sobelx_f[ix, iy] > 2.5:
+            sobelx_g[ix, iy] = 1.0
+        elif sobelx_f[ix, iy] < -2.5:
+            sobelx_b[ix, iy] = 1.0
+
+sobelx_dbg = cv2.merge((sobelx_b, sobelx_g, sobelx_r))
+image_gray_3_u8 = cv2.cvtColor(image_gray, cv2.COLOR_GRAY2BGR)
+image_gray_3_f = image_gray_3_u8.astype(float) / 255.0
+sobelx_dbg2 = cv2.addWeighted(image_gray_3_f, 1.0, sobelx_dbg, 0.5, 0.0)
+
+# cv2.imshow("image_gray", image_gray)
+# cv2.imshow("sobelx", sobelx_f)
+# cv2.imshow("sobely", sobely_f)
 # cv2.imshow("test_sobely", test_sobely)
+cv2.imshow("sobelx_dbg", sobelx_dbg2)
 cv2.waitKey(0)
 cv2.destroyAllWindows()
 
