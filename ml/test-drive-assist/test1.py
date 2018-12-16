@@ -75,59 +75,53 @@ debug_sobel(image_gray, sobel_hori_f, sobel_vert_f, threshold)
 sobel_grad_f = cv2.merge((sobel_hori_f, sobel_vert_f))
 
 # test expansion.
-visited_mask = np.zeros(image_gray.shape, dtype=bool)
+# at first, none of pixels is visited.
 
-starting_pos = (image_height - 1, image_width // 2)
-visited_mask[starting_pos] = True
-
-def expand_one(pos, image_shape, visited_mask, sobel_grad_f, threshold, frontiers):
+def expand_one(pos, image_shape, visited_global, sobel_grad_f, threshold, frontiers, visited_new):
     image_height = image_shape[0]
     image_width = image_shape[1]
 
-    def expand_one_internal(new_pos, visited_mask, sobel_grad_f, threshold, frontiers):
-        if not visited_mask[new_pos]:
+    def expand_one_internal(new_pos, visited_global, sobel_grad_f, threshold, frontiers, visited_new):
+        if not visited_global[new_pos] and not visited_new[new_pos]:
             grad = sobel_grad_f[new_pos]
             grad_mag = np.sqrt(grad[0] * grad[0] + grad[1] * grad[1])
             if grad_mag < threshold:
                 frontiers.append(new_pos)
-                visited_mask[new_pos] = True
+                visited_new[new_pos] = True
 
     if pos[0] > 0:
         # test up
         new_pos = (pos[0] - 1, pos[1])
-        expand_one_internal(new_pos, visited_mask, sobel_grad_f, threshold, frontiers)
+        expand_one_internal(new_pos, visited_global, sobel_grad_f, threshold, frontiers, visited_new)
 
     if pos[0] < image_height - 1:
         # test down
         new_pos = (pos[0] + 1, pos[1])
-        expand_one_internal(new_pos, visited_mask, sobel_grad_f, threshold, frontiers)
+        expand_one_internal(new_pos, visited_global, sobel_grad_f, threshold, frontiers, visited_new)
 
     if pos[1] > 0:
         # test left
         new_pos = (pos[0], pos[1] - 1)
-        expand_one_internal(new_pos, visited_mask, sobel_grad_f, threshold, frontiers)
+        expand_one_internal(new_pos, visited_global, sobel_grad_f, threshold, frontiers, visited_new)
 
     if pos[1] < image_width - 1:
         # test right
         new_pos = (pos[0], pos[1] + 1)
-        expand_one_internal(new_pos, visited_mask, sobel_grad_f, threshold, frontiers)
+        expand_one_internal(new_pos, visited_global, sobel_grad_f, threshold, frontiers, visited_new)
 
-def expand_version1(pos, image_shape, visited_mask, sobel_grad_f, threshold):
+def expand_version1(pos, image_shape, visited_global, sobel_grad_f, threshold, visited_new):
     frontiers = list()
-    expand_one(pos, image_shape, visited_mask, sobel_grad_f, threshold, frontiers)
+    expand_one(pos, image_shape, visited_global, sobel_grad_f, threshold, frontiers, visited_new)
 
     while len(frontiers) > 0:
         new_fronties = list()
 
         for x in frontiers:
-            expand_one(x, image_shape, visited_mask, sobel_grad_f, threshold, new_fronties)
+            expand_one(x, image_shape, visited_global, sobel_grad_f, threshold, new_fronties, visited_new)
 
         frontiers = new_fronties
 
-frontiers = list()
-expand_version1(starting_pos, image_gray.shape, visited_mask, sobel_grad_f, threshold)
-
-def debug_expansion(image_gray, visited_mask):
+def debug_expansion(image_gray, visited_mask, b, g, r):
     channel_b = np.zeros(image_gray.shape)
     channel_g = channel_b.copy()
     channel_r = channel_b.copy()
@@ -135,7 +129,9 @@ def debug_expansion(image_gray, visited_mask):
     for ix in range(image_gray.shape[0]):
         for iy in range(image_gray.shape[1]):
             if visited_mask[ix, iy]:
-                channel_r[ix, iy] = 1.0
+                channel_b[ix, iy] = b
+                channel_g[ix, iy] = g
+                channel_r[ix, iy] = r
 
     dbg = cv2.merge((channel_b, channel_g, channel_r))
 
@@ -144,11 +140,25 @@ def debug_expansion(image_gray, visited_mask):
 
     image_dbg = cv2.addWeighted(image_gray_3_f, 1.0, dbg, 0.5, 0.0)
 
-    cv2.imshow("sobel_vert_dbg", image_dbg)
+    cv2.imshow("expansion_test", image_dbg)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
-debug_expansion(image_gray, visited_mask)
+visited_global = np.zeros(image_gray.shape, dtype=bool)
+
+for iter in range(0, 2):
+    starting_pos = (image_height - 1, image_width // 2)
+    if iter == 1:
+        starting_pos = (image_height - 1, image_width - 1)
+    visited_global[starting_pos] = True
+
+    frontiers = list()
+    visited_new = np.zeros(visited_global.shape, dtype=bool)
+    expand_version1(starting_pos, image_gray.shape, visited_global, sobel_grad_f, threshold, visited_new)
+    debug_expansion(image_gray, visited_new, 0, 0, 1.0)
+
+    # fill global mask with new mask
+    visited_global = np.bitwise_or(visited_global, visited_new)
 
 # scaledown test: when scaled down to (60, 80), road can still be recognized
 # tiny_canny = cv2.resize(canny, (0,0), fx=0.125, fy=0.125, interpolation=cv2.INTER_AREA)
