@@ -14,6 +14,9 @@ import simple_math as sm
 image = cv2.imread('test_image_small.jpg')
 #canny = canny(image)
 
+image_height = image.shape[0]
+image_width = image.shape[1]
+
 image_gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
 image_blur_u8 = cv2.GaussianBlur(image_gray, (5, 5), 0)
 image_blur_f = image_blur_u8.astype(float) / 255.0
@@ -26,49 +29,126 @@ sobel_vert_f = cv2.Sobel(image_blur_f, cv2.CV_64F, 0, 1, ksize=3)
 # sobel_grad_f = np.sqrt(sobelx_sqr + sobely_sqr)
 # sobel_grad_u8 = sobel_grad_f.astype(np.uint8)
 
-sobel_hori_b = np.zeros(sobel_hori_f.shape)
-sobel_hori_g = sobel_hori_b.copy()
-sobel_hori_r = sobel_hori_b.copy()
-
-sobel_vert_b = np.zeros(sobel_vert_f.shape)
-sobel_vert_g = sobel_vert_b.copy()
-sobel_vert_r = sobel_vert_b.copy()
-
 threshold = 0.1
 
-# horizontal fill content
-for ix in range(sobel_hori_f.shape[0]):
-    for iy in range(sobel_hori_f.shape[1]):
-        if sobel_hori_f[ix, iy] > threshold:
-            sobel_hori_g[ix, iy] = 1.0
-        elif sobel_hori_f[ix, iy] < -threshold:
-            sobel_hori_b[ix, iy] = 1.0
+def debug_sobel(image_gray, sobel_hori_f, sobel_vert_f, threshold):
+    sobel_hori_b = np.zeros(sobel_hori_f.shape)
+    sobel_hori_g = sobel_hori_b.copy()
+    sobel_hori_r = sobel_hori_b.copy()
 
-# vertical fill content
-for ix in range(sobel_vert_f.shape[0]):
-    for iy in range(sobel_vert_f.shape[1]):
-        if sobel_vert_f[ix, iy] > threshold:
-            sobel_vert_g[ix, iy] = 1.0
-        elif sobel_vert_f[ix, iy] < -threshold:
-            sobel_vert_b[ix, iy] = 1.0
+    sobel_vert_b = np.zeros(sobel_vert_f.shape)
+    sobel_vert_g = sobel_vert_b.copy()
+    sobel_vert_r = sobel_vert_b.copy()
 
-sobel_hori_dbg = cv2.merge((sobel_hori_b, sobel_hori_g, sobel_hori_r))
-sobel_vert_dbg = cv2.merge((sobel_vert_b, sobel_vert_g, sobel_vert_r))
+    # horizontal fill content
+    for ix in range(sobel_hori_f.shape[0]):
+        for iy in range(sobel_hori_f.shape[1]):
+            if sobel_hori_f[ix, iy] > threshold:
+                sobel_hori_g[ix, iy] = 1.0
+            elif sobel_hori_f[ix, iy] < -threshold:
+                sobel_hori_b[ix, iy] = 1.0
 
-image_gray_3_u8 = cv2.cvtColor(image_gray, cv2.COLOR_GRAY2BGR)
-image_gray_3_f = image_gray_3_u8.astype(float) / 255.0
+    # vertical fill content
+    for ix in range(sobel_vert_f.shape[0]):
+        for iy in range(sobel_vert_f.shape[1]):
+            if sobel_vert_f[ix, iy] > threshold:
+                sobel_vert_g[ix, iy] = 1.0
+            elif sobel_vert_f[ix, iy] < -threshold:
+                sobel_vert_b[ix, iy] = 1.0
 
-sobel_hori_dbg2 = cv2.addWeighted(image_gray_3_f, 1.0, sobel_hori_dbg, 0.5, 0.0)
-sobel_vert_dbg2 = cv2.addWeighted(image_gray_3_f, 1.0, sobel_vert_dbg, 0.5, 0.0)
+    sobel_hori_dbg = cv2.merge((sobel_hori_b, sobel_hori_g, sobel_hori_r))
+    sobel_vert_dbg = cv2.merge((sobel_vert_b, sobel_vert_g, sobel_vert_r))
 
-# cv2.imshow("image_gray", image_gray)
-# cv2.imshow("sobelx", sobelx_f)
-# cv2.imshow("sobely", sobely_f)
-# cv2.imshow("test_sobely", test_sobely)
-cv2.imshow("sobel_hori_dbg", sobel_hori_dbg2)
-cv2.imshow("sobel_vert_dbg", sobel_vert_dbg2)
-cv2.waitKey(0)
-cv2.destroyAllWindows()
+    image_gray_3_u8 = cv2.cvtColor(image_gray, cv2.COLOR_GRAY2BGR)
+    image_gray_3_f = image_gray_3_u8.astype(float) / 255.0
+
+    sobel_hori_dbg2 = cv2.addWeighted(image_gray_3_f, 1.0, sobel_hori_dbg, 0.5, 0.0)
+    sobel_vert_dbg2 = cv2.addWeighted(image_gray_3_f, 1.0, sobel_vert_dbg, 0.5, 0.0)
+
+    cv2.imshow("sobel_hori_dbg", sobel_hori_dbg2)
+    cv2.imshow("sobel_vert_dbg", sobel_vert_dbg2)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+
+debug_sobel(image_gray, sobel_hori_f, sobel_vert_f, threshold)
+
+sobel_grad_f = cv2.merge((sobel_hori_f, sobel_vert_f))
+
+# test expansion.
+visited_mask = np.zeros(image_gray.shape, dtype=bool)
+
+starting_pos = (image_height - 1, image_width // 2)
+visited_mask[starting_pos] = True
+
+def expand_one(pos, image_shape, visited_mask, sobel_grad_f, threshold, frontiers):
+    image_height = image_shape[0]
+    image_width = image_shape[1]
+
+    def expand_one_internal(new_pos, visited_mask, sobel_grad_f, threshold, frontiers):
+        if not visited_mask[new_pos]:
+            grad = sobel_grad_f[new_pos]
+            grad_mag = np.sqrt(grad[0] * grad[0] + grad[1] * grad[1])
+            if grad_mag < threshold:
+                frontiers.append(new_pos)
+                visited_mask[new_pos] = True
+
+    if pos[0] > 0:
+        # test up
+        new_pos = (pos[0] - 1, pos[1])
+        expand_one_internal(new_pos, visited_mask, sobel_grad_f, threshold, frontiers)
+
+    if pos[0] < image_height - 1:
+        # test down
+        new_pos = (pos[0] + 1, pos[1])
+        expand_one_internal(new_pos, visited_mask, sobel_grad_f, threshold, frontiers)
+
+    if pos[1] > 0:
+        # test left
+        new_pos = (pos[0], pos[1] - 1)
+        expand_one_internal(new_pos, visited_mask, sobel_grad_f, threshold, frontiers)
+
+    if pos[1] < image_width - 1:
+        # test right
+        new_pos = (pos[0], pos[1] + 1)
+        expand_one_internal(new_pos, visited_mask, sobel_grad_f, threshold, frontiers)
+
+def expand_version1(pos, image_shape, visited_mask, sobel_grad_f, threshold):
+    frontiers = list()
+    expand_one(pos, image_shape, visited_mask, sobel_grad_f, threshold, frontiers)
+
+    while len(frontiers) > 0:
+        new_fronties = list()
+
+        for x in frontiers:
+            expand_one(x, image_shape, visited_mask, sobel_grad_f, threshold, new_fronties)
+
+        frontiers = new_fronties
+
+frontiers = list()
+expand_version1(starting_pos, image_gray.shape, visited_mask, sobel_grad_f, threshold)
+
+def debug_expansion(image_gray, visited_mask):
+    channel_b = np.zeros(image_gray.shape)
+    channel_g = channel_b.copy()
+    channel_r = channel_b.copy()
+
+    for ix in range(image_gray.shape[0]):
+        for iy in range(image_gray.shape[1]):
+            if visited_mask[ix, iy]:
+                channel_r[ix, iy] = 1.0
+
+    dbg = cv2.merge((channel_b, channel_g, channel_r))
+
+    image_gray_3_u8 = cv2.cvtColor(image_gray, cv2.COLOR_GRAY2BGR)
+    image_gray_3_f = image_gray_3_u8.astype(float) / 255.0
+
+    image_dbg = cv2.addWeighted(image_gray_3_f, 1.0, dbg, 0.5, 0.0)
+
+    cv2.imshow("sobel_vert_dbg", image_dbg)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+
+debug_expansion(image_gray, visited_mask)
 
 # scaledown test: when scaled down to (60, 80), road can still be recognized
 # tiny_canny = cv2.resize(canny, (0,0), fx=0.125, fy=0.125, interpolation=cv2.INTER_AREA)
