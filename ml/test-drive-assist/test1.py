@@ -88,6 +88,8 @@ def expand_one(pos, image_shape, visited_global, sobel_grad_f, threshold, fronti
             if grad_mag < threshold:
                 frontiers.append(new_pos)
                 visited_new[new_pos] = True
+            else:
+                visited_new[new_pos] = True
 
     if pos[0] > 0:
         # test up
@@ -126,12 +128,18 @@ def debug_expansion(image_gray, visited_mask, b, g, r):
     channel_g = channel_b.copy()
     channel_r = channel_b.copy()
 
+    count = 0
     for ix in range(image_gray.shape[0]):
         for iy in range(image_gray.shape[1]):
             if visited_mask[ix, iy]:
                 channel_b[ix, iy] = b
                 channel_g[ix, iy] = g
                 channel_r[ix, iy] = r
+
+                if count == 0:
+                    print('region first pixel: (' + str(ix) + ', ' + str(iy) + ')')
+
+                count = count + 1
 
     dbg = cv2.merge((channel_b, channel_g, channel_r))
 
@@ -145,20 +153,39 @@ def debug_expansion(image_gray, visited_mask, b, g, r):
     cv2.destroyAllWindows()
 
 visited_global = np.zeros(image_gray.shape, dtype=bool)
+expand_regions = list()
 
-for iter in range(0, 2):
-    starting_pos = (image_height - 1, image_width // 2)
-    if iter == 1:
-        starting_pos = (image_height - 1, image_width - 1)
+# get expansions from bottom row
+for ix in range(image_width):
+    starting_pos = (image_height - 1, ix)
+
+    # if pixel is in a region, skip to next pixel
+    if visited_global[starting_pos]:
+        continue;
+
+    # or if pixel has great gradient, skip to next pixel
+    grad = sobel_grad_f[starting_pos]
+    grad_mag = np.sqrt(grad[0] * grad[0] + grad[1] * grad[1])
+    if (grad_mag >= threshold):
+        continue;
+
     visited_global[starting_pos] = True
 
     frontiers = list()
-    visited_new = np.zeros(visited_global.shape, dtype=bool)
-    expand_version1(starting_pos, image_gray.shape, visited_global, sobel_grad_f, threshold, visited_new)
-    debug_expansion(image_gray, visited_new, 0, 0, 1.0)
+    new_region = np.zeros(visited_global.shape, dtype=bool)
+    expand_version1(starting_pos, image_gray.shape, visited_global, sobel_grad_f, threshold, new_region)
+    # debug_expansion(image_gray, new_region, 0, 0, 1.0)
+    expand_regions.append(new_region)
 
     # fill global mask with new mask
-    visited_global = np.bitwise_or(visited_global, visited_new)
+    visited_global = np.bitwise_or(visited_global, new_region)
+
+print(len(expand_regions))
+
+# next thing, test diagonal pixel.
+
+for iregion in expand_regions:
+    debug_expansion(image_gray, iregion, 0, 0, 1.0)
 
 # scaledown test: when scaled down to (60, 80), road can still be recognized
 # tiny_canny = cv2.resize(canny, (0,0), fx=0.125, fy=0.125, interpolation=cv2.INTER_AREA)
