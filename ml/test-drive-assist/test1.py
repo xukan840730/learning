@@ -82,7 +82,9 @@ def expand_one(pos, image_shape, visited_global, sobel_grad_f, threshold, fronti
     image_width = image_shape[1]
 
     def expand_one_internal(new_pos, visited_global, sobel_grad_f, threshold, frontiers, visited_new):
-        if not visited_global[new_pos] and not visited_new[new_pos]:
+        vg = visited_global[new_pos]
+        vn = visited_new[new_pos]
+        if not vg and not vn:
             grad = sobel_grad_f[new_pos]
             grad_mag = np.sqrt(grad[0] * grad[0] + grad[1] * grad[1])
             if grad_mag < threshold:
@@ -110,6 +112,28 @@ def expand_one(pos, image_shape, visited_global, sobel_grad_f, threshold, fronti
         # test right
         new_pos = (pos[0], pos[1] + 1)
         expand_one_internal(new_pos, visited_global, sobel_grad_f, threshold, frontiers, visited_new)
+
+    if pos[0] > 0 and pos[1] > 0:
+        # test up-left
+        new_pos = (pos[0] - 1, pos[1] - 1)
+        expand_one_internal(new_pos, visited_global, sobel_grad_f, threshold, frontiers, visited_new)
+
+    if pos[0] < image_height - 1 and pos[1] > 0:
+        # test down-left
+        new_pos = (pos[0] + 1, pos[1] - 1)
+        expand_one_internal(new_pos, visited_global, sobel_grad_f, threshold, frontiers, visited_new)
+
+    if pos[0] > 0 and pos[1] < image_width - 1:
+        # test up-right
+        new_pos = (pos[0] - 1, pos[1] + 1)
+        expand_one_internal(new_pos, visited_global, sobel_grad_f, threshold, frontiers, visited_new)
+
+    if pos[0] < image_height - 1 and pos[1] < image_width - 1:
+        # test down-right
+        new_pos = (pos[0] + 1, pos[1] + 1)
+        expand_one_internal(new_pos, visited_global, sobel_grad_f, threshold, frontiers, visited_new)
+
+
 
 def expand_version1(pos, image_shape, visited_global, sobel_grad_f, threshold, visited_new):
     frontiers = list()
@@ -168,6 +192,8 @@ for ix in range(image_width):
     grad_mag = np.sqrt(grad[0] * grad[0] + grad[1] * grad[1])
     if (grad_mag >= threshold):
         continue;
+
+    print('start expansion from: (' + str(starting_pos[0]) + ', ' + str(starting_pos[1]) + ')')
 
     visited_global[starting_pos] = True
 
