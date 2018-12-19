@@ -40,6 +40,10 @@ def debug_sobel(image_gray, sobel_hori_f, sobel_vert_f, threshold):
     sobel_vert_g = sobel_vert_b.copy()
     sobel_vert_r = sobel_vert_b.copy()
 
+    sobel_mag_b = np.zeros(sobel_hori_f.shape)
+    sobel_mag_g = sobel_mag_b.copy()
+    sobel_mag_r = sobel_mag_b.copy()
+
     # horizontal fill content
     for ix in range(sobel_hori_f.shape[0]):
         for iy in range(sobel_hori_f.shape[1]):
@@ -56,17 +60,29 @@ def debug_sobel(image_gray, sobel_hori_f, sobel_vert_f, threshold):
             elif sobel_vert_f[ix, iy] < -threshold:
                 sobel_vert_b[ix, iy] = 1.0
 
+    # magnitude fill content
+    for ix in range(sobel_hori_f.shape[0]):
+        for iy in range(sobel_hori_f.shape[1]):
+            grad_hori = sobel_hori_f[ix, iy]
+            grad_vert = sobel_vert_f[ix, iy]
+            grad_mag = np.sqrt(grad_hori * grad_hori + grad_vert * grad_vert)
+            if grad_mag > threshold:
+                sobel_mag_r[ix, iy] = 1.0
+
     sobel_hori_dbg = cv2.merge((sobel_hori_b, sobel_hori_g, sobel_hori_r))
     sobel_vert_dbg = cv2.merge((sobel_vert_b, sobel_vert_g, sobel_vert_r))
+    sobel_mag_dbg = cv2.merge((sobel_mag_b, sobel_mag_g, sobel_mag_r))
 
     image_gray_3_u8 = cv2.cvtColor(image_gray, cv2.COLOR_GRAY2BGR)
     image_gray_3_f = image_gray_3_u8.astype(float) / 255.0
 
     sobel_hori_dbg2 = cv2.addWeighted(image_gray_3_f, 1.0, sobel_hori_dbg, 0.5, 0.0)
     sobel_vert_dbg2 = cv2.addWeighted(image_gray_3_f, 1.0, sobel_vert_dbg, 0.5, 0.0)
+    sobel_mag_dbg2 = cv2.addWeighted(image_gray_3_f, 1.0, sobel_mag_dbg, 1.0, 0.0)
 
     cv2.imshow("sobel_hori_dbg", sobel_hori_dbg2)
     cv2.imshow("sobel_vert_dbg", sobel_vert_dbg2)
+    cv2.imshow("sobel_mag_dbg", sobel_mag_dbg2)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
