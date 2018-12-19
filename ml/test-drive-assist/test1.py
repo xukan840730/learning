@@ -44,6 +44,10 @@ def debug_sobel(image_gray, sobel_hori_f, sobel_vert_f, threshold):
     sobel_mag_g = sobel_mag_b.copy()
     sobel_mag_r = sobel_mag_b.copy()
 
+    sobel_mag_f = np.sqrt(sobel_hori_f * sobel_hori_f + sobel_vert_f * sobel_vert_f)
+    sobel_mag_max = np.max(sobel_mag_f)
+    sobel_mag_norm = sobel_mag_f / sobel_mag_max
+
     # horizontal fill content
     for ix in range(sobel_hori_f.shape[0]):
         for iy in range(sobel_hori_f.shape[1]):
@@ -63,11 +67,11 @@ def debug_sobel(image_gray, sobel_hori_f, sobel_vert_f, threshold):
     # magnitude fill content
     for ix in range(sobel_hori_f.shape[0]):
         for iy in range(sobel_hori_f.shape[1]):
-            grad_hori = sobel_hori_f[ix, iy]
-            grad_vert = sobel_vert_f[ix, iy]
-            grad_mag = np.sqrt(grad_hori * grad_hori + grad_vert * grad_vert)
-            if grad_mag > threshold:
-                sobel_mag_r[ix, iy] = 1.0
+            # grad_hori = sobel_hori_f[ix, iy]
+            # grad_vert = sobel_vert_f[ix, iy]
+            # grad_mag = np.sqrt(grad_hori * grad_hori + grad_vert * grad_vert)
+            # if grad_mag > threshold:
+            sobel_mag_r[ix, iy] = sobel_mag_norm[ix, iy]
 
     sobel_hori_dbg = cv2.merge((sobel_hori_b, sobel_hori_g, sobel_hori_r))
     sobel_vert_dbg = cv2.merge((sobel_vert_b, sobel_vert_g, sobel_vert_r))
