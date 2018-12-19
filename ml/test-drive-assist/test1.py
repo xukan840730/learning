@@ -82,7 +82,7 @@ def debug_sobel(image_gray, sobel_hori_f, sobel_vert_f, threshold):
 
     cv2.imshow("sobel_hori_dbg", sobel_hori_dbg2)
     cv2.imshow("sobel_vert_dbg", sobel_vert_dbg2)
-    cv2.imshow("sobel_mag_dbg", sobel_mag_dbg2)
+    cv2.imshow("sobel_mag_dbg", sobel_mag_dbg)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
@@ -129,25 +129,25 @@ def expand_one(pos, image_shape, visited_global, sobel_grad_f, threshold, fronti
         new_pos = (pos[0], pos[1] + 1)
         expand_one_internal(new_pos, visited_global, sobel_grad_f, threshold, frontiers, visited_new)
 
-    if pos[0] > 0 and pos[1] > 0:
-        # test up-left
-        new_pos = (pos[0] - 1, pos[1] - 1)
-        expand_one_internal(new_pos, visited_global, sobel_grad_f, threshold, frontiers, visited_new)
-
-    if pos[0] < image_height - 1 and pos[1] > 0:
-        # test down-left
-        new_pos = (pos[0] + 1, pos[1] - 1)
-        expand_one_internal(new_pos, visited_global, sobel_grad_f, threshold, frontiers, visited_new)
-
-    if pos[0] > 0 and pos[1] < image_width - 1:
-        # test up-right
-        new_pos = (pos[0] - 1, pos[1] + 1)
-        expand_one_internal(new_pos, visited_global, sobel_grad_f, threshold, frontiers, visited_new)
-
-    if pos[0] < image_height - 1 and pos[1] < image_width - 1:
-        # test down-right
-        new_pos = (pos[0] + 1, pos[1] + 1)
-        expand_one_internal(new_pos, visited_global, sobel_grad_f, threshold, frontiers, visited_new)
+    # if pos[0] > 0 and pos[1] > 0:
+    #     # test up-left
+    #     new_pos = (pos[0] - 1, pos[1] - 1)
+    #     expand_one_internal(new_pos, visited_global, sobel_grad_f, threshold, frontiers, visited_new)
+    #
+    # if pos[0] < image_height - 1 and pos[1] > 0:
+    #     # test down-left
+    #     new_pos = (pos[0] + 1, pos[1] - 1)
+    #     expand_one_internal(new_pos, visited_global, sobel_grad_f, threshold, frontiers, visited_new)
+    #
+    # if pos[0] > 0 and pos[1] < image_width - 1:
+    #     # test up-right
+    #     new_pos = (pos[0] - 1, pos[1] + 1)
+    #     expand_one_internal(new_pos, visited_global, sobel_grad_f, threshold, frontiers, visited_new)
+    #
+    # if pos[0] < image_height - 1 and pos[1] < image_width - 1:
+    #     # test down-right
+    #     new_pos = (pos[0] + 1, pos[1] + 1)
+    #     expand_one_internal(new_pos, visited_global, sobel_grad_f, threshold, frontiers, visited_new)
 
 
 
@@ -226,8 +226,8 @@ print(len(expand_regions))
 
 # next thing, test diagonal pixel.
 
-for iregion in expand_regions:
-    debug_expansion(image_gray, iregion, 0, 0, 1.0)
+# for iregion in expand_regions:
+#     debug_expansion(image_gray, iregion, 0, 0, 1.0)
 
 # scaledown test: when scaled down to (60, 80), road can still be recognized
 # tiny_canny = cv2.resize(canny, (0,0), fx=0.125, fy=0.125, interpolation=cv2.INTER_AREA)
