@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 import simple_math as sm
+import region as rg
 
 # def canny(image):
 #     gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
@@ -94,78 +95,8 @@ debug_sobel(image_gray, sobel_hori_f, sobel_vert_f, threshold)
 
 sobel_grad_f = cv2.merge((sobel_hori_f, sobel_vert_f))
 
-# test expansion.
-# at first, none of pixels is visited.
-
-def expand_one(pos, image_shape, visited_global, sobel_grad_f, threshold, frontiers, visited_new):
-    image_height = image_shape[0]
-    image_width = image_shape[1]
-
-    def expand_one_internal(new_pos, visited_global, sobel_grad_f, threshold, frontiers, visited_new):
-        vg = visited_global[new_pos]
-        vn = visited_new[new_pos]
-        if not vg and not vn:
-            grad = sobel_grad_f[new_pos]
-            grad_mag = np.sqrt(grad[0] * grad[0] + grad[1] * grad[1])
-            if grad_mag < threshold:
-                frontiers.append(new_pos)
-                visited_new[new_pos] = True
-            else:
-                visited_new[new_pos] = True
-
-    if pos[0] > 0:
-        # test up
-        new_pos = (pos[0] - 1, pos[1])
-        expand_one_internal(new_pos, visited_global, sobel_grad_f, threshold, frontiers, visited_new)
-
-    if pos[0] < image_height - 1:
-        # test down
-        new_pos = (pos[0] + 1, pos[1])
-        expand_one_internal(new_pos, visited_global, sobel_grad_f, threshold, frontiers, visited_new)
-
-    if pos[1] > 0:
-        # test left
-        new_pos = (pos[0], pos[1] - 1)
-        expand_one_internal(new_pos, visited_global, sobel_grad_f, threshold, frontiers, visited_new)
-
-    if pos[1] < image_width - 1:
-        # test right
-        new_pos = (pos[0], pos[1] + 1)
-        expand_one_internal(new_pos, visited_global, sobel_grad_f, threshold, frontiers, visited_new)
-
-    # if pos[0] > 0 and pos[1] > 0:
-    #     # test up-left
-    #     new_pos = (pos[0] - 1, pos[1] - 1)
-    #     expand_one_internal(new_pos, visited_global, sobel_grad_f, threshold, frontiers, visited_new)
-    #
-    # if pos[0] < image_height - 1 and pos[1] > 0:
-    #     # test down-left
-    #     new_pos = (pos[0] + 1, pos[1] - 1)
-    #     expand_one_internal(new_pos, visited_global, sobel_grad_f, threshold, frontiers, visited_new)
-    #
-    # if pos[0] > 0 and pos[1] < image_width - 1:
-    #     # test up-right
-    #     new_pos = (pos[0] - 1, pos[1] + 1)
-    #     expand_one_internal(new_pos, visited_global, sobel_grad_f, threshold, frontiers, visited_new)
-    #
-    # if pos[0] < image_height - 1 and pos[1] < image_width - 1:
-    #     # test down-right
-    #     new_pos = (pos[0] + 1, pos[1] + 1)
-    #     expand_one_internal(new_pos, visited_global, sobel_grad_f, threshold, frontiers, visited_new)
-
-
-
-def expand_version1(pos, image_shape, visited_global, sobel_grad_f, threshold, visited_new):
-    frontiers = list()
-    expand_one(pos, image_shape, visited_global, sobel_grad_f, threshold, frontiers, visited_new)
-
-    while len(frontiers) > 0:
-        new_fronties = list()
-
-        for x in frontiers:
-            expand_one(x, image_shape, visited_global, sobel_grad_f, threshold, new_fronties, visited_new)
-
-        frontiers = new_fronties
+visited_global = np.zeros(image_gray.shape, dtype=bool)
+expand_regions = list()
 
 def debug_expansion(image_gray, visited_mask, b, g, r):
     channel_b = np.zeros(image_gray.shape)
@@ -196,11 +127,8 @@ def debug_expansion(image_gray, visited_mask, b, g, r):
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
-visited_global = np.zeros(image_gray.shape, dtype=bool)
-expand_regions = list()
-
 # get expansions from bottom row
-for ix in range(image_width):
+for ix in range(488, 489):
     starting_pos = (image_height - 1, ix)
 
     # if pixel is in a region, skip to next pixel
@@ -219,7 +147,7 @@ for ix in range(image_width):
 
     frontiers = list()
     new_region = np.zeros(visited_global.shape, dtype=bool)
-    expand_version1(starting_pos, image_gray.shape, visited_global, sobel_grad_f, threshold, new_region)
+    rg.expand_v1(starting_pos, visited_global, sobel_grad_f, threshold, new_region)
     # debug_expansion(image_gray, new_region, 0, 0, 1.0)
     expand_regions.append(new_region)
 
