@@ -59,14 +59,14 @@ for ix in range(488, 489):
     visited_global[starting_pos] = True
 
     new_region = np.zeros(visited_global.shape, dtype=bool)
-    rg.expand_v2(starting_pos, visited_global, sobel_grad_f, threshold, new_region)
+    rg.expand_v2(starting_pos, visited_global, sobel_grad_f, threshold, new_region, True)
     # debug_expansion(image_gray, new_region, 0, 0, 1.0)
     expand_regions.append(new_region)
 
     # fill global mask with new mask
     visited_global = np.bitwise_or(visited_global, new_region)
 
-print(len(expand_regions))
+# print(len(expand_regions))
 
 # next thing, test diagonal pixel.
 
