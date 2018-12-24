@@ -36,12 +36,18 @@ threshold = 0.1
 # dbg.debug_sobel(image_gray, sobel_hori_f, sobel_vert_f, threshold)
 
 sobel_grad_f = cv2.merge((sobel_hori_f, sobel_vert_f))
+sobel_grad_mag = np.zeros(sobel_hori_f.shape)
+for ix in range(sobel_hori_f.shape[0]):
+    for iy in range(sobel_hori_f.shape[1]):
+        sobel_grad_mag[ix, iy] = np.linalg.norm(sobel_hori_f[ix, iy])
 
 visited_global = np.zeros(image_gray.shape, dtype=bool)
 expand_regions = list()
 
 # get expansions from bottom row
-for ix in range(488, 489):
+# for ix in range(488, 489):
+for ix in range(0, 1):
+# for ix in range(0, image_width):
     starting_pos = (image_height - 1, ix)
 
     # if pixel is in a region, skip to next pixel
@@ -49,8 +55,7 @@ for ix in range(488, 489):
         continue;
 
     # or if pixel has great gradient, skip to next pixel
-    grad = sobel_grad_f[starting_pos]
-    grad_mag = np.sqrt(grad[0] * grad[0] + grad[1] * grad[1])
+    grad_mag = sobel_grad_mag[starting_pos]
     if (grad_mag >= threshold):
         continue;
 
@@ -59,7 +64,7 @@ for ix in range(488, 489):
     visited_global[starting_pos] = True
 
     new_region = np.zeros(visited_global.shape, dtype=bool)
-    rg.expand_v2(starting_pos, visited_global, sobel_grad_f, threshold, new_region, True)
+    rg.expand_v2(starting_pos, visited_global, sobel_grad_f, sobel_grad_mag, threshold, new_region, False)
     # debug_expansion(image_gray, new_region, 0, 0, 1.0)
     expand_regions.append(new_region)
 
@@ -70,5 +75,5 @@ for ix in range(488, 489):
 
 # next thing, test diagonal pixel.
 
-# for iregion in expand_regions:
-#     dbg.debug_expansion(image_gray, iregion, 0, 0, 1.0)
+for iregion in expand_regions:
+    dbg.debug_expansion(image_gray, iregion, 0, 0, 1.0)
