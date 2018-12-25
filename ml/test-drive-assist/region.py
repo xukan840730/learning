@@ -170,5 +170,5 @@ def expand_v2(pos, visited_global, sobel_grad_f, sobel_grad_mag, threshold, new_
 
         frontiers = new_fronties
 
-        if iter_idx >= 10:
-            break
+        # if iter_idx >= 10:
+        #     break

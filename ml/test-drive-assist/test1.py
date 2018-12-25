@@ -39,16 +39,16 @@ sobel_grad_f = cv2.merge((sobel_hori_f, sobel_vert_f))
 sobel_grad_mag = np.zeros(sobel_hori_f.shape)
 for ix in range(sobel_hori_f.shape[0]):
     for iy in range(sobel_hori_f.shape[1]):
-        sobel_grad_mag[ix, iy] = np.linalg.norm(sobel_hori_f[ix, iy])
+        sobel_grad_mag[ix, iy] = np.linalg.norm(sobel_grad_f[ix, iy])
 
 visited_global = np.zeros(image_gray.shape, dtype=bool)
 expand_regions = list()
 
 # get expansions from bottom row
 # for ix in range(488, 489):
-for ix in range(0, 1):
-# for ix in range(0, image_width):
-    starting_pos = (image_height - 100, ix)
+# for ix in range(0, 1):
+for ix in range(0, image_width):
+    starting_pos = (image_height - 1, ix)
 
     # debug print
     for idbg in range(0, 10):
@@ -69,7 +69,7 @@ for ix in range(0, 1):
     visited_global[starting_pos] = True
 
     new_region = np.zeros(visited_global.shape, dtype=bool)
-    rg.expand_v2(starting_pos, visited_global, sobel_grad_f, sobel_grad_mag, threshold, new_region, True)
+    rg.expand_v2(starting_pos, visited_global, sobel_grad_f, sobel_grad_mag, threshold, new_region, False)
     # debug_expansion(image_gray, new_region, 0, 0, 1.0)
     expand_regions.append(new_region)
 
