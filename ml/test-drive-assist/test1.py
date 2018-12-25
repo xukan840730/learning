@@ -33,7 +33,7 @@ sobel_vert_f = cv2.Sobel(image_blur_f, cv2.CV_64F, 0, 1, ksize=3)
 
 threshold = 0.1
 
-# dbg.debug_sobel(image_gray, sobel_hori_f, sobel_vert_f, threshold)
+dbg.debug_sobel(image_gray, sobel_hori_f, sobel_vert_f, threshold)
 
 sobel_grad_f = cv2.merge((sobel_hori_f, sobel_vert_f))
 sobel_grad_mag = np.zeros(sobel_hori_f.shape)
@@ -48,7 +48,12 @@ expand_regions = list()
 # for ix in range(488, 489):
 for ix in range(0, 1):
 # for ix in range(0, image_width):
-    starting_pos = (image_height - 1, ix)
+    starting_pos = (image_height - 100, ix)
+
+    # debug print
+    for idbg in range(0, 10):
+        dbg_pos = (starting_pos[0] - idbg, starting_pos[1])
+        print('(' + str(dbg_pos[0]) + ', ' + str(dbg_pos[1]) + '): ' + str(sobel_grad_f[dbg_pos]))
 
     # if pixel is in a region, skip to next pixel
     if visited_global[starting_pos]:
@@ -64,7 +69,7 @@ for ix in range(0, 1):
     visited_global[starting_pos] = True
 
     new_region = np.zeros(visited_global.shape, dtype=bool)
-    rg.expand_v2(starting_pos, visited_global, sobel_grad_f, sobel_grad_mag, threshold, new_region, False)
+    rg.expand_v2(starting_pos, visited_global, sobel_grad_f, sobel_grad_mag, threshold, new_region, True)
     # debug_expansion(image_gray, new_region, 0, 0, 1.0)
     expand_regions.append(new_region)
 
