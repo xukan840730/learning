@@ -87,13 +87,15 @@ def expand_v2_internal2(pos_from, pos_to, visited_global, sobel_grad_f, sobel_gr
         else:
             grad_next_mag = sobel_grad_mag[pos_next]
 
-            if grad_to_mag < grad_next_mag:
+            if grad_from_mag > grad_to_mag:
+                pass
+            elif grad_to_mag < grad_next_mag:
                 # keep exploring on that direction
                 new_region[pos_to] = True
                 frontiers.append((pos_from, pos_to))
-            else:
-                # pos_to is a local maximum on that direction.
-                new_region[pos_to] = True
+            # else:
+            #     # pos_to is a local maximum on that direction.
+            #     new_region[pos_to] = True
 
     if direction[0] < 0:
         # explore up
@@ -170,5 +172,5 @@ def expand_v2(pos, visited_global, sobel_grad_f, sobel_grad_mag, threshold, new_
 
         frontiers = new_fronties
 
-        # if iter_idx >= 10:
+        # if iter_idx >= 150:
         #     break
