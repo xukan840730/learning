@@ -53,10 +53,8 @@ def debug_sobel(image_gray, sobel_hori_f, sobel_vert_f, threshold):
     for ix in range(1, sobel_hori_f.shape[0] - 1):
         for iy in range(1, sobel_hori_f.shape[1] - 1):
             if sobel_mag_f[ix, iy] > threshold:
-                if sobel_mag_f[ix, iy] >= sobel_mag_f[ix - 1, iy] and \
-                    sobel_mag_f[ix, iy] >= sobel_mag_f[ix + 1, iy] and \
-                    sobel_mag_f[ix, iy] >= sobel_mag_f[ix, iy - 1] and \
-                    sobel_mag_f[ix, iy] >= sobel_mag_f[ix, iy + 1]:
+                if (sobel_mag_f[ix, iy] >= sobel_mag_f[ix - 1, iy] and sobel_mag_f[ix, iy] >= sobel_mag_f[ix + 1, iy]) or \
+                    (sobel_mag_f[ix, iy] >= sobel_mag_f[ix, iy - 1] and sobel_mag_f[ix, iy] >= sobel_mag_f[ix, iy + 1]):
                     sobel_local_max[ix, iy] = True
                     sobel_local_max_r[ix, iy] = 1.0
 
