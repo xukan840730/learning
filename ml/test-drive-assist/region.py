@@ -73,64 +73,32 @@ def expand_v1(pos, visited_global, sobel_grad_f, threshold, new_region):
 def expand_v2_internal2(pos_from, pos_to, visited_global, sobel_grad_f, sobel_grad_mag, threshold, frontiers, new_region, iter_idx):
     image_height = visited_global.shape[0]
     image_width = visited_global.shape[1]
-    direction = (pos_to[0] - pos_from[0], pos_to[1] - pos_from[1])
-    grad_from_mag = sobel_grad_mag[pos_from]
     grad_to_mag = sobel_grad_mag[pos_to]
 
-    def expand_internal(pos_from, pos_to, direction, sobel_grad_f, sobel_grad_mag, threshold, frontiers, new_region, iter_idx):
-        pos_next = (pos_to[0] + direction[0], pos_to[1] + direction[1])
+    if grad_to_mag < threshold:
+        # keep exploring on that direction
+        new_region[pos_to] = True
+        frontiers.append((pos_from, pos_to))
+    else:
+        grad_from_mag = sobel_grad_mag[pos_from]
 
-        if grad_to_mag < threshold:
-            # keep exploring on that direction
-            new_region[pos_to] = True
-            frontiers.append((pos_from, pos_to))
+        if grad_from_mag > grad_to_mag:
+            pass
+        elif pos_to[0] == 0 or pos_to[0] == image_height - 1 or pos_to[1] == 0 or pos_to[1] == image_width - 1:
+            pass
         else:
+            direction = (pos_to[0] - pos_from[0], pos_to[1] - pos_from[1])
+            pos_next = (pos_to[0] + direction[0], pos_to[1] + direction[1])
+            assert(pos_next[0] >= 0 and pos_next[0] < image_height and pos_next[1] >= 0 and pos_next[1] < image_width)
             grad_next_mag = sobel_grad_mag[pos_next]
 
-            if grad_from_mag > grad_to_mag:
-                pass
-            elif grad_to_mag < grad_next_mag:
+            if grad_to_mag < grad_next_mag:
                 # keep exploring on that direction
                 new_region[pos_to] = True
                 frontiers.append((pos_from, pos_to))
-            # else:
-            #     # pos_to is a local maximum on that direction.
-            #     new_region[pos_to] = True
-
-    if direction[0] < 0:
-        # explore up
-        if pos_to[0] == 0:
-            if grad_to_mag > grad_from_mag:
-                new_region[pos_to] = True
-        else:
-            expand_internal(pos_from, pos_to, direction, sobel_grad_f, sobel_grad_mag, threshold, frontiers, new_region, iter_idx)
-
-    elif direction[0] > 0:
-        # explore down
-        if pos_to[0] == image_height - 1:
-            if grad_to_mag > grad_from_mag:
-                new_region[pos_to] = True
-        else:
-            expand_internal(pos_from, pos_to, direction, sobel_grad_f, sobel_grad_mag, threshold, frontiers, new_region, iter_idx)
-
-    elif direction[1] < 0:
-        # explore left
-        if pos_to[1] == 0:
-            if grad_to_mag > grad_from_mag:
-                new_region[pos_to] = True
-        else:
-            expand_internal(pos_from, pos_to, direction, sobel_grad_f, sobel_grad_mag, threshold, frontiers, new_region, iter_idx)
-
-    elif direction[1] > 0:
-        # explore right
-        if pos_to[1] == image_width - 1:
-            if grad_to_mag > grad_from_mag:
-                new_region[pos_to] = True
-        else:
-            expand_internal(pos_from, pos_to, direction, sobel_grad_f, sobel_grad_mag, threshold, frontiers, new_region, iter_idx)
-
-    else:
-        assert(False)
+                # else:
+                #     # pos_to is a local maximum on that direction.
+                #     new_region[pos_to] = True
 
 def expand_v2_internal(pos, visited_global, sobel_grad_f, sobel_grad_mag, threshold, frontiers, new_region, iter_idx):
     image_height = visited_global.shape[0]
@@ -158,6 +126,7 @@ def expand_v2(pos, visited_global, sobel_grad_f, sobel_grad_mag, threshold, new_
 
     while len(frontiers) > 0:
         iter_idx = iter_idx + 1
+        # print('iter: %d' % iter_idx)
         new_fronties = list()
 
         for each_f in frontiers:
@@ -171,6 +140,3 @@ def expand_v2(pos, visited_global, sobel_grad_f, sobel_grad_mag, threshold, new_
             print("iter: %d end:" % iter_idx)
 
         frontiers = new_fronties
-
-        # if iter_idx >= 150:
-        #     break

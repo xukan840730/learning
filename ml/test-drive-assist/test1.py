@@ -44,6 +44,8 @@ for ix in range(sobel_hori_f.shape[0]):
 visited_global = np.zeros(image_gray.shape, dtype=bool)
 expand_regions = list()
 
+# skipped_region = np.zeros(visited_global.shape, dtype=bool)
+
 # get expansions from bottom row
 # for ix in range(488, 489):
 # for ix in range(0, 1):
@@ -63,6 +65,8 @@ for ix in range(0, image_width):
     # or if pixel has great gradient, skip to next pixel
     grad_mag = sobel_grad_mag[starting_pos]
     if (grad_mag >= threshold):
+        # skipped_region[starting_pos] = True
+        # print('skipping: (' + str(starting_pos[0]) + ', ' + str(starting_pos[1]) + ')')
         continue;
 
     print('start expansion from: (' + str(starting_pos[0]) + ', ' + str(starting_pos[1]) + ')')
@@ -84,3 +88,5 @@ for iregion in expand_regions:
     #         if iy != 230:
     #             iregion[ix, iy] = False
     dbg.debug_expansion(image_gray, iregion, 0, 0, 1.0)
+
+# dbg.debug_expansion(image_gray, skipped_region, 0.0, 1.0, 0)
