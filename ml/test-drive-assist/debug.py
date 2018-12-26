@@ -19,7 +19,7 @@ def debug_sobel(image_gray, sobel_hori_f, sobel_vert_f, threshold):
     sobel_mag_max = np.max(sobel_mag_f)
     sobel_mag_norm = sobel_mag_f / sobel_mag_max
 
-    sobel_local_max = np.zeros(sobel_hori_f.shape, dtype=bool)
+    sobel_local_max = np.zeros(sobel_hori_f.shape)
     sobel_local_max_b = np.zeros(sobel_hori_f.shape)
     sobel_local_max_g = sobel_local_max_b.copy()
     sobel_local_max_r = sobel_local_max_b.copy()
@@ -43,10 +43,6 @@ def debug_sobel(image_gray, sobel_hori_f, sobel_vert_f, threshold):
     # magnitude fill content
     for ix in range(sobel_hori_f.shape[0]):
         for iy in range(sobel_hori_f.shape[1]):
-            # grad_hori = sobel_hori_f[ix, iy]
-            # grad_vert = sobel_vert_f[ix, iy]
-            # grad_mag = np.sqrt(grad_hori * grad_hori + grad_vert * grad_vert)
-            # if grad_mag > threshold:
             sobel_mag_r[ix, iy] = sobel_mag_norm[ix, iy]
 
     # fill local maximum
@@ -55,13 +51,26 @@ def debug_sobel(image_gray, sobel_hori_f, sobel_vert_f, threshold):
             if sobel_mag_f[ix, iy] > threshold:
                 if (sobel_mag_f[ix, iy] >= sobel_mag_f[ix - 1, iy] and sobel_mag_f[ix, iy] >= sobel_mag_f[ix + 1, iy]) or \
                     (sobel_mag_f[ix, iy] >= sobel_mag_f[ix, iy - 1] and sobel_mag_f[ix, iy] >= sobel_mag_f[ix, iy + 1]):
-                    sobel_local_max[ix, iy] = True
+                    sobel_local_max[ix, iy] = 1.0
                     sobel_local_max_r[ix, iy] = 1.0
 
+    sobel_mag_mod = sobel_mag_f + sobel_local_max
+    sobel_mag_mod_max = np.max(sobel_mag_mod)
+    sobel_mag_mod_norm = sobel_mag_mod / sobel_mag_mod_max
+
+    sobel_mag_mod_b = np.zeros(sobel_hori_f.shape)
+    sobel_mag_mod_g = sobel_mag_b.copy()
+    sobel_mag_mod_r = sobel_mag_b.copy()
+
+    # magnitude fill content
+    for ix in range(sobel_hori_f.shape[0]):
+        for iy in range(sobel_hori_f.shape[1]):
+            sobel_mag_mod_r[ix, iy] = sobel_mag_mod_norm[ix, iy]
 
     sobel_hori_dbg = cv2.merge((sobel_hori_b, sobel_hori_g, sobel_hori_r))
     sobel_vert_dbg = cv2.merge((sobel_vert_b, sobel_vert_g, sobel_vert_r))
     sobel_mag_dbg = cv2.merge((sobel_mag_b, sobel_mag_g, sobel_mag_r))
+    sobel_mag_mod_dbg = cv2.merge((sobel_mag_mod_b, sobel_mag_mod_g, sobel_mag_mod_r))
     sobel_local_max_dbg = cv2.merge((sobel_local_max_b, sobel_local_max_g, sobel_local_max_r))
 
     image_gray_3_u8 = cv2.cvtColor(image_gray, cv2.COLOR_GRAY2BGR)
@@ -75,6 +84,7 @@ def debug_sobel(image_gray, sobel_hori_f, sobel_vert_f, threshold):
     cv2.imshow("sobel_vert_dbg", sobel_vert_dbg2)
     cv2.imshow("sobel_mag_dbg", sobel_mag_dbg)
     cv2.imshow("sobel_local_max", sobel_local_max_dbg)
+    cv2.imshow("sobel_mag_mod_dbg", sobel_mag_mod_dbg)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 

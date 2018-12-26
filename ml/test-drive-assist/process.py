@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 import region as rg
+import debug as dbg
 
 def process_image(image_gray):
     image_height = image_gray.shape[0]
@@ -12,14 +13,10 @@ def process_image(image_gray):
 
     sobel_hori_f = cv2.Sobel(image_blur_f, cv2.CV_64F, 1, 0, ksize=1)
     sobel_vert_f = cv2.Sobel(image_blur_f, cv2.CV_64F, 0, 1, ksize=1)
-    # sobelx_sqr = sobelx_f * sobelx_f
-    # sobely_sqr = sobely_f * sobely_f
-    # sobel_grad_f = np.sqrt(sobelx_sqr + sobely_sqr)
-    # sobel_grad_u8 = sobel_grad_f.astype(np.uint8)
 
-    threshold = 0.02
+    threshold_grad = 0.02
 
-    # dbg.debug_sobel(image_gray, sobel_hori_f, sobel_vert_f, threshold)
+    dbg.debug_sobel(image_gray, sobel_hori_f, sobel_vert_f, threshold_grad)
 
     sobel_grad_f = cv2.merge((sobel_hori_f, sobel_vert_f))
     sobel_grad_mag = np.zeros(sobel_hori_f.shape)
@@ -27,9 +24,23 @@ def process_image(image_gray):
         for iy in range(sobel_hori_f.shape[1]):
             sobel_grad_mag[ix, iy] = np.linalg.norm(sobel_grad_f[ix, iy])
 
+    sobel_local_max = np.zeros(sobel_hori_f.shape, dtype=float)
+    for ix in range(sobel_hori_f.shape[0]):
+        for iy in range(sobel_hori_f.shape[1]):
+            if ix == 0 or ix == sobel_hori_f.shape[0] -1 or iy == 0 or iy == sobel_hori_f.shape[1] - 1:
+                sobel_local_max[ix, iy] = 1.0
+            elif sobel_grad_mag[ix, iy] > threshold_grad:
+                if (sobel_grad_mag[ix, iy] >= sobel_grad_mag[ix - 1, iy] and sobel_grad_mag[ix, iy] >= sobel_grad_mag[ix + 1, iy]) or \
+                    (sobel_grad_mag[ix, iy] >= sobel_grad_mag[ix, iy - 1] and sobel_grad_mag[ix, iy] >= sobel_grad_mag[ix, iy + 1]):
+                    sobel_local_max[ix, iy] = 1.0
+
+    sobel_grad_mod = sobel_grad_mag + sobel_local_max
+
     # sobel_grad_max = np.max(sobel_grad_mag)
     # sobel_grad_norm = sobel_grad_mag / sobel_grad_max
     # sobel_grad_mag = sobel_grad_norm
+
+    image_grad_mag = sobel_grad_mod
 
     visited_global = np.zeros(image_gray.shape, dtype=bool)
     expand_regions = list()
@@ -37,11 +48,11 @@ def process_image(image_gray):
     # skipped_region = np.zeros(visited_global.shape, dtype=bool)
 
     # get expansions from bottom row
-    # for ix in range(244, 245):
-    # for ix in range(0, 1):
     for ix in range(1):
+        # for iy in range(244, 245):
+        # for iy in range(0, 1):
         for iy in range(0, image_width):
-            starting_pos = (image_height - 1 - ix, iy)
+            starting_pos = (image_height - 2 - ix, iy)
             # starting_pos = (image_height - 170, 225)
 
             # debug print
@@ -54,8 +65,8 @@ def process_image(image_gray):
                 continue;
 
             # or if pixel has great gradient, skip to next pixel
-            grad_mag = sobel_grad_mag[starting_pos]
-            if (grad_mag >= threshold):
+            grad_mag = image_grad_mag[starting_pos]
+            if (grad_mag >= threshold_grad):
                 # skipped_region[starting_pos] = True
                 # print('skipping: (' + str(starting_pos[0]) + ', ' + str(starting_pos[1]) + ')')
                 continue;
@@ -69,7 +80,7 @@ def process_image(image_gray):
             #     verbose = True
 
             new_region = np.zeros(visited_global.shape, dtype=bool)
-            rg.expand_v2(starting_pos, visited_global, sobel_grad_mag, threshold, new_region, verbose)
+            rg.expand_v3(starting_pos, visited_global, image_grad_mag, image_blur_f, threshold_grad, new_region, verbose)
             expand_regions.append(new_region)
 
             # fill global mask with new mask
