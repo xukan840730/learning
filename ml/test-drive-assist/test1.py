@@ -83,7 +83,7 @@ for ix in range(1):
         #     verbose = True
 
         new_region = np.zeros(visited_global.shape, dtype=bool)
-        rg.expand_v2(starting_pos, visited_global, sobel_grad_f, sobel_grad_mag, threshold, new_region, verbose)
+        rg.expand_v2(starting_pos, visited_global, sobel_grad_mag, threshold, new_region, verbose)
         expand_regions.append(new_region)
 
         # fill global mask with new mask
