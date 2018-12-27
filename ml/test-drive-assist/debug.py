@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+import matplotlib.pyplot as plt
 
 
 def debug_sobel(image_gray, sobel_hori_f, sobel_vert_f, threshold):
@@ -117,3 +118,7 @@ def debug_expansion(image_gray, visited_mask, b, g, r):
     cv2.imshow("expansion_test", image_dbg)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
+
+def debug_histogram(image_gray_u8):
+    plt.hist(image_gray_u8, 256 // 4)
+    plt.show()

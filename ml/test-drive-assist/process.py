@@ -3,20 +3,30 @@ import numpy as np
 import region as rg
 import debug as dbg
 
-def process_image(image_gray):
-    image_height = image_gray.shape[0]
-    image_width = image_gray.shape[1]
+def process_image(image_grayscale):
+    image_height = image_grayscale.shape[0]
+    image_width = image_grayscale.shape[1]
 
-    image_blur_u8 = cv2.GaussianBlur(image_gray, (5, 5), 0)
+    image_blur_u8 = cv2.GaussianBlur(image_grayscale, (5, 5), 0)
     image_blur_f = image_blur_u8.astype(float) / 255.0
     # image_b, image_g, image_r = cv2.split(image)
+
+    # create grayscale histogram
+    image_blur_u8_flat = image_blur_u8.flatten()
+    image_gray_hist = np.zeros((256), dtype=int)
+    for ix in range(image_blur_u8.shape[0]):
+        for iy in range(image_blur_u8.shape[1]):
+            k = image_blur_u8[ix, iy]
+            image_gray_hist[k] += 1
+
+    dbg.debug_histogram(image_blur_u8_flat)
 
     sobel_hori_f = cv2.Sobel(image_blur_f, cv2.CV_64F, 1, 0, ksize=1)
     sobel_vert_f = cv2.Sobel(image_blur_f, cv2.CV_64F, 0, 1, ksize=1)
 
     threshold_grad = 0.02
 
-    dbg.debug_sobel(image_gray, sobel_hori_f, sobel_vert_f, threshold_grad)
+    dbg.debug_sobel(image_grayscale, sobel_hori_f, sobel_vert_f, threshold_grad)
 
     sobel_grad_f = cv2.merge((sobel_hori_f, sobel_vert_f))
     sobel_grad_mag = np.zeros(sobel_hori_f.shape)
@@ -42,7 +52,7 @@ def process_image(image_gray):
 
     image_grad_mag = sobel_grad_mod
 
-    visited_global = np.zeros(image_gray.shape, dtype=bool)
+    visited_global = np.zeros(image_grayscale.shape, dtype=bool)
     expand_regions = list()
 
     # skipped_region = np.zeros(visited_global.shape, dtype=bool)

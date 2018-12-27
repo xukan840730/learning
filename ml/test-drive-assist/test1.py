@@ -14,11 +14,11 @@ image = cv2.imread('test_image_tiny.jpg')
 image_gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
 expand_regions = process.process_image(image_gray)
 
-for iregion in expand_regions:
-    # for ix in range(iregion.shape[0]):
-    #     for iy in range(iregion.shape[1]):
-    #         if iy != 230:
-    #             iregion[ix, iy] = False
-    dbg.debug_expansion(image_gray, iregion, 0, 0, 1.0)
+# for iregion in expand_regions:
+#     # for ix in range(iregion.shape[0]):
+#     #     for iy in range(iregion.shape[1]):
+#     #         if iy != 230:
+#     #             iregion[ix, iy] = False
+#     dbg.debug_expansion(image_gray, iregion, 0, 0, 1.0)
 
 # dbg.debug_expansion(image_gray, skipped_region, 0.0, 1.0, 0)
