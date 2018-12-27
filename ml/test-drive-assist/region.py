@@ -197,7 +197,6 @@ def expand_v3_internal(pos, from_frontiers2, visited_global, sobel_grad_mag, ima
             if not new_region[new_pos] and not visited_global[new_pos]:
                 expand_v3_internal2(pos, new_pos, from_frontiers2, visited_global, sobel_grad_mag, image_gray_f, threshold_grad, frontiers1, frontiers2, new_region)
 
-# TODO: test expansion with color matching
 def expand_v3(pos, visited_global, image_grad_mag, image_gray_f, threshold_grad, new_region, verbose):
     assert(image_gray_f.dtype == float)
 
@@ -242,3 +241,7 @@ def expand_v3(pos, visited_global, image_grad_mag, image_gray_f, threshold_grad,
 
         frontiers1 = new_frontiers1
         frontiers2 = new_frontiers2
+
+##--------------------------------------------------------------------------------------##
+## v4: with histogram
+##--------------------------------------------------------------------------------------##
