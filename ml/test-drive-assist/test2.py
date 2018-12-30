@@ -88,7 +88,9 @@ def capture2():
 			cv2.namedWindow(winname)
 			cv2.moveWindow(winname, (640 - 400) // 2, (480 - 240) // 2)
 			cv2.imshow(winname, frame)
-			# key = cv2.waitKey(1) & 0xFF
+			key = cv2.waitKey(1)
+			if key > 0:
+				break
 
 		# update the FPS counter
 		fps.update()
