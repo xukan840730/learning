@@ -14,32 +14,15 @@ def process_image(image_grayscale):
     # create grayscale histogram
     image_blur_u8_flat = image_blur_u8.flatten()
 
-    dbg.proto_histogram(image_blur_u8_flat)
-    dbg.debug_histogram(image_blur_u8_flat)
-
-    # fill histogram bins
-    # image_histo_bins = np.zeros(image_blur_u8.shape, dtype=np.uint8)
-    # for ix in range(image_blur_u8.shape[0]):
-    #     for iy in range(image_blur_u8.shape[1]):
-    #         k = image_blur_u8[ix, iy]
-    #         if k <= 50:
-    #             image_histo_bins[ix, iy] = 0
-    #         elif k <= 110:
-    #             image_histo_bins[ix, iy] = 1
-    #         elif k <= 170:
-    #             image_histo_bins[ix, iy] = 2
-    #         else:
-    #             image_histo_bins[ix, iy] = 3
-            # image_histo_bins[ix, iy] = k
+    # dbg.proto_histogram(image_blur_u8_flat)
+    # dbg.debug_histogram(image_blur_u8_flat)
 
     sobel_hori_f = cv2.Sobel(image_blur_f, cv2.CV_64F, 1, 0, ksize=1)
     sobel_vert_f = cv2.Sobel(image_blur_f, cv2.CV_64F, 0, 1, ksize=1)
 
     threshold_grad = 0.02
 
-    dbg.debug_sobel(image_grayscale, sobel_hori_f, sobel_vert_f, threshold_grad)
-
-    return ()
+    # dbg.debug_sobel(image_grayscale, sobel_hori_f, sobel_vert_f, threshold_grad)
 
     sobel_grad_f = cv2.merge((sobel_hori_f, sobel_vert_f))
     sobel_grad_mag = np.zeros(sobel_hori_f.shape)

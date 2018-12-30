@@ -40,7 +40,7 @@ def capture1():
 		# grab the frame from the stream and resize it to have a maximum
 		# width of 400 pixels
 		frame = f.array
-		frame = imutils.resize(frame, width=400)
+		# frame = imutils.resize(frame, width=400)
 
 		# check to see if the frame should be displayed to our screen
 		if args["display"] > 0:
@@ -67,41 +67,38 @@ def capture1():
 	rawCapture.close()
 	camera.close()
 
-def capture2():
-	# created a *threaded *video stream, allow the camera sensor to warmup,
-	# and start the FPS counter
-	print("[INFO] sampling THREADED frames from `picamera` module...")
-	vs = PiVideoStream().start()
-	time.sleep(2.0)
-	fps = FPS().start()
+# created a *threaded *video stream, allow the camera sensor to warmup,
+# and start the FPS counter
+print("[INFO] sampling THREADED frames from `picamera` module...")
+vs = PiVideoStream().start()
+time.sleep(2.0)
+fps = FPS().start()
 
-	# loop over some frames...this time using the threaded stream
-	while fps._numFrames < args["num_frames"]:
-		# grab the frame from the threaded video stream and resize it
-		# to have a maximum width of 400 pixels
-		frame = vs.read()
-		frame = imutils.resize(frame, width=400)
+# loop over some frames...this time using the threaded stream
+while fps._numFrames < args["num_frames"]:
+	# grab the frame from the threaded video stream and resize it
+	# to have a maximum width of 400 pixels
+	frame = vs.read()
+	# frame = imutils.resize(frame, width=400)
 
-		# check to see if the frame should be displayed to our screen
-		if args["display"] > 0:
-			winname = "Frame"
-			cv2.namedWindow(winname)
-			cv2.moveWindow(winname, (640 - 400) // 2, (480 - 240) // 2)
-			cv2.imshow(winname, frame)
-			key = cv2.waitKey(1)
-			if key > 0:
-				break
+	# check to see if the frame should be displayed to our screen
+	if args["display"] > 0:
+		winname = "Frame"
+		cv2.namedWindow(winname)
+		cv2.moveWindow(winname, (640 - 400) // 2, (480 - 240) // 2)
+		cv2.imshow(winname, frame)
+		key = cv2.waitKey(1)
+		if key > 0:
+			break
 
-		# update the FPS counter
-		fps.update()
+	# update the FPS counter
+	fps.update()
 
-	# stop the timer and display FPS information
-	fps.stop()
-	print("[INFO] elasped time: {:.2f}".format(fps.elapsed()))
-	print("[INFO] approx. FPS: {:.2f}".format(fps.fps()))
+# stop the timer and display FPS information
+fps.stop()
+print("[INFO] elasped time: {:.2f}".format(fps.elapsed()))
+print("[INFO] approx. FPS: {:.2f}".format(fps.fps()))
 
-	# do a bit of cleanup
-	cv2.destroyAllWindows()
-	vs.stop()
-
-capture2()
+# do a bit of cleanup
+cv2.destroyAllWindows()
+vs.stop()
