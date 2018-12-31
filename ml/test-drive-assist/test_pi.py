@@ -12,6 +12,7 @@ import argparse
 import imutils
 import time
 import cv2
+import process
 
 # construct the argument parse and parse the arguments
 ap = argparse.ArgumentParser()
@@ -80,13 +81,17 @@ while fps._numFrames < args["num_frames"]:
 	# to have a maximum width of 400 pixels
 	frame = vs.read()
 	# frame = imutils.resize(frame, width=400)
+	processed_frame = process.process_image(frame)
 
 	# check to see if the frame should be displayed to our screen
 	if args["display"] > 0:
 		winname = "Frame"
+		frame_width = processed_frame.shape[0]
+		frame_height = processed_frame.shape[1]
+
 		cv2.namedWindow(winname)
-		cv2.moveWindow(winname, (640 - 400) // 2, (480 - 240) // 2)
-		cv2.imshow(winname, frame)
+		cv2.moveWindow(winname, (640 - frame_width) // 2, (480 - frame_height) // 2)
+		cv2.imshow(winname, processed_frame)
 		key = cv2.waitKey(1)
 		if key > 0:
 			break
