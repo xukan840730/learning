@@ -121,6 +121,22 @@ def debug_sobel(image_gray, sobel_hori_f, sobel_vert_f, threshold):
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
+def debug_sobel2(image_gray, sobel_hori_f, sobel_vert_f, threshold):
+    sobel_mag_b = np.zeros(sobel_hori_f.shape)
+    sobel_mag_g = sobel_mag_b.copy()
+    sobel_mag_r = sobel_mag_b.copy()
+
+    sobel_mag_f = np.sqrt(sobel_hori_f * sobel_hori_f + sobel_vert_f * sobel_vert_f)
+    sobel_mag_max = np.max(sobel_mag_f)
+    sobel_mag_norm = sobel_mag_f / sobel_mag_max
+
+    # magnitude fill content
+    for ix in range(sobel_hori_f.shape[0]):
+        for iy in range(sobel_hori_f.shape[1]):
+            sobel_mag_g[ix, iy] = sobel_mag_norm[ix, iy]
+
+    sobel_mag_dbg = cv2.merge((sobel_mag_b, sobel_mag_g, sobel_mag_r))
+    return sobel_mag_dbg
 
 def debug_expansion(image_gray, visited_mask, b, g, r):
     channel_b = np.zeros(image_gray.shape)

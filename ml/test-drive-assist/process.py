@@ -3,16 +3,15 @@ import numpy as np
 import region as rg
 import debug as dbg
 
-def process_image(image):
-    image_grayscale = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
+def process_image(image_u8):
+    image_f = image_u8.astype(float) / 255.0
+    image_grayscale = cv2.cvtColor(image_u8, cv2.COLOR_RGB2GRAY)
     image_height = image_grayscale.shape[0]
     image_width = image_grayscale.shape[1]
 
     image_blur_u8 = cv2.GaussianBlur(image_grayscale, (5, 5), 0)
     image_blur_f = image_blur_u8.astype(float) / 255.0
     # image_b, image_g, image_r = cv2.split(image)
-
-    return image_blur_f
 
     # create grayscale histogram
     image_blur_u8_flat = image_blur_u8.flatten()
@@ -24,7 +23,9 @@ def process_image(image):
     sobel_vert_f = cv2.Sobel(image_blur_f, cv2.CV_64F, 0, 1, ksize=1)
 
     threshold_grad = 0.02
-
+    sobel_mag_dbg = dbg.debug_sobel2(image_grayscale, sobel_hori_f, sobel_vert_f, threshold_grad)
+    sobel_mag_dbg2 = cv2.addWeighted(image_f, 1.0, sobel_mag_dbg, 1.0, 0.0)
+    return sobel_mag_dbg2
     # dbg.debug_sobel(image_grayscale, sobel_hori_f, sobel_vert_f, threshold_grad)
 
     sobel_grad_f = cv2.merge((sobel_hori_f, sobel_vert_f))

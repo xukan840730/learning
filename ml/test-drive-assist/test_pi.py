@@ -90,7 +90,7 @@ while fps._numFrames < args["num_frames"]:
 		frame_height = processed_frame.shape[1]
 
 		cv2.namedWindow(winname)
-		cv2.moveWindow(winname, (640 - frame_width) // 2, (480 - frame_height) // 2)
+		cv2.moveWindow(winname, (480 - frame_width) // 2, (320 - frame_height) // 2)
 		cv2.imshow(winname, processed_frame)
 		key = cv2.waitKey(1)
 		if key > 0:
