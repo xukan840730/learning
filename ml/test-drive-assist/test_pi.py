@@ -4,7 +4,7 @@
 
 # import the necessary packages
 from __future__ import print_function
-from imutils.video.pivideostream import PiVideoStream
+from pivideostream import PiVideoStream
 from imutils.video import FPS
 from picamera.array import PiRGBArray
 from picamera import PiCamera
@@ -75,26 +75,32 @@ vs = PiVideoStream().start()
 time.sleep(2.0)
 fps = FPS().start()
 
+curr_frame = -1
+
 # loop over some frames...this time using the threaded stream
 while True:
 	# grab the frame from the threaded video stream and resize it
 	# to have a maximum width of 400 pixels
-	frame = vs.read()
+	frame, frame_num = vs.read()
+	print('frame-num: %d' % frame_num)
+	if curr_frame == frame_num: # HACK: skip the same frame
+		continue;
+	curr_frame = frame_num
+
 	# frame = imutils.resize(frame, width=400)
 	processed_frame = process.process_image(frame)
 
 	# check to see if the frame should be displayed to our screen
-	if True:
-		winname = "Frame"
-		frame_width = processed_frame.shape[0]
-		frame_height = processed_frame.shape[1]
+	winname = "Frame"
+	frame_width = processed_frame.shape[0]
+	frame_height = processed_frame.shape[1]
 
-		cv2.namedWindow(winname)
-		cv2.moveWindow(winname, (480 - frame_width) // 2, (480 - frame_height) // 2)
-		cv2.imshow(winname, processed_frame)
-		key = cv2.waitKey(1)
-		if key > 0:
-			break
+	cv2.namedWindow(winname)
+	cv2.moveWindow(winname, (480 - frame_width) // 2, (480 - frame_height) // 2)
+	cv2.imshow(winname, processed_frame)
+	key = cv2.waitKey(1)
+	if key > 0:
+		break
 
 	# update the FPS counter
 	fps.update()
