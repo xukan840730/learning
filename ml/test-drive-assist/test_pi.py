@@ -76,7 +76,7 @@ time.sleep(2.0)
 fps = FPS().start()
 
 # loop over some frames...this time using the threaded stream
-while fps._numFrames < args["num_frames"]:
+while True:
 	# grab the frame from the threaded video stream and resize it
 	# to have a maximum width of 400 pixels
 	frame = vs.read()
@@ -84,13 +84,13 @@ while fps._numFrames < args["num_frames"]:
 	processed_frame = process.process_image(frame)
 
 	# check to see if the frame should be displayed to our screen
-	if args["display"] > 0:
+	if True:
 		winname = "Frame"
 		frame_width = processed_frame.shape[0]
 		frame_height = processed_frame.shape[1]
 
 		cv2.namedWindow(winname)
-		cv2.moveWindow(winname, (480 - frame_width) // 2, (320 - frame_height) // 2)
+		cv2.moveWindow(winname, (480 - frame_width) // 2, (480 - frame_height) // 2)
 		cv2.imshow(winname, processed_frame)
 		key = cv2.waitKey(1)
 		if key > 0:
