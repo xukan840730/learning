@@ -4,7 +4,6 @@ import region as rg
 import debug as dbg
 
 def process_image(image_u8):
-    image_f = image_u8.astype(float) / 255.0
     image_grayscale = cv2.cvtColor(image_u8, cv2.COLOR_RGB2GRAY)
     image_height = image_grayscale.shape[0]
     image_width = image_grayscale.shape[1]
@@ -24,7 +23,7 @@ def process_image(image_u8):
 
     threshold_grad = 0.02
     sobel_mag_dbg = dbg.debug_sobel2(image_grayscale, sobel_hori_f, sobel_vert_f, threshold_grad)
-    sobel_mag_dbg2 = cv2.addWeighted(image_f, 1.0, sobel_mag_dbg, 1.0, 0.0)
+    sobel_mag_dbg2 = (sobel_mag_dbg * 255.0).astype(np.uint8)
     return sobel_mag_dbg2
     # dbg.debug_sobel(image_grayscale, sobel_hori_f, sobel_vert_f, threshold_grad)
 

@@ -10,13 +10,14 @@ import process
 #     # sobel = cv2.Sobel(blur, cv2.CV_64F, 1, 0, ksize=5)
 #     return canny
 
-image = cv2.imread('test_image_tiny.jpg')
-processed_frame = process.process_image(image)
+image_u8 = cv2.imread('test_image_tiny.jpg')
+processed_u8 = process.process_image(image_u8)
 
-frame_width = processed_frame.shape[0]
-frame_height = processed_frame.shape[1]
+frame_width = image_u8.shape[0]
+frame_height = image_u8.shape[1]
 
-cv2.imshow('Frame', processed_frame)
+frame_u8 = cv2.addWeighted(image_u8, 1.0, processed_u8, 1.0, 0.0)
+cv2.imshow('Frame', frame_u8)
 cv2.waitKey(0)
 
 # do a bit of cleanup

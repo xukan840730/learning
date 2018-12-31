@@ -45,7 +45,7 @@ class PiVideoStream:
 
     def read(self):
         # return the frame most recently read
-        return self.frame, self.frame_num
+        return self.frame
 
     def stop(self):
         # indicate that the thread should be stopped

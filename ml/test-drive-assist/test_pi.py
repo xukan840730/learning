@@ -6,10 +6,11 @@
 from __future__ import print_function
 from pivideostream import PiVideoStream
 from imutils.video import FPS
+from multiprocessing import Process
+from multiprocessing import Queue
 from picamera.array import PiRGBArray
 from picamera import PiCamera
 import argparse
-import imutils
 import time
 import cv2
 import process
@@ -68,6 +69,31 @@ def capture1():
 	rawCapture.close()
 	camera.close()
 
+def classify_frame(inputQueue, outputQueue):
+	# keep looping
+	while True:
+		# check to see if there is a frame in our input queue
+		if not inputQueue.empty():
+			# grab the frame from the input queue
+			frame = inputQueue.get()
+			processed_frame = process.process_image(frame)
+
+			# write the detections to the output queue
+			outputQueue.put(processed_frame)
+
+# initialize the input queue (frames), output queue (detections),
+# and the list of actual detections returned by the child process
+inputQueue = Queue(maxsize=1)
+outputQueue = Queue(maxsize=1)
+processed = None
+
+# construct a child process *indepedent* from our main process of
+# execution
+print("[INFO] starting process...")
+p = Process(target=classify_frame, args=(inputQueue, outputQueue,))
+p.daemon = True
+p.start()
+
 # created a *threaded *video stream, allow the camera sensor to warmup,
 # and start the FPS counter
 print("[INFO] sampling THREADED frames from `picamera` module...")
@@ -75,29 +101,34 @@ vs = PiVideoStream().start()
 time.sleep(2.0)
 fps = FPS().start()
 
-curr_frame = -1
-
 # loop over some frames...this time using the threaded stream
 while True:
 	# grab the frame from the threaded video stream and resize it
 	# to have a maximum width of 400 pixels
-	frame, frame_num = vs.read()
-	print('frame-num: %d' % frame_num)
-	if curr_frame == frame_num: # HACK: skip the same frame
-		continue;
-	curr_frame = frame_num
+	frame_u8 = vs.read()
+	frame_width = frame_u8.shape[0]
+	frame_height = frame_u8.shape[1]
+
+	# if the input queue *is* empty, give the current frame to classify
+	if inputQueue.empty():
+		inputQueue.put(frame_u8)
+
+	# if the output queue *is not* empty, grab the detections
+	if not outputQueue.empty():
+		processed_u8 = outputQueue.get()
 
 	# frame = imutils.resize(frame, width=400)
-	processed_frame = process.process_image(frame)
+
+	# check to see if our detectios are not None (and if so, we'll
+	# draw the detections on the frame)
+	if processed_u8 is not None:
+		frame_u8 = cv2.addWeighted(frame_u8, 1.0, processed_u8, 1.0, 0.0)
 
 	# check to see if the frame should be displayed to our screen
 	winname = "Frame"
-	frame_width = processed_frame.shape[0]
-	frame_height = processed_frame.shape[1]
-
 	cv2.namedWindow(winname)
 	cv2.moveWindow(winname, (480 - frame_width) // 2, (480 - frame_height) // 2)
-	cv2.imshow(winname, processed_frame)
+	cv2.imshow(winname, frame_u8)
 	key = cv2.waitKey(1)
 	if key > 0:
 		break
