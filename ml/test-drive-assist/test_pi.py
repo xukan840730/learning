@@ -5,7 +5,7 @@
 # import the necessary packages
 from __future__ import print_function
 from pivideostream import PiVideoStream
-from imutils.video import FPS
+from fps import FPS
 import imutils
 from multiprocessing import Process
 from multiprocessing import Queue
@@ -126,8 +126,8 @@ while True:
 	display_frame = imutils.resize(frame_u8, width=480)
 	display_frame_height = display_frame.shape[0]
 	display_frame_width = display_frame.shape[1]
-	# fps_text = 'fps: ' + str(fps.fps())
-	# cv2.putText(display_frame, fps_text, (display_frame_width - 10.0, display_frame_height - 10.0), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+	fps_text = 'fps: ' + str(fps.fps())
+	cv2.putText(display_frame, fps_text, (display_frame_width - 10.0, display_frame_height - 10.0), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
 
 	# check to see if the frame should be displayed to our screen
 	winname = "Frame"
