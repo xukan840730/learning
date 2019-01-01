@@ -6,6 +6,7 @@
 from __future__ import print_function
 from pivideostream import PiVideoStream
 from imutils.video import FPS
+import imutils
 from multiprocessing import Process
 from multiprocessing import Queue
 from picamera.array import PiRGBArray
@@ -85,7 +86,7 @@ def classify_frame(inputQueue, outputQueue):
 # and the list of actual detections returned by the child process
 inputQueue = Queue(maxsize=1)
 outputQueue = Queue(maxsize=1)
-processed = None
+processed_u8 = None
 
 # construct a child process *indepedent* from our main process of
 # execution
@@ -117,18 +118,22 @@ while True:
 	if not outputQueue.empty():
 		processed_u8 = outputQueue.get()
 
-	# frame = imutils.resize(frame, width=400)
-
 	# check to see if our detectios are not None (and if so, we'll
 	# draw the detections on the frame)
 	if processed_u8 is not None:
 		frame_u8 = cv2.addWeighted(frame_u8, 1.0, processed_u8, 1.0, 0.0)
 
+	display_frame = imutils.resize(frame_u8, width=640)
+	display_frame_height = display_frame.shape[0]
+	display_frame_width = display_frame.shape[1]
+	fps_text = 'fps: ' + str(fps.fps())
+	cv2.putText(display_frame, fps_text, (display_frame_width - 10.0, display_frame_height - 10.0), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+
 	# check to see if the frame should be displayed to our screen
 	winname = "Frame"
 	cv2.namedWindow(winname)
-	cv2.moveWindow(winname, (480 - frame_width) // 2, (480 - frame_height) // 2)
-	cv2.imshow(winname, frame_u8)
+	cv2.moveWindow(winname, (640 - display_frame_width) // 2, (480 - display_frame_height) // 2)
+	cv2.imshow(winname, display_frame)
 	key = cv2.waitKey(1)
 	if key > 0:
 		break
