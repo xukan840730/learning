@@ -123,16 +123,16 @@ while True:
 	if processed_u8 is not None:
 		frame_u8 = cv2.addWeighted(frame_u8, 1.0, processed_u8, 1.0, 0.0)
 
-	display_frame = imutils.resize(frame_u8, width=640)
+	display_frame = imutils.resize(frame_u8, width=480)
 	display_frame_height = display_frame.shape[0]
 	display_frame_width = display_frame.shape[1]
-	fps_text = 'fps: ' + str(fps.fps())
-	cv2.putText(display_frame, fps_text, (display_frame_width - 10.0, display_frame_height - 10.0), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+	# fps_text = 'fps: ' + str(fps.fps())
+	# cv2.putText(display_frame, fps_text, (display_frame_width - 10.0, display_frame_height - 10.0), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
 
 	# check to see if the frame should be displayed to our screen
 	winname = "Frame"
 	cv2.namedWindow(winname)
-	cv2.moveWindow(winname, (640 - display_frame_width) // 2, (480 - display_frame_height) // 2)
+	cv2.moveWindow(winname, (560 - display_frame_width) // 2, (400 - display_frame_height) // 2)
 	cv2.imshow(winname, display_frame)
 	key = cv2.waitKey(1)
 	if key > 0:
