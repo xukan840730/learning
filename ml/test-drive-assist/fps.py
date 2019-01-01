@@ -34,3 +34,4 @@ class FPS:
         if end is None:
             end = datetime.datetime.now()
         delta = self._numFrames / (end - self._start).total_seconds()
+        return delta
