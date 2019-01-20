@@ -77,7 +77,7 @@ def classify_frame(inputQueue, outputQueue):
 		if not inputQueue.empty():
 			# grab the frame from the input queue
 			frame = inputQueue.get()
-			processed_frame = process.process_image(frame)
+			processed_frame = process.process_image2(frame)
 
 			# write the detections to the output queue
 			outputQueue.put(processed_frame)
