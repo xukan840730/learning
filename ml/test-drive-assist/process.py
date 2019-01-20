@@ -22,7 +22,7 @@ def process_image(image_u8):
     sobel_vert_f = cv2.Sobel(image_blur_f, cv2.CV_64F, 0, 1, ksize=1)
 
     threshold_grad = 0.02
-    sobel_mag_dbg = dbg.debug_sobel2(image_grayscale, sobel_hori_f, sobel_vert_f, threshold_grad)
+    sobel_mag_dbg = dbg.debug_sobel2(sobel_hori_f, sobel_vert_f)
     sobel_mag_dbg2 = (sobel_mag_dbg * 255.0).astype(np.uint8)
     return sobel_mag_dbg2
     # dbg.debug_sobel(image_grayscale, sobel_hori_f, sobel_vert_f, threshold_grad)
@@ -98,3 +98,19 @@ def process_image(image_u8):
     print(len(expand_regions))
 
     return expand_regions
+
+#-----------------------------------------------------------------------------------#
+def process_image2(image_u8):
+    image_grayscale = cv2.cvtColor(image_u8, cv2.COLOR_RGB2GRAY)
+    image_height = image_grayscale.shape[0]
+    image_width = image_grayscale.shape[1]
+
+    sigma = 1.5
+    image_blur_u8 = cv2.GaussianBlur(image_grayscale, (5, 5), sigma)
+    image_blur_f = image_blur_u8.astype(float) / 255.0
+
+    pyramid_l1 = cv2.pyrDown(image_blur_f)
+    l1_expanded = cv2.pyrUp(pyramid_l1)
+    laplacian = cv2.subtract(image_blur_f, l1_expanded)
+    dbg_image = dbg.debug_laplacian(laplacian) * 255.0
+    return dbg_image.astype(np.uint8)

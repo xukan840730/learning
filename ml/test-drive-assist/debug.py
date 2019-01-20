@@ -121,7 +121,7 @@ def debug_sobel(image_gray, sobel_hori_f, sobel_vert_f, threshold):
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
-def debug_sobel2(image_gray, sobel_hori_f, sobel_vert_f, threshold):
+def debug_sobel2(sobel_hori_f, sobel_vert_f):
     sobel_mag_b = np.zeros(sobel_hori_f.shape)
     sobel_mag_g = sobel_mag_b.copy()
     sobel_mag_r = sobel_mag_b.copy()
@@ -181,6 +181,25 @@ def debug_histogram(image_gray_u8):
 
     plt.hist(image_gray_u8, num_bins)
     plt.show()
+
+def debug_laplacian(laplacian):
+    dbg_b = np.zeros(laplacian.shape)
+    dbg_g = dbg_b.copy()
+    dbg_r = dbg_b.copy()
+
+    lap_max = np.max(laplacian)
+    lap_norm = laplacian / lap_max
+
+    # magnitude fill content
+    for ix in range(laplacian.shape[0]):
+        for iy in range(laplacian.shape[1]):
+            if lap_norm[ix, iy] > 0.0:
+                dbg_g[ix, iy] = lap_norm[ix, iy]
+            else:
+                dbg_r[ix, iy] = -lap_norm[ix, iy]
+
+    dbg_image = cv2.merge((dbg_b, dbg_g, dbg_r))
+    return dbg_image
 
 def proto_histogram(image_gray_u8):
     num_bins = 16

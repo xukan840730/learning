@@ -11,7 +11,7 @@ import process
 #     return canny
 
 image_u8 = cv2.imread('test_image_tiny.jpg')
-processed_u8 = process.process_image(image_u8)
+processed_u8 = process.process_image2(image_u8)
 
 frame_width = image_u8.shape[0]
 frame_height = image_u8.shape[1]
