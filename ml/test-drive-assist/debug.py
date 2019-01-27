@@ -105,7 +105,7 @@ def debug_sobel(image_gray, sobel_hori_f, sobel_vert_f, threshold):
     # image_histo_dbg = cv2.merge((histo_bins_b, histo_bins_g, histo_bins_r))
 
     image_gray_3_u8 = cv2.cvtColor(image_gray, cv2.COLOR_GRAY2BGR)
-    image_gray_3_f = image_gray_3_u8.astype(float) / 255.0
+    image_gray_3_f = image_gray_3_u8.astype(np.float32) / 255.0
 
     sobel_hori_dbg2 = cv2.addWeighted(image_gray_3_f, 1.0, sobel_hori_dbg, 0.5, 0.0)
     sobel_vert_dbg2 = cv2.addWeighted(image_gray_3_f, 1.0, sobel_vert_dbg, 0.5, 0.0)
@@ -159,7 +159,7 @@ def debug_expansion(image_gray, visited_mask, b, g, r):
     dbg = cv2.merge((channel_b, channel_g, channel_r))
 
     image_gray_3_u8 = cv2.cvtColor(image_gray, cv2.COLOR_GRAY2BGR)
-    image_gray_3_f = image_gray_3_u8.astype(float) / 255.0
+    image_gray_3_f = image_gray_3_u8.astype(np.float32) / 255.0
 
     image_dbg = cv2.addWeighted(image_gray_3_f, 1.0, dbg, 0.5, 0.0)
 
@@ -190,13 +190,11 @@ def debug_laplacian(laplacian):
     lap_max = np.max(laplacian)
     lap_norm = laplacian / lap_max
 
-    # magnitude fill content
-    for ix in range(laplacian.shape[0]):
-        for iy in range(laplacian.shape[1]):
-            if lap_norm[ix, iy] > 0.0:
-                dbg_g[ix, iy] = lap_norm[ix, iy]
-            else:
-                dbg_r[ix, iy] = -lap_norm[ix, iy]
+    mask1 = lap_norm > 0.0
+    dbg_g[mask1] = lap_norm[mask1]
+
+    mask2 = lap_norm <= 0.0
+    dbg_r[mask2] = -lap_norm[mask2]
 
     dbg_image = cv2.merge((dbg_b, dbg_g, dbg_r))
     return dbg_image

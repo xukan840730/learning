@@ -5,12 +5,13 @@ import process
 # def canny(image):
 #     gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
 #     blur = cv2.GaussianBlur(gray, (5, 5), 0)
-#     # canny = cv2.Canny(blur, 50, 150) ;; original value
-#     canny = cv2.Canny(blur, 20, 40)
-#     # sobel = cv2.Sobel(blur, cv2.CV_64F, 1, 0, ksize=5)
+#     canny = cv2.Canny(blur, 40, 100)
 #     return canny
 
 image_u8 = cv2.imread('test_image_tiny.jpg')
+# image_canny = canny(image_u8)
+# cv2.imshow('canny', image_canny)
+
 processed_u8 = process.process_image2(image_u8)
 
 frame_width = image_u8.shape[0]

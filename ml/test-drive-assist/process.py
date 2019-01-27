@@ -9,7 +9,7 @@ def process_image(image_u8):
     image_width = image_grayscale.shape[1]
 
     image_blur_u8 = cv2.GaussianBlur(image_grayscale, (5, 5), 0)
-    image_blur_f = image_blur_u8.astype(float) / 255.0
+    image_blur_f = image_blur_u8.astype(np.float32) / 255.0
     # image_b, image_g, image_r = cv2.split(image)
 
     # create grayscale histogram
@@ -102,15 +102,65 @@ def process_image(image_u8):
 #-----------------------------------------------------------------------------------#
 def process_image2(image_u8):
     image_grayscale = cv2.cvtColor(image_u8, cv2.COLOR_RGB2GRAY)
-    image_height = image_grayscale.shape[0]
-    image_width = image_grayscale.shape[1]
+    # image_height = image_grayscale.shape[0]
+    # image_width = image_grayscale.shape[1]
 
     sigma = 1.5
     image_blur_u8 = cv2.GaussianBlur(image_grayscale, (5, 5), sigma)
-    image_blur_f = image_blur_u8.astype(float) / 255.0
+    image_blur_f = image_blur_u8.astype(np.float32) / 255.0
 
+    # build laplacian pyramid.
     pyramid_l1 = cv2.pyrDown(image_blur_f)
     l1_expanded = cv2.pyrUp(pyramid_l1)
     laplacian = cv2.subtract(image_blur_f, l1_expanded)
+
+    edgels = {}
+    # build edgels.
+    for irow in range(laplacian.shape[0] - 1):
+        for icol in range(laplacian.shape[1] - 1):
+            pixels = [(irow, icol), (irow, icol + 1), (irow + 1, icol + 1), (irow + 1, icol)]
+            lap_vals = [laplacian[pixels[0]], laplacian[pixels[1]], laplacian[pixels[2]], laplacian[pixels[3]]]
+
+            zero_cross_edge = list()
+            end_pts = list()
+            for ii in range(len(pixels)):
+                p0 = pixels[ii]
+                p1 = pixels[(ii + 1) % len(pixels)]
+                val0 = lap_vals[ii]
+                val1 = lap_vals[(ii + 1) % len(pixels)]
+                if (val0 > 0.0) != (val1 > 0.0):
+                    end_pt_x = (p0[0] * val1 - p1[0] * val0) / (val1 - val0)
+                    end_pt_y = (p0[1] * val1 - p1[1] * val0) / (val1 - val0)
+                    end_pts.append((end_pt_x, end_pt_y))
+                    zero_cross_edge.append((p0, p1))
+
+            if len(end_pts) == 2:
+                end_p0 = end_pts[0]
+                end_p1 = end_pts[1]
+
+                edgel = {}
+                edgel['end_pts'] = (end_p0, end_p1)
+                edgel['mid_pt'] = ((end_p0[0] + end_p1[0]) / 2.0, (end_p0[1] + end_p1[1]) / 2.0)
+
+                grad_hori = 0.0
+                grad_vert = 0.0
+                for e in zero_cross_edge:
+                    edge_pt0 = e[0]
+                    edge_pt1 = e[1]
+                    if edge_pt1[1] == edge_pt0[1] + 1:
+                        grad_hori += laplacian[edge_pt1] - laplacian[edge_pt0]
+                    elif edge_pt1[0] == edge_pt0[0] + 1:
+                        grad_vert += laplacian[edge_pt1] - laplacian[edge_pt0]
+                    elif edge_pt1[1] == edge_pt0[1] - 1:
+                        grad_hori += laplacian[edge_pt0] - laplacian[edge_pt1]
+                    elif edge_pt1[0] == edge_pt0[0] - 1:
+                        grad_vert += laplacian[edge_pt0] - laplacian[edge_pt1]
+                    else:
+                        assert(False)
+                edgel['grad'] = (grad_hori / 2.0, grad_vert / 2.0)
+
+                edgels[(irow, icol)] = edgel
+
     dbg_image = dbg.debug_laplacian(laplacian) * 255.0
+
     return dbg_image.astype(np.uint8)

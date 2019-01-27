@@ -31,8 +31,8 @@ sigma2 = sigma1 * 2.0
 image_blur_1_u8 = cv2.GaussianBlur(image_grayscale, ksize, sigma1, sigma1)
 image_blur_2_u8 = cv2.GaussianBlur(image_grayscale, ksize, sigma2, sigma2)
 
-image_blur_1_f = image_blur_1_u8.astype(float) / 255.0
-image_blur_2_f = image_blur_2_u8.astype(float) / 255.0
+image_blur_1_f = image_blur_1_u8.astype(np.float32) / 255.0
+image_blur_2_f = image_blur_2_u8.astype(np.float32) / 255.0
 
 image_dog = image_blur_1_f - image_blur_2_f
 debug_dog(image_dog)
