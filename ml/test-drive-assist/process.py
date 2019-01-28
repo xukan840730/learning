@@ -255,6 +255,7 @@ def process_image2(image_u8):
                 end_pt_x = (p0[0] * val1 - p1[0] * val0) / (val1 - val0)
                 end_pts_vert[((irow, irow + 1), icol)] = end_pt_x
 
+    grad_mag_max = 0.0
     edgels_dict = {}
     # build edgels.
     for irow in range(laplacian.shape[0] - 1):
@@ -310,8 +311,14 @@ def process_image2(image_u8):
                         grad_vert += laplacian[edge_pt0] - laplacian[edge_pt1]
                     else:
                         assert(False)
-                edgel['grad'] = (grad_hori / 2.0, grad_vert / 2.0)
+                grad_hori *= 0.5
+                grad_vert *= 0.5
+                grad_mag = np.sqrt(grad_hori * grad_hori + grad_vert * grad_vert)
+                edgel['grad'] = grad_hori, grad_vert
+                edgel['grad_mag'] = grad_mag
                 edgel['visited'] = False
+                if grad_mag > grad_mag_max:
+                    grad_mag_max = grad_mag
 
                 edgels_dict[(irow, icol)] = edgel
 
@@ -337,8 +344,9 @@ def process_image2(image_u8):
         # update iteration count
         i_visited += 1
 
-    print(len(chains))
+    # print(len(chains))
 
-    dbg_image = dbg.debug_laplacian(laplacian) * 255.0
+    # dbg_image = dbg.debug_laplacian(laplacian) * 255.0
+    dbg_image = dbg.debug_edgels(laplacian, edgels_dict, grad_mag_max) * 255.0
 
     return dbg_image.astype(np.uint8)

@@ -18,6 +18,7 @@ frame_width = image_u8.shape[0]
 frame_height = image_u8.shape[1]
 
 frame_u8 = cv2.addWeighted(image_u8, 1.0, processed_u8, 1.0, 0.0)
+# frame_u8 = processed_u8
 cv2.imshow('Frame', frame_u8)
 cv2.waitKey(0)
 

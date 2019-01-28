@@ -199,6 +199,33 @@ def debug_laplacian(laplacian):
     dbg_image = cv2.merge((dbg_b, dbg_g, dbg_r))
     return dbg_image
 
+def debug_edgels(laplacian, edgels_dict, grad_mag_max):
+    dbg_b = np.zeros(laplacian.shape)
+    dbg_g = dbg_b.copy()
+    dbg_r = dbg_b.copy()
+
+    # avoid zero division
+    if grad_mag_max == 0.0:
+        grad_mag_max = 0.1
+
+    edgel_keys = edgels_dict.keys()
+
+    # build linked chain from edgels
+    num_edgels = len(edgel_keys)
+
+    threshold = grad_mag_max / 10.0
+
+    for e_key in edgel_keys:
+        edgel = edgels_dict[e_key]
+        edgel_idx = edgel['quad_idx']
+        edgel_grad_mag = edgel['grad_mag']
+        # dbg_g[edgel_idx] = edgel_grad_mag / grad_mag_max
+        if edgel_grad_mag > threshold:
+            dbg_g[edgel_idx] = 1.0
+
+    dbg_image = cv2.merge((dbg_b, dbg_g, dbg_r))
+    return dbg_image
+
 def proto_histogram(image_gray_u8):
     num_bins = 16
     assert (256 % num_bins == 0)
