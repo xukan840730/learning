@@ -145,6 +145,7 @@ def link_edgel(edgels_dict, e_key, shape):
     first_edgel['visited'] = True
     chain_a.append(e_key)
     chain_b.append(e_key)
+    grad_mag_max = first_edgel['grad_mag']
 
     frontiers_a = list()
     frontiers_b = list()
@@ -166,6 +167,9 @@ def link_edgel(edgels_dict, e_key, shape):
                 if (next_idx0 not in chain_a) and (next_idx0 not in chain_b):
                     next_edgel = edgels_dict[next_idx0]
                     next_edgel['visited'] = True
+                    grad_mag = next_edgel['grad_mag']
+                    if grad_mag > grad_mag_max:
+                        grad_mag_max = grad_mag
                     new_frontiers.append(next_edgel)
                     chain_a.append(next_idx0)
 
@@ -177,6 +181,9 @@ def link_edgel(edgels_dict, e_key, shape):
                     if (next_idx1 not in chain_a) and (next_idx1 not in chain_b):
                         next_edgel = edgels_dict[next_idx1]
                         next_edgel['visited'] = True
+                        grad_mag = next_edgel['grad_mag']
+                        if grad_mag > grad_mag_max:
+                            grad_mag_max = grad_mag
                         new_frontiers.append(next_edgel)
                         chain_a.append(next_idx1)
 
@@ -199,6 +206,9 @@ def link_edgel(edgels_dict, e_key, shape):
                     if (next_idx0 not in chain_a) and (next_idx0 not in chain_b):
                         next_edgel = edgels_dict[next_idx0]
                         next_edgel['visited'] = True
+                        grad_mag = next_edgel['grad_mag']
+                        if grad_mag > grad_mag_max:
+                            grad_mag_max = grad_mag
                         new_frontiers.append(next_edgel)
                         chain_b.append(next_idx0)
 
@@ -209,12 +219,24 @@ def link_edgel(edgels_dict, e_key, shape):
                 if (next_idx1 not in chain_a) and (next_idx1 not in chain_b):
                     next_edgel = edgels_dict[next_idx1]
                     next_edgel['visited'] = True
+                    grad_mag = next_edgel['grad_mag']
+                    if grad_mag > grad_mag_max:
+                        grad_mag_max = grad_mag
                     new_frontiers.append(next_edgel)
                     chain_b.append(next_idx1)
 
         frontiers_b = new_frontiers
 
-    return chain_a, chain_b
+    final_chain = chain_a.copy()
+    final_chain.reverse()
+    final_chain.pop(len(final_chain) - 1)
+    final_chain.extend(chain_b)
+
+    result = {}
+    result['chain'] = final_chain
+    result['grad_mag_max'] = grad_mag_max
+
+    return result
 
 #-----------------------------------------------------------------------------------#
 def process_image2(image_u8):
@@ -336,9 +358,7 @@ def process_image2(image_u8):
             continue
 
         # use 2 list so they can be easily linked together
-        chain_a, chain_b = link_edgel(edgels_dict, e_key, laplacian.shape)
-        this_chain = (chain_a, chain_b)
-        # print(this_chain)
+        this_chain = link_edgel(edgels_dict, e_key, laplacian.shape)
         chains.append(this_chain)
 
         # update iteration count
@@ -347,6 +367,6 @@ def process_image2(image_u8):
     # print(len(chains))
 
     # dbg_image = dbg.debug_laplacian(laplacian) * 255.0
-    dbg_image = dbg.debug_edgels(laplacian, edgels_dict, grad_mag_max) * 255.0
+    dbg_image = dbg.debug_edgels(laplacian, edgels_dict, chains, grad_mag_max) * 255.0
 
     return dbg_image.astype(np.uint8)
