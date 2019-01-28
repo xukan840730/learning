@@ -114,29 +114,63 @@ def process_image2(image_u8):
     l1_expanded = cv2.pyrUp(pyramid_l1)
     laplacian = cv2.subtract(image_blur_f, l1_expanded)
 
+    # build hori edge end points
+    end_pts_hori = {}
+    for irow in range(laplacian.shape[0]):
+        for icol in range(laplacian.shape[1] - 1):
+            p0 = (irow, icol)
+            p1 = (irow, icol + 1)
+            val0 = laplacian[p0]
+            val1 = laplacian[p1]
+            if (val0 > 0.0) != (val1 > 0.0):
+                end_pt_y = (p0[1] * val1 - p1[1] * val0) / (val1 - val0)
+                end_pts_hori[(irow, (icol, icol + 1))] = end_pt_y
+
+    # build vert edge end points
+    end_pts_vert = {}
+    for icol in range(laplacian.shape[1]):
+        for irow in range(laplacian.shape[0] - 1):
+            p0 = (irow, icol)
+            p1 = (irow + 1, icol)
+            val0 = laplacian[p0]
+            val1 = laplacian[p1]
+            if (val0 > 0.0) != (val1 > 0.0):
+                end_pt_x = (p0[0] * val1 - p1[0] * val0) / (val1 - val0)
+                end_pts_vert[((irow, irow + 1), icol)] = end_pt_x
+
     edgels = {}
     # build edgels.
     for irow in range(laplacian.shape[0] - 1):
         for icol in range(laplacian.shape[1] - 1):
             pixels = [(irow, icol), (irow, icol + 1), (irow + 1, icol + 1), (irow + 1, icol)]
-            lap_vals = [laplacian[pixels[0]], laplacian[pixels[1]], laplacian[pixels[2]], laplacian[pixels[3]]]
 
+            quad_end_pts = list()
             zero_cross_edge = list()
-            end_pts = list()
-            for ii in range(len(pixels)):
-                p0 = pixels[ii]
-                p1 = pixels[(ii + 1) % len(pixels)]
-                val0 = lap_vals[ii]
-                val1 = lap_vals[(ii + 1) % len(pixels)]
-                if (val0 > 0.0) != (val1 > 0.0):
-                    end_pt_x = (p0[0] * val1 - p1[0] * val0) / (val1 - val0)
-                    end_pt_y = (p0[1] * val1 - p1[1] * val0) / (val1 - val0)
-                    end_pts.append((end_pt_x, end_pt_y))
-                    zero_cross_edge.append((p0, p1))
 
-            if len(end_pts) == 2:
-                end_p0 = end_pts[0]
-                end_p1 = end_pts[1]
+            # clockwise
+            e0 = (irow, (icol, icol + 1))
+            if e0 in end_pts_hori:
+                quad_end_pts.append((irow, end_pts_hori[e0]))
+                zero_cross_edge.append(((irow, icol), (irow, icol + 1)))
+
+            e1 = ((irow, irow + 1), icol + 1)
+            if e1 in end_pts_vert:
+                quad_end_pts.append((end_pts_vert[e1], icol + 1))
+                zero_cross_edge.append(((irow, icol + 1), (irow + 1, icol + 1)))
+
+            e2 = (irow + 1, (icol, icol + 1))
+            if e2 in end_pts_hori:
+                quad_end_pts.append((irow + 1, end_pts_hori[e2]))
+                zero_cross_edge.append(((irow + 1, icol), (irow + 1, icol + 1)))
+
+            e3 = ((irow, irow + 1), icol)
+            if e3 in end_pts_vert:
+                quad_end_pts.append((end_pts_vert[e3], icol))
+                zero_cross_edge.append(((irow, icol), (irow + 1, icol)))
+
+            if len(quad_end_pts) == 2:
+                end_p0 = quad_end_pts[0]
+                end_p1 = quad_end_pts[1]
 
                 edgel = {}
                 edgel['end_pts'] = (end_p0, end_p1)

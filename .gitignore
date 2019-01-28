@@ -52,3 +52,5 @@ opencl/opencl-cuda/hello.xcodeproj/project.xcworkspace/xcuserdata/kanxu.xcuserda
 *.xcbkptlist
 ml/test-drive-assist/.idea/test-drive-assist.iml
 ml/test-drive-assist/test_image.jpg
+ml/test-drive-assist/__pycache__/debug.cpython-36.pyc
+*.pyc
