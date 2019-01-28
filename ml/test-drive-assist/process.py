@@ -100,6 +100,87 @@ def process_image(image_u8):
     return expand_regions
 
 #-----------------------------------------------------------------------------------#
+def edge_equal(e0, e1):
+    e0_pt0 = e0[0]
+    e1_pt0 = e1[0]
+    if e0_pt0[0] != e1_pt0[0] or e0_pt0[1] != e1_pt0[1]:
+        return False
+
+    e0_pt1 = e0[1]
+    e1_pt1 = e1[1]
+    if e0_pt1[0] != e1_pt1[0] or e0_pt1[1] != e1_pt1[1]:
+        return False
+
+    return True
+
+#-----------------------------------------------------------------------------------#
+def get_adj_quad(curr_quad_idx, edge):
+    irow = curr_quad_idx[0]
+    icol = curr_quad_idx[1]
+
+    test_edge0 = ((irow, icol), (irow, icol + 1))
+    if edge_equal(test_edge0, edge):
+        return (irow - 1, icol)
+
+    test_edge1 = ((irow, icol + 1), (irow + 1, icol + 1))
+    if edge_equal(test_edge1, edge):
+        return (irow, icol + 1)
+
+    test_edge2 = ((irow + 1, icol), (irow + 1, icol + 1))
+    if edge_equal(test_edge2, edge):
+        return (irow + 1, icol)
+
+    test_edge3 = ((irow, icol), (irow + 1, icol))
+    if edge_equal(test_edge3, edge):
+        return (irow, icol - 1)
+
+    assert(False)
+
+#-----------------------------------------------------------------------------------#
+def link_edgel(edgels_dict, e_key, shape):
+    chain_a = list()
+    chain_b = list()
+
+    first_edgel = edgels_dict[e_key]
+    first_edgel['visited'] = True
+    chain_a.append(e_key)
+    chain_b.append(e_key)
+
+    frontiers = list()
+    frontiers.append(first_edgel)
+
+    while len(frontiers) > 0:
+        new_frontiers = list()
+
+        for each_edgel in frontiers:
+            edgel_idx = each_edgel['quad_idx']
+            edges = each_edgel['edge']
+            e0 = edges[0]
+            e1 = edges[1]
+
+            next_idx0 = get_adj_quad(edgel_idx, e0)
+            if next_idx0 in edgels_dict:
+                if next_idx0[0] >= 0 and next_idx0[0] < shape[0] and next_idx0[1] >= 0 and next_idx0[1] < shape[1]:
+                    if (next_idx0 not in chain_a) and (next_idx0 not in chain_b):
+                        next_edgel = edgels_dict[next_idx0]
+                        next_edgel['visited'] = True
+                        new_frontiers.append(next_edgel)
+                        chain_a.append(next_idx0)
+
+            next_idx1 = get_adj_quad(edgel_idx, e1)
+            if next_idx1 in edgels_dict:
+                if next_idx1[0] >= 0 and next_idx1[0] < shape[0] and next_idx1[1] >= 0 and next_idx1[1] < shape[1]:
+                    if (next_idx1 not in chain_a) and (next_idx1 not in chain_b):
+                        next_edgel = edgels_dict[next_idx1]
+                        next_edgel['visited'] = True
+                        new_frontiers.append(next_edgel)
+                        chain_b.append(next_idx1)
+
+        frontiers = new_frontiers
+
+    return chain_a, chain_b
+
+#-----------------------------------------------------------------------------------#
 def process_image2(image_u8):
     image_grayscale = cv2.cvtColor(image_u8, cv2.COLOR_RGB2GRAY)
     # image_height = image_grayscale.shape[0]
@@ -138,11 +219,10 @@ def process_image2(image_u8):
                 end_pt_x = (p0[0] * val1 - p1[0] * val0) / (val1 - val0)
                 end_pts_vert[((irow, irow + 1), icol)] = end_pt_x
 
-    edgels = {}
+    edgels_dict = {}
     # build edgels.
     for irow in range(laplacian.shape[0] - 1):
         for icol in range(laplacian.shape[1] - 1):
-            pixels = [(irow, icol), (irow, icol + 1), (irow + 1, icol + 1), (irow + 1, icol)]
 
             quad_end_pts = list()
             zero_cross_edge = list()
@@ -173,8 +253,11 @@ def process_image2(image_u8):
                 end_p1 = quad_end_pts[1]
 
                 edgel = {}
+                edgel['quad_idx'] = (irow, icol)
                 edgel['end_pts'] = (end_p0, end_p1)
                 edgel['mid_pt'] = ((end_p0[0] + end_p1[0]) / 2.0, (end_p0[1] + end_p1[1]) / 2.0)
+                assert(len(zero_cross_edge) == 2)
+                edgel['edge'] = zero_cross_edge
 
                 grad_hori = 0.0
                 grad_vert = 0.0
@@ -192,8 +275,32 @@ def process_image2(image_u8):
                     else:
                         assert(False)
                 edgel['grad'] = (grad_hori / 2.0, grad_vert / 2.0)
+                edgel['visited'] = False
 
-                edgels[(irow, icol)] = edgel
+                edgels_dict[(irow, icol)] = edgel
+
+    edgel_keys = edgels_dict.keys()
+
+    # build linked chain from edgels
+    num_edgels = len(edgel_keys)
+
+    chains = list()
+    i_visited = 0
+    for e_key in edgel_keys:
+        edgel = edgels_dict[e_key]
+        # skip already visited edgel
+        if edgel['visited']:
+            continue
+
+        # use 2 list so they can be easily linked together
+        chain_a, chain_b = link_edgel(edgels_dict, e_key, laplacian.shape)
+        chains.append((chain_a, chain_b))
+
+        # update iteration count
+        i_visited += 1
+
+    for x in chains:
+        print(x)
 
     dbg_image = dbg.debug_laplacian(laplacian) * 255.0
 
