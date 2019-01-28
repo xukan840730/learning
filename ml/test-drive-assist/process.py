@@ -146,27 +146,31 @@ def link_edgel(edgels_dict, e_key, shape):
     chain_a.append(e_key)
     chain_b.append(e_key)
 
-    frontiers = list()
-    frontiers.append(first_edgel)
+    frontiers_a = list()
+    frontiers_b = list()
+    frontiers_a.append(first_edgel)
+    frontiers_b.append(first_edgel)
 
-    while len(frontiers) > 0:
+    iter_count = 0
+    while len(frontiers_a) > 0:
         new_frontiers = list()
 
-        for each_edgel in frontiers:
-            edgel_idx = each_edgel['quad_idx']
-            edges = each_edgel['edge']
-            e0 = edges[0]
+        each_edgel = frontiers_a.pop(0)
+        edgel_idx = each_edgel['quad_idx']
+        edges = each_edgel['edge']
+
+        e0 = edges[0]
+        next_idx0 = get_adj_quad(edgel_idx, e0)
+        if next_idx0 in edgels_dict:
+            if next_idx0[0] >= 0 and next_idx0[0] < shape[0] and next_idx0[1] >= 0 and next_idx0[1] < shape[1]:
+                if (next_idx0 not in chain_a) and (next_idx0 not in chain_b):
+                    next_edgel = edgels_dict[next_idx0]
+                    next_edgel['visited'] = True
+                    new_frontiers.append(next_edgel)
+                    chain_a.append(next_idx0)
+
+        if iter_count > 0:
             e1 = edges[1]
-
-            next_idx0 = get_adj_quad(edgel_idx, e0)
-            if next_idx0 in edgels_dict:
-                if next_idx0[0] >= 0 and next_idx0[0] < shape[0] and next_idx0[1] >= 0 and next_idx0[1] < shape[1]:
-                    if (next_idx0 not in chain_a) and (next_idx0 not in chain_b):
-                        next_edgel = edgels_dict[next_idx0]
-                        next_edgel['visited'] = True
-                        new_frontiers.append(next_edgel)
-                        chain_a.append(next_idx0)
-
             next_idx1 = get_adj_quad(edgel_idx, e1)
             if next_idx1 in edgels_dict:
                 if next_idx1[0] >= 0 and next_idx1[0] < shape[0] and next_idx1[1] >= 0 and next_idx1[1] < shape[1]:
@@ -174,9 +178,41 @@ def link_edgel(edgels_dict, e_key, shape):
                         next_edgel = edgels_dict[next_idx1]
                         next_edgel['visited'] = True
                         new_frontiers.append(next_edgel)
-                        chain_b.append(next_idx1)
+                        chain_a.append(next_idx1)
 
-        frontiers = new_frontiers
+        iter_count += 1
+        frontiers_a = new_frontiers
+
+    iter_count = 0
+    while len(frontiers_b) > 0:
+        new_frontiers = list()
+
+        each_edgel = frontiers_b.pop(0)
+        edgel_idx = each_edgel['quad_idx']
+        edges = each_edgel['edge']
+
+        if iter_count > 0:
+            e0 = edges[0]
+            next_idx0 = get_adj_quad(edgel_idx, e0)
+            if next_idx0 in edgels_dict:
+                if next_idx0[0] >= 0 and next_idx0[0] < shape[0] and next_idx0[1] >= 0 and next_idx0[1] < shape[1]:
+                    if (next_idx0 not in chain_a) and (next_idx0 not in chain_b):
+                        next_edgel = edgels_dict[next_idx0]
+                        next_edgel['visited'] = True
+                        new_frontiers.append(next_edgel)
+                        chain_b.append(next_idx0)
+
+        e1 = edges[1]
+        next_idx1 = get_adj_quad(edgel_idx, e1)
+        if next_idx1 in edgels_dict:
+            if next_idx1[0] >= 0 and next_idx1[0] < shape[0] and next_idx1[1] >= 0 and next_idx1[1] < shape[1]:
+                if (next_idx1 not in chain_a) and (next_idx1 not in chain_b):
+                    next_edgel = edgels_dict[next_idx1]
+                    next_edgel['visited'] = True
+                    new_frontiers.append(next_edgel)
+                    chain_b.append(next_idx1)
+
+        frontiers_b = new_frontiers
 
     return chain_a, chain_b
 
@@ -294,13 +330,14 @@ def process_image2(image_u8):
 
         # use 2 list so they can be easily linked together
         chain_a, chain_b = link_edgel(edgels_dict, e_key, laplacian.shape)
-        chains.append((chain_a, chain_b))
+        this_chain = (chain_a, chain_b)
+        # print(this_chain)
+        chains.append(this_chain)
 
         # update iteration count
         i_visited += 1
 
-    for x in chains:
-        print(x)
+    print(len(chains))
 
     dbg_image = dbg.debug_laplacian(laplacian) * 255.0
 
