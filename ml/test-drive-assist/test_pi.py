@@ -16,8 +16,6 @@ import time
 import cv2
 import process
 
-capture_res = (160, 120)
-
 # construct the argument parse and parse the arguments
 ap = argparse.ArgumentParser()
 ap.add_argument("-n", "--num-frames", type=int, default=100,
@@ -29,9 +27,9 @@ args = vars(ap.parse_args())
 def capture1():
 	# initialize the camera and stream
 	camera = PiCamera()
-	camera.resolution = capture_res
+	camera.resolution = (320, 240)
 	camera.framerate = 32
-	rawCapture = PiRGBArray(camera, size=capture_res)
+	rawCapture = PiRGBArray(camera, size=(320, 240))
 	stream = camera.capture_continuous(rawCapture, format="bgr",
 									   use_video_port=True)
 
@@ -100,7 +98,7 @@ p.start()
 # created a *threaded *video stream, allow the camera sensor to warmup,
 # and start the FPS counter
 print("[INFO] sampling THREADED frames from `picamera` module...")
-vs = PiVideoStream(resolution=capture_res).start()
+vs = PiVideoStream().start()
 time.sleep(2.0)
 fps = FPS().start()
 
