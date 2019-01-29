@@ -199,7 +199,7 @@ def debug_laplacian(laplacian):
     dbg_image = cv2.merge((dbg_b, dbg_g, dbg_r))
     return dbg_image
 
-def debug_edgels(laplacian, edgels_dict, chains, grad_mag_max):
+def debug_edgels(laplacian, edgels_dict, grad_mag_max):
     dbg_b = np.zeros(laplacian.shape)
     dbg_g = dbg_b.copy()
     dbg_r = dbg_b.copy()
@@ -210,13 +210,14 @@ def debug_edgels(laplacian, edgels_dict, chains, grad_mag_max):
 
     threshold = grad_mag_max / 10.0
 
-    for each_chain in chains:
-        chain = each_chain['chain']
-        chain_grad_mag_max = each_chain['grad_mag_max']
-        if chain_grad_mag_max > threshold:
-            for edgel_idx in chain:
-                # dbg_g[edgel_idx] = edgel_grad_mag / grad_mag_max
-                dbg_g[edgel_idx] = 1.0
+    edgel_keys = edgels_dict.keys()
+
+    for e_key in edgel_keys:
+        edgel = edgels_dict[e_key]
+        grad_mag = edgel['grad_mag']
+        if grad_mag > threshold:
+            # dbg_g[edgel_idx] = edgel_grad_mag / grad_mag_max
+            dbg_g[e_key] = 1.0
 
     dbg_image = cv2.merge((dbg_b, dbg_g, dbg_r))
     return dbg_image

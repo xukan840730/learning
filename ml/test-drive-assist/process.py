@@ -350,23 +350,23 @@ def process_image2(image_u8):
     num_edgels = len(edgel_keys)
 
     chains = list()
-    i_visited = 0
-    for e_key in edgel_keys:
-        edgel = edgels_dict[e_key]
-        # skip already visited edgel
-        if edgel['visited']:
-            continue
-
-        # use 2 list so they can be easily linked together
-        this_chain = link_edgel(edgels_dict, e_key, laplacian.shape)
-        chains.append(this_chain)
-
-        # update iteration count
-        i_visited += 1
+    # i_visited = 0
+    # for e_key in edgel_keys:
+    #     edgel = edgels_dict[e_key]
+    #     # skip already visited edgel
+    #     if edgel['visited']:
+    #         continue
+    #
+    #     # use 2 list so they can be easily linked together
+    #     this_chain = link_edgel(edgels_dict, e_key, laplacian.shape)
+    #     chains.append(this_chain)
+    #
+    #     # update iteration count
+    #     i_visited += 1
 
     # print(len(chains))
 
     # dbg_image = dbg.debug_laplacian(laplacian) * 255.0
-    dbg_image = dbg.debug_edgels(laplacian, edgels_dict, chains, grad_mag_max) * 255.0
+    dbg_image = dbg.debug_edgels(laplacian, edgels_dict, grad_mag_max) * 255.0
 
     return dbg_image.astype(np.uint8)
