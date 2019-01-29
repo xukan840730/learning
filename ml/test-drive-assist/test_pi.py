@@ -16,7 +16,7 @@ import time
 import cv2
 import process
 
-capture_res = (320, 240)
+capture_res = (160, 120)
 
 # construct the argument parse and parse the arguments
 ap = argparse.ArgumentParser()
@@ -114,13 +114,11 @@ while True:
 
 	# if the input queue *is* empty, give the current frame to classify
 	if inputQueue.empty():
-		scaled_frame = imutils.resize(frame_u8, width=160)
-		inputQueue.put(scaled_frame)
+		inputQueue.put(frame_u8)
 
 	# if the output queue *is not* empty, grab the detections
 	if not outputQueue.empty():
 		processed_u8 = outputQueue.get()
-		processed_u8 = imutils.resize(processed_u8, width=320)
 
 	# check to see if our detectios are not None (and if so, we'll
 	# draw the detections on the frame)
