@@ -2,7 +2,27 @@ import cv2
 import numpy as np
 import region as rg
 import debug as dbg
+import imutils
+import cProfile, pstats, io
 
+def profile(fnc):
+    """ A decorator """
+
+    def inner(*args, **kwargs):
+        pr = cProfile.Profile()
+        pr.enable()
+        retval = fnc(*args, **kwargs)
+        pr.disable()
+        s = io.StringIO()
+        sortby = 'cumulative'
+        ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
+        ps.print_stats()
+        print(s.getvalue())
+        return retval
+
+    return inner
+
+# -----------------------------------------------------------------------------------------#
 def process_image(image_u8):
     image_grayscale = cv2.cvtColor(image_u8, cv2.COLOR_RGB2GRAY)
     image_height = image_grayscale.shape[0]
@@ -239,49 +259,53 @@ def link_edgel(edgels_dict, e_key, shape):
     return result
 
 #-----------------------------------------------------------------------------------#
-def process_image2(image_u8):
-    image_grayscale = cv2.cvtColor(image_u8, cv2.COLOR_RGB2GRAY)
-    # image_height = image_grayscale.shape[0]
-    # image_width = image_grayscale.shape[1]
-
-    sigma = 1.5
-    image_blur_u8 = cv2.GaussianBlur(image_grayscale, (5, 5), sigma)
-    image_blur_f = image_blur_u8.astype(np.float32) / 255.0
-
-    # build laplacian pyramid.
-    pyramid_l1 = cv2.pyrDown(image_blur_f)
+def laplacian(image_f):
+    pyramid_l1 = cv2.pyrDown(image_f)
     l1_expanded = cv2.pyrUp(pyramid_l1)
-    laplacian = cv2.subtract(image_blur_f, l1_expanded)
+    lapl = cv2.subtract(image_f, l1_expanded)
+    return lapl
 
+#-----------------------------------------------------------------------------------#
+def build_end_pts(lapl):
     # build hori edge end points
     end_pts_hori = {}
-    for irow in range(laplacian.shape[0]):
-        for icol in range(laplacian.shape[1] - 1):
+    for irow in range(lapl.shape[0]):
+        for icol in range(lapl.shape[1] - 1):
             p0 = (irow, icol)
             p1 = (irow, icol + 1)
-            val0 = laplacian[p0]
-            val1 = laplacian[p1]
-            if (val0 > 0.0) != (val1 > 0.0):
+            val0 = lapl[p0]
+            val1 = lapl[p1]
+            bval0 = val0 > 0.0
+            bval1 = val1 > 0.0
+            if bval0 != bval1:
                 end_pt_y = (p0[1] * val1 - p1[1] * val0) / (val1 - val0)
                 end_pts_hori[(irow, (icol, icol + 1))] = end_pt_y
 
     # build vert edge end points
     end_pts_vert = {}
-    for icol in range(laplacian.shape[1]):
-        for irow in range(laplacian.shape[0] - 1):
+    for icol in range(lapl.shape[1]):
+        for irow in range(lapl.shape[0] - 1):
             p0 = (irow, icol)
             p1 = (irow + 1, icol)
-            val0 = laplacian[p0]
-            val1 = laplacian[p1]
+            val0 = lapl[p0]
+            val1 = lapl[p1]
+            bval0 = val0 > 0.0
+            bval1 = val1 > 0.0
             if (val0 > 0.0) != (val1 > 0.0):
                 end_pt_x = (p0[0] * val1 - p1[0] * val0) / (val1 - val0)
                 end_pts_vert[((irow, irow + 1), icol)] = end_pt_x
 
-    grad_mag_max = 0.0
+    return end_pts_hori, end_pts_vert
+
+#-----------------------------------------------------------------------------------#
+def build_edgels(lapl, end_pts_hori, end_pts_vert):
+
     edgels_dict = {}
+    grad_mag_max = 0.0
+
     # build edgels.
-    for irow in range(laplacian.shape[0] - 1):
-        for icol in range(laplacian.shape[1] - 1):
+    for irow in range(lapl.shape[0] - 1):
+        for icol in range(lapl.shape[1] - 1):
 
             quad_end_pts = list()
             zero_cross_edge = list()
@@ -324,15 +348,16 @@ def process_image2(image_u8):
                     edge_pt0 = e[0]
                     edge_pt1 = e[1]
                     if edge_pt1[1] == edge_pt0[1] + 1:
-                        grad_hori += laplacian[edge_pt1] - laplacian[edge_pt0]
+                        grad_hori += lapl[edge_pt1] - lapl[edge_pt0]
                     elif edge_pt1[0] == edge_pt0[0] + 1:
-                        grad_vert += laplacian[edge_pt1] - laplacian[edge_pt0]
+                        grad_vert += lapl[edge_pt1] - lapl[edge_pt0]
                     elif edge_pt1[1] == edge_pt0[1] - 1:
-                        grad_hori += laplacian[edge_pt0] - laplacian[edge_pt1]
+                        grad_hori += lapl[edge_pt0] - lapl[edge_pt1]
                     elif edge_pt1[0] == edge_pt0[0] - 1:
-                        grad_vert += laplacian[edge_pt0] - laplacian[edge_pt1]
+                        grad_vert += lapl[edge_pt0] - lapl[edge_pt1]
                     else:
                         assert(False)
+
                 grad_hori *= 0.5
                 grad_vert *= 0.5
                 grad_mag = np.sqrt(grad_hori * grad_hori + grad_vert * grad_vert)
@@ -344,29 +369,50 @@ def process_image2(image_u8):
 
                 edgels_dict[(irow, icol)] = edgel
 
+    return edgels_dict, grad_mag_max
+
+#-----------------------------------------------------------------------------------#
+def process_image2(image_u8):
+    image_grayscale = cv2.cvtColor(image_u8, cv2.COLOR_RGB2GRAY)
+    image_height = image_grayscale.shape[0]
+    image_width = image_grayscale.shape[1]
+
+    sigma = 1.5
+    image_blur_u8 = cv2.GaussianBlur(image_grayscale, (5, 5), sigma)
+    image_blur_f = image_blur_u8.astype(np.float32) / 255.0
+
+    small_width = image_width // 4
+    small_image_f = imutils.resize(image_blur_f, width=small_width)
+
+    # build laplacian pyramid.
+    lapl = laplacian(small_image_f)
+
+    end_pts_hori, end_pts_vert = build_end_pts(lapl)
+    edgels_dict, grad_mag_max = build_edgels(lapl, end_pts_hori, end_pts_vert)
     edgel_keys = edgels_dict.keys()
 
     # build linked chain from edgels
     num_edgels = len(edgel_keys)
 
     chains = list()
-    # i_visited = 0
-    # for e_key in edgel_keys:
-    #     edgel = edgels_dict[e_key]
-    #     # skip already visited edgel
-    #     if edgel['visited']:
-    #         continue
-    #
-    #     # use 2 list so they can be easily linked together
-    #     this_chain = link_edgel(edgels_dict, e_key, laplacian.shape)
-    #     chains.append(this_chain)
-    #
-    #     # update iteration count
-    #     i_visited += 1
+    i_visited = 0
+    for e_key in edgel_keys:
+        edgel = edgels_dict[e_key]
+        # skip already visited edgel
+        if edgel['visited']:
+            continue
+
+        # use 2 list so they can be easily linked together
+        this_chain = link_edgel(edgels_dict, e_key, lapl.shape)
+        chains.append(this_chain)
+
+        # update iteration count
+        i_visited += 1
 
     # print(len(chains))
 
-    # dbg_image = dbg.debug_laplacian(laplacian) * 255.0
-    dbg_image = dbg.debug_edgels(laplacian, edgels_dict, grad_mag_max) * 255.0
+    # dbg_image = dbg.debug_laplacian(lapl) * 255.0
+    dbg_image = dbg.debug_edgels(lapl, edgels_dict, chains, grad_mag_max) * 255.0
 
-    return dbg_image.astype(np.uint8)
+    result_image = imutils.resize(dbg_image, width=image_width)
+    return result_image.astype(np.uint8)
