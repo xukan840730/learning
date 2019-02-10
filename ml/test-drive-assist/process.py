@@ -300,12 +300,21 @@ def build_end_pts(lapl):
 #-----------------------------------------------------------------------------------#
 def build_edgels(lapl, end_pts_hori, end_pts_vert):
 
-    edgels_dict = {}
     grad_mag_max = 0.0
 
+    rows = lapl.shape[0]
+    cols = lapl.shape[1]
+
+    edgels_matx = list()
+    for irow in range(rows):
+        b = list()
+        for icol in range(cols):
+            b.append(list())
+        edgels_matx.append(b)
+
     # build edgels.
-    for irow in range(lapl.shape[0] - 1):
-        for icol in range(lapl.shape[1] - 1):
+    for irow in range(rows - 1):
+        for icol in range(cols - 1):
 
             quad_end_pts = list()
             zero_cross_edge = list()
@@ -367,9 +376,9 @@ def build_edgels(lapl, end_pts_hori, end_pts_vert):
                 if grad_mag > grad_mag_max:
                     grad_mag_max = grad_mag
 
-                edgels_dict[(irow, icol)] = edgel
+                edgels_matx[irow][icol].append(edgel)
 
-    return edgels_dict, grad_mag_max
+    return edgels_matx, grad_mag_max
 
 #-----------------------------------------------------------------------------------#
 def process_image2(image_u8):
@@ -388,31 +397,32 @@ def process_image2(image_u8):
     lapl = laplacian(small_image_f)
 
     end_pts_hori, end_pts_vert = build_end_pts(lapl)
-    edgels_dict, grad_mag_max = build_edgels(lapl, end_pts_hori, end_pts_vert)
-    edgel_keys = edgels_dict.keys()
+    edgels_matx, grad_mag_max = build_edgels(lapl, end_pts_hori, end_pts_vert)
+    # edgel_keys = edgels_dict.keys()
 
     # build linked chain from edgels
-    num_edgels = len(edgel_keys)
+    # num_edgels = len(edgel_keys)
 
     chains = list()
-    i_visited = 0
-    for e_key in edgel_keys:
-        edgel = edgels_dict[e_key]
-        # skip already visited edgel
-        if edgel['visited']:
-            continue
-
-        # use 2 list so they can be easily linked together
-        this_chain = link_edgel(edgels_dict, e_key, lapl.shape)
-        chains.append(this_chain)
-
-        # update iteration count
-        i_visited += 1
+    # i_visited = 0
+    # for e_key in edgel_keys:
+    #     edgel = edgels_dict[e_key]
+    #     # skip already visited edgel
+    #     if edgel['visited']:
+    #         continue
+    #
+    #     # use 2 list so they can be easily linked together
+    #     this_chain = link_edgel(edgels_dict, e_key, lapl.shape)
+    #     chains.append(this_chain)
+    #
+    #     # update iteration count
+    #     i_visited += 1
 
     # print(len(chains))
 
-    # dbg_image = dbg.debug_laplacian(lapl) * 255.0
-    dbg_image = dbg.debug_edgels(lapl, edgels_dict, chains, grad_mag_max) * 255.0
+    # dbg_lapl = dbg.debug_laplacian(lapl) * 255.0
+    # cv2.imshow('lapl', dbg_lapl)
+    dbg_image = dbg.debug_edgels(lapl, edgels_matx, chains, grad_mag_max) * 255.0
 
     result_image = imutils.resize(dbg_image, width=image_width)
     return result_image.astype(np.uint8)

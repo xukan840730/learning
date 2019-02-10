@@ -199,7 +199,7 @@ def debug_laplacian(laplacian):
     dbg_image = cv2.merge((dbg_b, dbg_g, dbg_r))
     return dbg_image
 
-def debug_edgels(laplacian, edgels_dict, chains, grad_mag_max):
+def debug_edgels(laplacian, edgels_matx, chains, grad_mag_max):
     dbg_b = np.zeros(laplacian.shape)
     dbg_g = dbg_b.copy()
     dbg_r = dbg_b.copy()
@@ -208,25 +208,35 @@ def debug_edgels(laplacian, edgels_dict, chains, grad_mag_max):
     if grad_mag_max == 0.0:
         grad_mag_max = 0.1
 
-    threshold = grad_mag_max / 10.0
+    threshold = grad_mag_max / 20.0
 
-    chain_index = 0
-    for c in chains:
-        chain_grad_mag = c['grad_mag_max']
-        if chain_grad_mag > threshold:
-            chain = c['chain']
-            for e_key in chain:
-                edgel = edgels_dict[e_key]
-                # dbg_g[edgel_idx] = edgel_grad_mag / grad_mag_max
+    # chain_index = 0
+    # for c in chains:
+    #     chain_grad_mag = c['grad_mag_max']
+    #     if chain_grad_mag > threshold:
+    #         chain = c['chain']
+    #         for e_key in chain:
+    #             edgel = edgels_dict[e_key]
+    #             # dbg_g[edgel_idx] = edgel_grad_mag / grad_mag_max
+    #
+    #             if chain_index % 3 == 0:
+    #                 dbg_b[e_key] = 1.0
+    #             elif chain_index % 3 == 1:
+    #                 dbg_g[e_key] = 1.0
+    #             elif chain_index % 3 == 2:
+    #                 dbg_r[e_key] = 1.0
+    #
+    #     chain_index += 1
 
-                if chain_index % 3 == 0:
-                    dbg_b[e_key] = 1.0
-                elif chain_index % 3 == 1:
-                    dbg_g[e_key] = 1.0
-                elif chain_index % 3 == 2:
-                    dbg_r[e_key] = 1.0
-
-        chain_index += 1
+    for irow in range(laplacian.shape[0]):
+        for icol in range(laplacian.shape[1]):
+            edgel_list = edgels_matx[irow][icol]
+            if len(edgel_list) > 0:
+                for e in edgel_list:
+                    grad_mag = e['grad_mag']
+                    if (grad_mag >= threshold):
+                        dbg_g[irow][icol] = 1.0
+                        break
 
     dbg_image = cv2.merge((dbg_b, dbg_g, dbg_r))
     return dbg_image

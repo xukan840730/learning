@@ -11,6 +11,7 @@ import process
 image_u8 = cv2.imread('test_image_tiny.jpg')
 # image_canny = canny(image_u8)
 # cv2.imshow('canny', image_canny)
+image_u8 = cv2.resize(image_u8, (320, 256))
 
 processed_u8 = process.process_image2(image_u8)
 
