@@ -278,7 +278,7 @@ def build_end_pts(lapl):
             bval0 = val0 > 0.0
             bval1 = val1 > 0.0
             if bval0 != bval1:
-                end_pt_y = (p0[1] * val1 - p1[1] * val0) / (val1 - val0)
+                end_pt_y = (np.float32(p0[1]) * val1 - np.float32(p1[1]) * val0) / (val1 - val0)
                 end_pts_hori[(irow, (icol, icol + 1))] = end_pt_y
 
     # build vert edge end points
@@ -291,11 +291,91 @@ def build_end_pts(lapl):
             val1 = lapl[p1]
             bval0 = val0 > 0.0
             bval1 = val1 > 0.0
-            if (val0 > 0.0) != (val1 > 0.0):
-                end_pt_x = (p0[0] * val1 - p1[0] * val0) / (val1 - val0)
+            if bval0 != bval1:
+                end_pt_x = (np.float32(p0[0]) * val1 - np.float32(p1[0]) * val0) / (val1 - val0)
                 end_pts_vert[((irow, irow + 1), icol)] = end_pt_x
 
     return end_pts_hori, end_pts_vert
+
+#-----------------------------------------------------------------------------------#
+def normalize(v):
+    norm = np.linalg.norm(v)
+    if norm == 0:
+       return np.zeros(v.shape)
+    return v / norm
+
+#-----------------------------------------------------------------------------------#
+def get_end_pt(e, end_pts_hori, end_pts_vert):
+    end_pt = np.array([0, 0], dtype=np.float32)
+
+    pt0 = e[0]
+    pt1 = e[1]
+
+    if pt0[0] == pt1[0]:
+        irow = pt0[0]
+        icol = 0
+        if pt0[1] < pt1[1]:
+            assert(pt0[1] + 1 == pt1[1])
+            icol = pt0[1]
+        else:
+            assert (pt0[1] - 1 == pt1[1])
+            icol = pt1[1]
+        val = end_pts_hori[(irow, (icol, icol + 1))]
+        end_pt = np.array([irow, val], dtype=np.float32)
+
+    elif pt0[1] == pt1[1]:
+        irow = 0
+        if pt0[0] < pt1[0]:
+            assert (pt0[0] + 1 == pt1[0])
+            irow = pt0[0]
+        else:
+            assert (pt0[0] - 1 == pt1[0])
+            irow = pt1[0]
+        icol = e[0][1]
+        val = end_pts_vert[((irow, irow + 1), icol)]
+        end_pt = np.array([val, icol], dtype=np.float32)
+    else:
+        assert(False)
+
+    return end_pt
+
+#-----------------------------------------------------------------------------------#
+def make_edgel(edge0, edge1, lapl, end_pts_hori, end_pts_vert, irow, icol):
+    end_pt0 = get_end_pt(edge0, end_pts_hori, end_pts_vert)
+    end_pt1 = get_end_pt(edge1, end_pts_hori, end_pts_vert)
+
+    edges = [edge0, edge1]
+
+    edgel = {}
+    edgel['quad_idx'] = (irow, icol)
+    edgel['end_pts'] = (end_pt0, end_pt1)
+    edgel['mid_pt'] = (end_pt0 + end_pt1) * 0.5
+    edgel['edge'] = edges
+
+    grad_hori = 0.0
+    grad_vert = 0.0
+    for e in edges:
+        edge_pt0 = e[0]
+        edge_pt1 = e[1]
+        if edge_pt1[1] == edge_pt0[1] + 1:
+            grad_hori += lapl[edge_pt1] - lapl[edge_pt0]
+        elif edge_pt1[0] == edge_pt0[0] + 1:
+            grad_vert += lapl[edge_pt1] - lapl[edge_pt0]
+        elif edge_pt1[1] == edge_pt0[1] - 1:
+            grad_hori += lapl[edge_pt0] - lapl[edge_pt1]
+        elif edge_pt1[0] == edge_pt0[0] - 1:
+            grad_vert += lapl[edge_pt0] - lapl[edge_pt1]
+        else:
+            assert (False)
+
+    grad_hori *= 0.5
+    grad_vert *= 0.5
+    edgel['grad'] = np.array([grad_hori, grad_vert], dtype=np.float32)
+    grad_mag = np.sqrt(grad_hori * grad_hori + grad_vert * grad_vert)
+    edgel['grad_mag'] = grad_mag
+    edgel['visited'] = False
+
+    return edgel
 
 #-----------------------------------------------------------------------------------#
 def build_edgels(lapl, end_pts_hori, end_pts_vert):
@@ -312,7 +392,9 @@ def build_edgels(lapl, end_pts_hori, end_pts_vert):
             b.append(list())
         edgels_matx.append(b)
 
-    # build edgels.
+    quad_4_pts = list()
+
+    # phase 1: build edgels from 2 end pts.
     for irow in range(rows - 1):
         for icol in range(cols - 1):
 
@@ -341,42 +423,117 @@ def build_edgels(lapl, end_pts_hori, end_pts_vert):
                 zero_cross_edge.append(((irow, icol), (irow + 1, icol)))
 
             if len(quad_end_pts) == 2:
-                end_p0 = quad_end_pts[0]
-                end_p1 = quad_end_pts[1]
-
-                edgel = {}
-                edgel['quad_idx'] = (irow, icol)
-                edgel['end_pts'] = (end_p0, end_p1)
-                edgel['mid_pt'] = ((end_p0[0] + end_p1[0]) / 2.0, (end_p0[1] + end_p1[1]) / 2.0)
-                assert(len(zero_cross_edge) == 2)
-                edgel['edge'] = zero_cross_edge
-
-                grad_hori = 0.0
-                grad_vert = 0.0
-                for e in zero_cross_edge:
-                    edge_pt0 = e[0]
-                    edge_pt1 = e[1]
-                    if edge_pt1[1] == edge_pt0[1] + 1:
-                        grad_hori += lapl[edge_pt1] - lapl[edge_pt0]
-                    elif edge_pt1[0] == edge_pt0[0] + 1:
-                        grad_vert += lapl[edge_pt1] - lapl[edge_pt0]
-                    elif edge_pt1[1] == edge_pt0[1] - 1:
-                        grad_hori += lapl[edge_pt0] - lapl[edge_pt1]
-                    elif edge_pt1[0] == edge_pt0[0] - 1:
-                        grad_vert += lapl[edge_pt0] - lapl[edge_pt1]
-                    else:
-                        assert(False)
-
-                grad_hori *= 0.5
-                grad_vert *= 0.5
-                grad_mag = np.sqrt(grad_hori * grad_hori + grad_vert * grad_vert)
-                edgel['grad'] = grad_hori, grad_vert
-                edgel['grad_mag'] = grad_mag
-                edgel['visited'] = False
+                edgel = make_edgel(zero_cross_edge[0], zero_cross_edge[1], lapl, end_pts_hori, end_pts_vert, irow, icol)
+                grad_mag = edgel['grad_mag']
                 if grad_mag > grad_mag_max:
                     grad_mag_max = grad_mag
 
                 edgels_matx[irow][icol].append(edgel)
+
+            elif len(quad_end_pts) == 4:
+                quad_4_pts.append((irow, icol))
+
+
+    # phase 2.
+    for quad in quad_4_pts:
+        irow = quad[0]
+        icol = quad[1]
+
+        # clockwise
+        end_pt_up = (irow, (icol, icol + 1))
+        end_pt_rt = ((irow, irow + 1), icol + 1)
+        end_pt_dw = (irow + 1, (icol, icol + 1))
+        end_pt_lt = ((irow, irow + 1), icol)
+        assert(end_pt_up in end_pts_hori)
+        assert(end_pt_rt in end_pts_vert)
+        assert(end_pt_dw in end_pts_hori)
+        assert(end_pt_lt in end_pts_vert)
+
+        line_neighbors = {}
+        end_pts = {}
+
+        if irow > 0:
+            edgels_neighbor = edgels_matx[irow - 1][icol]
+            if len(edgels_neighbor) > 0:
+                assert(len(edgels_neighbor) == 1)
+                line_neighbors['up'] = edgels_neighbor[0]['end_pts']
+                end_pts['up'] = np.array([irow, end_pts_hori[end_pt_up]], dtype=np.float32)
+
+        if icol < cols - 1:
+            edgels_neighbor = edgels_matx[irow][icol + 1]
+            if len(edgels_neighbor) > 0:
+                assert(len(edgels_neighbor) == 1)
+                line_neighbors['rt'] = edgels_neighbor[0]['end_pts']
+                end_pts['rt'] = np.array([end_pts_vert[end_pt_rt], icol + 1], dtype=np.float32)
+
+        if irow < rows - 1:
+            edgels_neighbor = edgels_matx[irow + 1][ icol]
+            if len(edgels_neighbor) > 0:
+                assert(len(edgels_neighbor) == 1)
+                line_neighbors['dw'] = edgels_neighbor[0]['end_pts']
+                end_pts['dw'] = np.array([irow + 1, end_pts_hori[end_pt_dw]], dtype=np.float32)
+
+        if icol > 0:
+            edgels_neighbor = edgels_matx[irow][icol - 1]
+            if len(edgels_neighbor) > 0:
+                assert(len(edgels_neighbor) == 1)
+                line_neighbors['lt'] = edgels_neighbor[0]['end_pts']
+                end_pts['lt'] = np.array([end_pts_vert[end_pt_lt], icol], dtype=np.float32)
+
+        if len(line_neighbors) == 4:
+            line_a_0 = end_pts['rt'] - end_pts['up']
+            line_a_1 = end_pts['lt'] - end_pts['dw']
+            line_a_0_norm = normalize(line_a_0)
+            line_a_1_norm = normalize(line_a_1)
+
+            line_b_0 = end_pts['dw'] - end_pts['rt']
+            line_b_1 = end_pts['up'] - end_pts['lt']
+            line_b_0_norm = normalize(line_b_0)
+            line_b_1_norm = normalize(line_b_1)
+
+            line_up = line_neighbors['up'][1] - line_neighbors['up'][0]
+            line_rt = line_neighbors['rt'][1] - line_neighbors['rt'][0]
+            line_dw = line_neighbors['dw'][1] - line_neighbors['dw'][0]
+            line_lt = line_neighbors['lt'][1] - line_neighbors['lt'][0]
+
+            line_up_norm = normalize(line_up)
+            line_rt_norm = normalize(line_rt)
+            line_dw_norm = normalize(line_dw)
+            line_lt_norm = normalize(line_lt)
+
+            test_a = abs(np.dot(line_a_0_norm, line_up_norm))
+            test_a += abs(np.dot(line_a_0_norm, line_rt_norm))
+            test_a += abs(np.dot(line_a_1_norm, line_dw_norm))
+            test_a += abs(np.dot(line_a_1_norm, line_lt_norm))
+
+            test_b = abs(np.dot(line_b_0_norm, line_rt_norm))
+            test_b += abs(np.dot(line_b_0_norm, line_dw_norm))
+            test_b += abs(np.dot(line_b_1_norm, line_lt_norm))
+            test_b += abs(np.dot(line_b_1_norm, line_up_norm))
+
+            if test_a > test_b:
+                # choose a
+                edge0 = ((irow, icol), (irow, icol + 1))
+                edge1 = ((irow, icol + 1), (irow + 1, icol + 1))
+                edgel_0 = make_edgel(edge0, edge1, lapl, end_pts_hori, end_pts_vert, irow, icol)
+                edgels_matx[irow][icol].append(edgel_0)
+
+                edge0 = ((irow + 1, icol + 1), (irow + 1, icol))
+                edge1 = ((irow + 1, icol), (irow, icol))
+                edgel_1 = make_edgel(edge0, edge1, lapl, end_pts_hori, end_pts_vert, irow, icol)
+                edgels_matx[irow][icol].append(edgel_1)
+
+            else:
+                # choose b, add 2 edgels
+                edge0 = ((irow, icol + 1), (irow + 1, icol + 1))
+                edge1 = ((irow + 1, icol + 1), (irow + 1, icol))
+                edgel_0 = make_edgel(edge0, edge1, lapl, end_pts_hori, end_pts_vert, irow, icol)
+                edgels_matx[irow][icol].append(edgel_0)
+
+                edge0 = ((irow + 1, icol), (irow, icol))
+                edge1 = ((irow, icol), (irow, icol + 1))
+                edgel_1 = make_edgel(edge0, edge1, lapl, end_pts_hori, end_pts_vert, irow, icol)
+                edgels_matx[irow][icol].append(edgel_1)
 
     return edgels_matx, grad_mag_max
 
@@ -390,7 +547,7 @@ def process_image2(image_u8):
     image_blur_u8 = cv2.GaussianBlur(image_grayscale, (5, 5), sigma)
     image_blur_f = image_blur_u8.astype(np.float32) / 255.0
 
-    small_width = image_width // 4
+    small_width = image_width // 16
     small_image_f = imutils.resize(image_blur_f, width=small_width)
 
     # build laplacian pyramid.
