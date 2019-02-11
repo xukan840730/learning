@@ -393,33 +393,54 @@ def get_neighbors(irow, icol, end_pts_hori, end_pts_vert, edgels_matx, rows, col
     line_neighbors = {}
     end_pts = {}
 
-    if irow > 0:
-        edgels_neighbor = edgels_matx[irow - 1][icol]
-        if len(edgels_neighbor) > 0:
-            assert (len(edgels_neighbor) == 1)
-            line_neighbors['up'] = edgels_neighbor[0]['end_pts']
-            end_pts['up'] = np.array([irow, end_pts_hori[end_pt_up]], dtype=np.float32)
+    n_quads = [(irow - 1, icol),
+             (irow, icol + 1),
+             (irow + 1, icol),
+             (irow, icol -1)]
 
-    if icol < cols - 1:
-        edgels_neighbor = edgels_matx[irow][icol + 1]
-        if len(edgels_neighbor) > 0:
-            assert (len(edgels_neighbor) == 1)
-            line_neighbors['rt'] = edgels_neighbor[0]['end_pts']
-            end_pts['rt'] = np.array([end_pts_vert[end_pt_rt], icol + 1], dtype=np.float32)
+    edges = [((irow, icol), (irow, icol + 1)),
+             ((irow, icol + 1), (irow + 1, icol + 1)),
+             ((irow + 1, icol + 1), (irow + 1, icol)),
+             ((irow + 1, icol), (irow, icol))]
 
-    if irow < rows - 1:
-        edgels_neighbor = edgels_matx[irow + 1][icol]
-        if len(edgels_neighbor) > 0:
-            assert (len(edgels_neighbor) == 1)
-            line_neighbors['dw'] = edgels_neighbor[0]['end_pts']
-            end_pts['dw'] = np.array([irow + 1, end_pts_hori[end_pt_dw]], dtype=np.float32)
+    coords = ['up', 'rt', 'dw', 'lt']
 
-    if icol > 0:
-        edgels_neighbor = edgels_matx[irow][icol - 1]
-        if len(edgels_neighbor) > 0:
-            assert (len(edgels_neighbor) == 1)
-            line_neighbors['lt'] = edgels_neighbor[0]['end_pts']
-            end_pts['lt'] = np.array([end_pts_vert[end_pt_lt], icol], dtype=np.float32)
+    for idx in range(len(n_quads)):
+        n_q = n_quads[idx]
+        co = coords[idx]
+        nrow = n_q[0]
+        ncol = n_q[1]
+
+        if nrow >= 0 and nrow < rows and ncol >= 0 and ncol < cols:
+            edgels_neighbor = edgels_matx[nrow][ncol]
+
+            if len(edgels_neighbor) == 1:
+                line_neighbors[co] = edgels_neighbor[0]['end_pts']
+
+            elif len(edgels_neighbor) == 2:
+                edge = edges[idx]
+                n0 = edgels_neighbor[0]
+                n1 = edgels_neighbor[1]
+                ne0 = n0['edge']
+                ne1 = n1['edge']
+                if edge_equal(ne0[0], edge) or edge_equal(ne0[1], edge):
+                    line_neighbors['up'] = n0['end_pts']
+                elif edge_equal(ne1[0], edge) or edge_equal(ne1[1], edge):
+                    line_neighbors['up'] = n1['end_pts']
+                else:
+                    assert(False)
+
+            if len(edgels_neighbor) > 0:
+                if idx == 0:
+                    end_pts[co] = np.array([irow, end_pts_hori[end_pt_up]], dtype=np.float32)
+                elif idx == 1:
+                    end_pts[co] = np.array([end_pts_vert[end_pt_rt], icol + 1], dtype=np.float32)
+                elif idx == 2:
+                    end_pts[co] = np.array([irow + 1, end_pts_hori[end_pt_dw]], dtype=np.float32)
+                elif idx == 3:
+                    end_pts['lt'] = np.array([end_pts_vert[end_pt_lt], icol], dtype=np.float32)
+                else:
+                    assert (False)
 
     return line_neighbors, end_pts
 
