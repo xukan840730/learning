@@ -378,6 +378,52 @@ def make_edgel(edge0, edge1, lapl, end_pts_hori, end_pts_vert, irow, icol):
     return edgel
 
 #-----------------------------------------------------------------------------------#
+def get_neighbors(irow, icol, end_pts_hori, end_pts_vert, edgels_matx, rows, cols):
+
+    # clockwise
+    end_pt_up = (irow, (icol, icol + 1))
+    end_pt_rt = ((irow, irow + 1), icol + 1)
+    end_pt_dw = (irow + 1, (icol, icol + 1))
+    end_pt_lt = ((irow, irow + 1), icol)
+    assert (end_pt_up in end_pts_hori)
+    assert (end_pt_rt in end_pts_vert)
+    assert (end_pt_dw in end_pts_hori)
+    assert (end_pt_lt in end_pts_vert)
+
+    line_neighbors = {}
+    end_pts = {}
+
+    if irow > 0:
+        edgels_neighbor = edgels_matx[irow - 1][icol]
+        if len(edgels_neighbor) > 0:
+            assert (len(edgels_neighbor) == 1)
+            line_neighbors['up'] = edgels_neighbor[0]['end_pts']
+            end_pts['up'] = np.array([irow, end_pts_hori[end_pt_up]], dtype=np.float32)
+
+    if icol < cols - 1:
+        edgels_neighbor = edgels_matx[irow][icol + 1]
+        if len(edgels_neighbor) > 0:
+            assert (len(edgels_neighbor) == 1)
+            line_neighbors['rt'] = edgels_neighbor[0]['end_pts']
+            end_pts['rt'] = np.array([end_pts_vert[end_pt_rt], icol + 1], dtype=np.float32)
+
+    if irow < rows - 1:
+        edgels_neighbor = edgels_matx[irow + 1][icol]
+        if len(edgels_neighbor) > 0:
+            assert (len(edgels_neighbor) == 1)
+            line_neighbors['dw'] = edgels_neighbor[0]['end_pts']
+            end_pts['dw'] = np.array([irow + 1, end_pts_hori[end_pt_dw]], dtype=np.float32)
+
+    if icol > 0:
+        edgels_neighbor = edgels_matx[irow][icol - 1]
+        if len(edgels_neighbor) > 0:
+            assert (len(edgels_neighbor) == 1)
+            line_neighbors['lt'] = edgels_neighbor[0]['end_pts']
+            end_pts['lt'] = np.array([end_pts_vert[end_pt_lt], icol], dtype=np.float32)
+
+    return line_neighbors, end_pts
+
+#-----------------------------------------------------------------------------------#
 def build_edgels(lapl, end_pts_hori, end_pts_vert):
 
     grad_mag_max = 0.0
@@ -434,51 +480,12 @@ def build_edgels(lapl, end_pts_hori, end_pts_vert):
                 quad_4_pts.append((irow, icol))
 
 
-    # phase 2.
+    # phase 2, process 4 end pts edgels with 4 linked lines.
+    quad_4_pts_remains = list()
     for quad in quad_4_pts:
         irow = quad[0]
         icol = quad[1]
-
-        # clockwise
-        end_pt_up = (irow, (icol, icol + 1))
-        end_pt_rt = ((irow, irow + 1), icol + 1)
-        end_pt_dw = (irow + 1, (icol, icol + 1))
-        end_pt_lt = ((irow, irow + 1), icol)
-        assert(end_pt_up in end_pts_hori)
-        assert(end_pt_rt in end_pts_vert)
-        assert(end_pt_dw in end_pts_hori)
-        assert(end_pt_lt in end_pts_vert)
-
-        line_neighbors = {}
-        end_pts = {}
-
-        if irow > 0:
-            edgels_neighbor = edgels_matx[irow - 1][icol]
-            if len(edgels_neighbor) > 0:
-                assert(len(edgels_neighbor) == 1)
-                line_neighbors['up'] = edgels_neighbor[0]['end_pts']
-                end_pts['up'] = np.array([irow, end_pts_hori[end_pt_up]], dtype=np.float32)
-
-        if icol < cols - 1:
-            edgels_neighbor = edgels_matx[irow][icol + 1]
-            if len(edgels_neighbor) > 0:
-                assert(len(edgels_neighbor) == 1)
-                line_neighbors['rt'] = edgels_neighbor[0]['end_pts']
-                end_pts['rt'] = np.array([end_pts_vert[end_pt_rt], icol + 1], dtype=np.float32)
-
-        if irow < rows - 1:
-            edgels_neighbor = edgels_matx[irow + 1][ icol]
-            if len(edgels_neighbor) > 0:
-                assert(len(edgels_neighbor) == 1)
-                line_neighbors['dw'] = edgels_neighbor[0]['end_pts']
-                end_pts['dw'] = np.array([irow + 1, end_pts_hori[end_pt_dw]], dtype=np.float32)
-
-        if icol > 0:
-            edgels_neighbor = edgels_matx[irow][icol - 1]
-            if len(edgels_neighbor) > 0:
-                assert(len(edgels_neighbor) == 1)
-                line_neighbors['lt'] = edgels_neighbor[0]['end_pts']
-                end_pts['lt'] = np.array([end_pts_vert[end_pt_lt], icol], dtype=np.float32)
+        line_neighbors, end_pts = get_neighbors(irow, icol, end_pts_hori, end_pts_vert, edgels_matx, rows, cols)
 
         if len(line_neighbors) == 4:
             line_a_0 = end_pts['rt'] - end_pts['up']
@@ -534,6 +541,17 @@ def build_edgels(lapl, end_pts_hori, end_pts_vert):
                 edge1 = ((irow, icol), (irow, icol + 1))
                 edgel_1 = make_edgel(edge0, edge1, lapl, end_pts_hori, end_pts_vert, irow, icol)
                 edgels_matx[irow][icol].append(edgel_1)
+        else:
+            quad_4_pts_remains.append(quad)
+
+    # phase 3, process 4 end pts edgels with 3 linked lines.
+    for quad in quad_4_pts_remains:
+        irow = quad[0]
+        icol = quad[1]
+        line_neighbors, end_pts = get_neighbors(irow, icol, end_pts_hori, end_pts_vert, edgels_matx, rows, cols)
+
+        if len(line_neighbors) == 3:
+            print((irow, icol))
 
     return edgels_matx, grad_mag_max
 

@@ -228,18 +228,15 @@ def debug_edgels(laplacian, edgels_matx, chains, grad_mag_max):
     #
     #     chain_index += 1
 
-    count = 0
     for irow in range(laplacian.shape[0]):
         for icol in range(laplacian.shape[1]):
             edgel_list = edgels_matx[irow][icol]
             if len(edgel_list) > 0:
-                count += len(edgel_list)
                 for e in edgel_list:
                     grad_mag = e['grad_mag']
                     if (grad_mag >= threshold):
                         dbg_g[irow][icol] = 1.0
                         break
-    print(count)
 
     dbg_image = cv2.merge((dbg_b, dbg_g, dbg_r))
     return dbg_image
