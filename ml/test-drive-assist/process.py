@@ -121,17 +121,13 @@ def process_image(image_u8):
 
 #-----------------------------------------------------------------------------------#
 def edge_equal(e0, e1):
-    e0_pt0 = e0[0]
-    e1_pt0 = e1[0]
-    if e0_pt0[0] != e1_pt0[0] or e0_pt0[1] != e1_pt0[1]:
-        return False
+    if e0[0] == e1[0] and e0[1] == e1[1]:
+        return True
 
-    e0_pt1 = e0[1]
-    e1_pt1 = e1[1]
-    if e0_pt1[0] != e1_pt1[0] or e0_pt1[1] != e1_pt1[1]:
-        return False
+    if e0[0] == e1[1] and e0[1] == e1[0]:
+        return True
 
-    return True
+    return False
 
 #-----------------------------------------------------------------------------------#
 def get_adj_quad(curr_quad_idx, edge):
@@ -392,6 +388,10 @@ def get_neighbors(irow, icol, end_pts_hori, end_pts_vert, edgels_matx, rows, col
 
     line_neighbors = {}
     end_pts = {}
+    end_pts['up'] = np.array([irow, end_pts_hori[end_pt_up]], dtype=np.float32)
+    end_pts['rt'] = np.array([end_pts_vert[end_pt_rt], icol + 1], dtype=np.float32)
+    end_pts['dw'] = np.array([irow + 1, end_pts_hori[end_pt_dw]], dtype=np.float32)
+    end_pts['lt'] = np.array([end_pts_vert[end_pt_lt], icol], dtype=np.float32)
 
     n_quads = [(irow - 1, icol),
              (irow, icol + 1),
@@ -424,25 +424,71 @@ def get_neighbors(irow, icol, end_pts_hori, end_pts_vert, edgels_matx, rows, col
                 ne0 = n0['edge']
                 ne1 = n1['edge']
                 if edge_equal(ne0[0], edge) or edge_equal(ne0[1], edge):
-                    line_neighbors['up'] = n0['end_pts']
+                    line_neighbors[co] = n0['end_pts']
                 elif edge_equal(ne1[0], edge) or edge_equal(ne1[1], edge):
-                    line_neighbors['up'] = n1['end_pts']
+                    line_neighbors[co] = n1['end_pts']
                 else:
                     assert(False)
 
-            if len(edgels_neighbor) > 0:
-                if idx == 0:
-                    end_pts[co] = np.array([irow, end_pts_hori[end_pt_up]], dtype=np.float32)
-                elif idx == 1:
-                    end_pts[co] = np.array([end_pts_vert[end_pt_rt], icol + 1], dtype=np.float32)
-                elif idx == 2:
-                    end_pts[co] = np.array([irow + 1, end_pts_hori[end_pt_dw]], dtype=np.float32)
-                elif idx == 3:
-                    end_pts['lt'] = np.array([end_pts_vert[end_pt_lt], icol], dtype=np.float32)
-                else:
-                    assert (False)
-
     return line_neighbors, end_pts
+
+#-----------------------------------------------------------------------------------#
+def make_edgel_quad(end_pts, line_neighbors, irow, icol, lapl, end_pts_hori, end_pts_vert):
+    line_a_0 = end_pts['rt'] - end_pts['up']
+    line_a_1 = end_pts['lt'] - end_pts['dw']
+    line_a_0_norm = normalize(line_a_0)
+    line_a_1_norm = normalize(line_a_1)
+
+    line_b_0 = end_pts['dw'] - end_pts['rt']
+    line_b_1 = end_pts['up'] - end_pts['lt']
+    line_b_0_norm = normalize(line_b_0)
+    line_b_1_norm = normalize(line_b_1)
+
+    line_up = line_neighbors['up'][1] - line_neighbors['up'][0]
+    line_rt = line_neighbors['rt'][1] - line_neighbors['rt'][0]
+    line_dw = line_neighbors['dw'][1] - line_neighbors['dw'][0]
+    line_lt = line_neighbors['lt'][1] - line_neighbors['lt'][0]
+
+    line_up_norm = normalize(line_up)
+    line_rt_norm = normalize(line_rt)
+    line_dw_norm = normalize(line_dw)
+    line_lt_norm = normalize(line_lt)
+
+    test_a = abs(np.dot(line_a_0_norm, line_up_norm))
+    test_a += abs(np.dot(line_a_0_norm, line_rt_norm))
+    test_a += abs(np.dot(line_a_1_norm, line_dw_norm))
+    test_a += abs(np.dot(line_a_1_norm, line_lt_norm))
+
+    test_b = abs(np.dot(line_b_0_norm, line_rt_norm))
+    test_b += abs(np.dot(line_b_0_norm, line_dw_norm))
+    test_b += abs(np.dot(line_b_1_norm, line_lt_norm))
+    test_b += abs(np.dot(line_b_1_norm, line_up_norm))
+
+    edgel_0 = None
+    edgel_1 = None
+
+    if test_a > test_b:
+        # choose a
+        edge0 = ((irow, icol), (irow, icol + 1))
+        edge1 = ((irow, icol + 1), (irow + 1, icol + 1))
+        edgel_0 = make_edgel(edge0, edge1, lapl, end_pts_hori, end_pts_vert, irow, icol)
+
+        edge0 = ((irow + 1, icol + 1), (irow + 1, icol))
+        edge1 = ((irow + 1, icol), (irow, icol))
+        edgel_1 = make_edgel(edge0, edge1, lapl, end_pts_hori, end_pts_vert, irow, icol)
+
+    else:
+        # choose b, add 2 edgels
+        edge0 = ((irow, icol + 1), (irow + 1, icol + 1))
+        edge1 = ((irow + 1, icol + 1), (irow + 1, icol))
+        edgel_0 = make_edgel(edge0, edge1, lapl, end_pts_hori, end_pts_vert, irow, icol)
+
+        edge0 = ((irow + 1, icol), (irow, icol))
+        edge1 = ((irow, icol), (irow, icol + 1))
+        edgel_1 = make_edgel(edge0, edge1, lapl, end_pts_hori, end_pts_vert, irow, icol)
+
+    return edgel_0, edgel_1
+
 
 #-----------------------------------------------------------------------------------#
 def build_edgels(lapl, end_pts_hori, end_pts_vert):
@@ -509,70 +555,66 @@ def build_edgels(lapl, end_pts_hori, end_pts_vert):
         line_neighbors, end_pts = get_neighbors(irow, icol, end_pts_hori, end_pts_vert, edgels_matx, rows, cols)
 
         if len(line_neighbors) == 4:
-            line_a_0 = end_pts['rt'] - end_pts['up']
-            line_a_1 = end_pts['lt'] - end_pts['dw']
-            line_a_0_norm = normalize(line_a_0)
-            line_a_1_norm = normalize(line_a_1)
+            edgel_0, edgel_1 = make_edgel_quad(end_pts, line_neighbors, irow, icol, lapl, end_pts_hori, end_pts_vert)
+            edgels_matx[irow][icol].append(edgel_0)
+            edgels_matx[irow][icol].append(edgel_1)
 
-            line_b_0 = end_pts['dw'] - end_pts['rt']
-            line_b_1 = end_pts['up'] - end_pts['lt']
-            line_b_0_norm = normalize(line_b_0)
-            line_b_1_norm = normalize(line_b_1)
-
-            line_up = line_neighbors['up'][1] - line_neighbors['up'][0]
-            line_rt = line_neighbors['rt'][1] - line_neighbors['rt'][0]
-            line_dw = line_neighbors['dw'][1] - line_neighbors['dw'][0]
-            line_lt = line_neighbors['lt'][1] - line_neighbors['lt'][0]
-
-            line_up_norm = normalize(line_up)
-            line_rt_norm = normalize(line_rt)
-            line_dw_norm = normalize(line_dw)
-            line_lt_norm = normalize(line_lt)
-
-            test_a = abs(np.dot(line_a_0_norm, line_up_norm))
-            test_a += abs(np.dot(line_a_0_norm, line_rt_norm))
-            test_a += abs(np.dot(line_a_1_norm, line_dw_norm))
-            test_a += abs(np.dot(line_a_1_norm, line_lt_norm))
-
-            test_b = abs(np.dot(line_b_0_norm, line_rt_norm))
-            test_b += abs(np.dot(line_b_0_norm, line_dw_norm))
-            test_b += abs(np.dot(line_b_1_norm, line_lt_norm))
-            test_b += abs(np.dot(line_b_1_norm, line_up_norm))
-
-            if test_a > test_b:
-                # choose a
-                edge0 = ((irow, icol), (irow, icol + 1))
-                edge1 = ((irow, icol + 1), (irow + 1, icol + 1))
-                edgel_0 = make_edgel(edge0, edge1, lapl, end_pts_hori, end_pts_vert, irow, icol)
-                edgels_matx[irow][icol].append(edgel_0)
-
-                edge0 = ((irow + 1, icol + 1), (irow + 1, icol))
-                edge1 = ((irow + 1, icol), (irow, icol))
-                edgel_1 = make_edgel(edge0, edge1, lapl, end_pts_hori, end_pts_vert, irow, icol)
-                edgels_matx[irow][icol].append(edgel_1)
-
-            else:
-                # choose b, add 2 edgels
-                edge0 = ((irow, icol + 1), (irow + 1, icol + 1))
-                edge1 = ((irow + 1, icol + 1), (irow + 1, icol))
-                edgel_0 = make_edgel(edge0, edge1, lapl, end_pts_hori, end_pts_vert, irow, icol)
-                edgels_matx[irow][icol].append(edgel_0)
-
-                edge0 = ((irow + 1, icol), (irow, icol))
-                edge1 = ((irow, icol), (irow, icol + 1))
-                edgel_1 = make_edgel(edge0, edge1, lapl, end_pts_hori, end_pts_vert, irow, icol)
-                edgels_matx[irow][icol].append(edgel_1)
         else:
             quad_4_pts_remains.append(quad)
 
     # phase 3, process 4 end pts edgels with 3 linked lines.
-    for quad in quad_4_pts_remains:
-        irow = quad[0]
-        icol = quad[1]
-        line_neighbors, end_pts = get_neighbors(irow, icol, end_pts_hori, end_pts_vert, edgels_matx, rows, cols)
+    for iter in range(10):
+        quad_4_pts_new = list()
 
-        if len(line_neighbors) == 3:
-            print((irow, icol))
+        for quad in quad_4_pts_remains:
+            irow = quad[0]
+            icol = quad[1]
+            line_neighbors, end_pts = get_neighbors(irow, icol, end_pts_hori, end_pts_vert, edgels_matx, rows, cols)
+
+            if len(line_neighbors) == 3:
+
+                if 'up' in line_neighbors:
+                    pass
+                else:
+                    pt_old = end_pts['up']
+                    pt_new = pt_old.copy()
+                    pt_new[0] -= 1
+                    line_neighbors['up'] = (pt_old, pt_new)
+
+                if 'rt' in line_neighbors:
+                    pass
+                else:
+                    pt_old = end_pts['rt']
+                    pt_new = pt_old.copy()
+                    pt_new[1] += 1
+                    line_neighbors['rt'] = (pt_old, pt_new)
+
+                if 'dw' in line_neighbors:
+                    pass
+                else:
+                    pt_old = end_pts['dw']
+                    pt_new = pt_old.copy()
+                    pt_new[0] += 1
+                    line_neighbors['dw'] = (pt_old, pt_new)
+
+                if 'lt' in line_neighbors:
+                    pass
+                else:
+                    pt_old = end_pts['lt']
+                    pt_new = pt_old.copy()
+                    pt_new[1] -= 1
+                    line_neighbors['lt'] = (pt_old, pt_new)
+
+                edgel_0, edgel_1 = make_edgel_quad(end_pts, line_neighbors, irow, icol, lapl, end_pts_hori, end_pts_vert)
+                edgels_matx[irow][icol].append(edgel_0)
+                edgels_matx[irow][icol].append(edgel_1)
+            else:
+                quad_4_pts_new.append((irow, icol))
+
+        quad_4_pts_remains = quad_4_pts_new
+
+        if len(quad_4_pts_remains) == 0:
+            break
 
     return edgels_matx, grad_mag_max
 
