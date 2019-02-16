@@ -98,7 +98,7 @@ t3 = time.time()
 print('dx difference: ', rel_error(dx1, dx2))
 print('dgamma difference: ', rel_error(dgamma1, dgamma2))
 print('dbeta difference: ', rel_error(dbeta1, dbeta2))
-print('speedup: %.2fx' % ((t2 - t1) / (t3 - t2)))
+# print('speedup: %.2fx' % ((t2 - t1) / (t3 - t2)))
 
 
 N, D, H1, H2, C = 2, 15, 20, 30, 10

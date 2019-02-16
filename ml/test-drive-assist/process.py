@@ -571,7 +571,7 @@ def build_edgels(lapl, end_pts_hori, end_pts_vert):
             icol = quad[1]
             line_neighbors, end_pts = get_neighbors(irow, icol, end_pts_hori, end_pts_vert, edgels_matx, rows, cols)
 
-            if len(line_neighbors) == 3:
+            if len(line_neighbors) >= 3:
 
                 if 'up' in line_neighbors:
                     pass
@@ -611,10 +611,17 @@ def build_edgels(lapl, end_pts_hori, end_pts_vert):
             else:
                 quad_4_pts_new.append((irow, icol))
 
-        quad_4_pts_remains = quad_4_pts_new
-
-        if len(quad_4_pts_remains) == 0:
+        if len(quad_4_pts_new) == 0:
             break
+
+        # nothing processed
+        if len(quad_4_pts_new) == len(quad_4_pts_remains):
+            print('missing quad:')
+            for quad in quad_4_pts_new:
+                print(quad)
+            break
+
+        quad_4_pts_remains = quad_4_pts_new.copy()
 
     return edgels_matx, grad_mag_max
 

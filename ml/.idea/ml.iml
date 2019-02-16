@@ -1,8 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module type="PYTHON_MODULE" version="4">
   <component name="NewModuleRootManager">
-    <content url="file://$MODULE_DIR$" />
-    <orderEntry type="inheritedJdk" />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/misc" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/tensorflow/models/tutorials/rnn/ptb" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/test-drive-assist" isTestSource="false" />
+    </content>
+    <orderEntry type="jdk" jdkName="Python 3.6.4 (C:\python3.6-64\python.exe)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
   <component name="TestRunnerService">
