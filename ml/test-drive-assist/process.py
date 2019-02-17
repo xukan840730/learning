@@ -121,6 +121,23 @@ def process_image(image_u8):
 
 #-----------------------------------------------------------------------------------#
 def edge_equal(e0, e1):
+    assert(len(e0) == 2)
+    assert(len(e1) == 2)
+
+    if (e0[0][0] == e0[1][0]):
+        assert(abs(e0[0][1] - e0[1][1]) == 1)
+    elif (e0[0][1] == e0[1][1]):
+        assert(abs(e0[0][0] - e0[1][0]) == 1)
+    else:
+        assert(False)
+
+    if (e1[0][0] == e1[1][0]):
+        assert(abs(e1[0][1] - e1[1][1]) == 1)
+    elif (e1[0][1] == e1[1][1]):
+        assert(abs(e1[0][0] - e1[1][0]) == 1)
+    else:
+        assert(False)
+
     if e0[0] == e1[0] and e0[1] == e1[1]:
         return True
 
@@ -153,14 +170,16 @@ def get_adj_quad(curr_quad_idx, edge):
     assert(False)
 
 #-----------------------------------------------------------------------------------#
-def link_edgel(edgels_dict, e_key, shape):
+def link_edgel(edgels_matx, edgel, shape):
     chain_a = list()
     chain_b = list()
 
-    first_edgel = edgels_dict[e_key]
+    quad_idx = edgel['quad_idx']
+
+    first_edgel = edgel
     first_edgel['visited'] = True
-    chain_a.append(e_key)
-    chain_b.append(e_key)
+    chain_a.append(quad_idx)
+    chain_b.append(quad_idx)
     grad_mag_max = first_edgel['grad_mag']
 
     frontiers_a = list()
@@ -178,30 +197,62 @@ def link_edgel(edgels_dict, e_key, shape):
 
         e0 = edges[0]
         next_idx0 = get_adj_quad(edgel_idx, e0)
-        if next_idx0 in edgels_dict:
-            if next_idx0[0] >= 0 and next_idx0[0] < shape[0] and next_idx0[1] >= 0 and next_idx0[1] < shape[1]:
+        if next_idx0[0] >= 0 and next_idx0[0] < shape[0] and next_idx0[1] >= 0 and next_idx0[1] < shape[1]:
+            next_edgel_list = edgels_matx[next_idx0[0]][next_idx0[1]]
+            if len(next_edgel_list) > 0:
                 if (next_idx0 not in chain_a) and (next_idx0 not in chain_b):
-                    next_edgel = edgels_dict[next_idx0]
-                    next_edgel['visited'] = True
-                    grad_mag = next_edgel['grad_mag']
-                    if grad_mag > grad_mag_max:
-                        grad_mag_max = grad_mag
-                    new_frontiers.append(next_edgel)
-                    chain_a.append(next_idx0)
+                    # find next edgel
+                    next_edgel = None
+                    if len(next_edgel_list) == 1:
+                        next_edgel = next_edgel_list[0]
+                    elif len(next_edgel_list) == 2:
+                        for ne in next_edgel_list:
+                            ne_edges = ne['edge']
+                            assert (len(ne_edges) == 2)
+                            for nee in ne_edges:
+                                if edge_equal(nee, e0):
+                                    next_edgel = ne
+                                    break
+                    else:
+                        assert(False)
 
-        if iter_count > 0:
-            e1 = edges[1]
-            next_idx1 = get_adj_quad(edgel_idx, e1)
-            if next_idx1 in edgels_dict:
-                if next_idx1[0] >= 0 and next_idx1[0] < shape[0] and next_idx1[1] >= 0 and next_idx1[1] < shape[1]:
-                    if (next_idx1 not in chain_a) and (next_idx1 not in chain_b):
-                        next_edgel = edgels_dict[next_idx1]
+                    if next_edgel['visited'] == False:
                         next_edgel['visited'] = True
                         grad_mag = next_edgel['grad_mag']
                         if grad_mag > grad_mag_max:
                             grad_mag_max = grad_mag
                         new_frontiers.append(next_edgel)
-                        chain_a.append(next_idx1)
+                        chain_a.append(next_idx0)
+
+        if iter_count > 0:
+            e1 = edges[1]
+            next_idx1 = get_adj_quad(edgel_idx, e1)
+            if next_idx1[0] >= 0 and next_idx1[0] < shape[0] and next_idx1[1] >= 0 and next_idx1[1] < shape[1]:
+                next_edgel_list = edgels_matx[next_idx1[0]][next_idx1[1]]
+                if len(next_edgel_list) > 0:
+                    if (next_idx1 not in chain_a) and (next_idx1 not in chain_b):
+                        # find next edgel
+                        next_edgel = None
+                        if len(next_edgel_list) == 1:
+                            next_edgel = next_edgel_list[0]
+                        elif len(next_edgel_list) == 2:
+                            for ne in next_edgel_list:
+                                ne_edges = ne['edge']
+                                assert(len(ne_edges) == 2)
+                                for nee in ne_edges:
+                                    if edge_equal(nee, e1):
+                                        next_edgel = ne
+                                        break
+                        else:
+                            assert (False)
+
+                        if next_edgel['visited'] == False:
+                            next_edgel['visited'] = True
+                            grad_mag = next_edgel['grad_mag']
+                            if grad_mag > grad_mag_max:
+                                grad_mag_max = grad_mag
+                            new_frontiers.append(next_edgel)
+                            chain_a.append(next_idx1)
 
         iter_count += 1
         frontiers_a = new_frontiers
@@ -217,29 +268,61 @@ def link_edgel(edgels_dict, e_key, shape):
         if iter_count > 0:
             e0 = edges[0]
             next_idx0 = get_adj_quad(edgel_idx, e0)
-            if next_idx0 in edgels_dict:
-                if next_idx0[0] >= 0 and next_idx0[0] < shape[0] and next_idx0[1] >= 0 and next_idx0[1] < shape[1]:
+            if next_idx0[0] >= 0 and next_idx0[0] < shape[0] and next_idx0[1] >= 0 and next_idx0[1] < shape[1]:
+                next_edgel_list = edgels_matx[next_idx0[0]][next_idx0[1]]
+                if len(next_edgel_list) > 0:
                     if (next_idx0 not in chain_a) and (next_idx0 not in chain_b):
-                        next_edgel = edgels_dict[next_idx0]
+                        # find next edgel
+                        next_edgel = None
+                        if len(next_edgel_list) == 1:
+                            next_edgel = next_edgel_list[0]
+                        elif len(next_edgel_list) == 2:
+                            for ne in next_edgel_list:
+                                ne_edges = ne['edge']
+                                assert(len(ne_edges) == 2)
+                                for nee in ne_edges:
+                                    if edge_equal(nee, e1):
+                                        next_edgel = ne
+                                        break
+                        else:
+                            assert (False)
+
+                        if next_edgel['visited'] == False:
+                            next_edgel['visited'] = True
+                            grad_mag = next_edgel['grad_mag']
+                            if grad_mag > grad_mag_max:
+                                grad_mag_max = grad_mag
+                            new_frontiers.append(next_edgel)
+                            chain_b.append(next_idx0)
+
+        e1 = edges[1]
+        next_idx1 = get_adj_quad(edgel_idx, e1)
+        if next_idx1[0] >= 0 and next_idx1[0] < shape[0] and next_idx1[1] >= 0 and next_idx1[1] < shape[1]:
+            next_edgel_list = edgels_matx[next_idx1[0]][next_idx1[1]]
+            if len(next_edgel_list) > 0:
+                if (next_idx1 not in chain_a) and (next_idx1 not in chain_b):
+                    # find next edgel
+                    next_edgel = None
+                    if len(next_edgel_list) == 1:
+                        next_edgel = next_edgel_list[0]
+                    elif len(next_edgel_list) == 2:
+                        for ne in next_edgel_list:
+                            ne_edges = ne['edge']
+                            assert (len(ne_edges) == 2)
+                            for nee in ne_edges:
+                                if edge_equal(nee, e1):
+                                    next_edgel = ne
+                                    break
+                    else:
+                        assert (False)
+
+                    if next_edgel['visited'] == False:
                         next_edgel['visited'] = True
                         grad_mag = next_edgel['grad_mag']
                         if grad_mag > grad_mag_max:
                             grad_mag_max = grad_mag
                         new_frontiers.append(next_edgel)
-                        chain_b.append(next_idx0)
-
-        e1 = edges[1]
-        next_idx1 = get_adj_quad(edgel_idx, e1)
-        if next_idx1 in edgels_dict:
-            if next_idx1[0] >= 0 and next_idx1[0] < shape[0] and next_idx1[1] >= 0 and next_idx1[1] < shape[1]:
-                if (next_idx1 not in chain_a) and (next_idx1 not in chain_b):
-                    next_edgel = edgels_dict[next_idx1]
-                    next_edgel['visited'] = True
-                    grad_mag = next_edgel['grad_mag']
-                    if grad_mag > grad_mag_max:
-                        grad_mag_max = grad_mag
-                    new_frontiers.append(next_edgel)
-                    chain_b.append(next_idx1)
+                        chain_b.append(next_idx1)
 
         frontiers_b = new_frontiers
 
@@ -354,12 +437,16 @@ def make_edgel(edge0, edge1, lapl, end_pts_hori, end_pts_vert, irow, icol):
         edge_pt0 = e[0]
         edge_pt1 = e[1]
         if edge_pt1[1] == edge_pt0[1] + 1:
+            assert (edge_pt0[0] == edge_pt1[0])
             grad_hori += lapl[edge_pt1] - lapl[edge_pt0]
         elif edge_pt1[0] == edge_pt0[0] + 1:
+            assert(edge_pt0[1] == edge_pt1[1])
             grad_vert += lapl[edge_pt1] - lapl[edge_pt0]
         elif edge_pt1[1] == edge_pt0[1] - 1:
+            assert (edge_pt0[0] == edge_pt1[0])
             grad_hori += lapl[edge_pt0] - lapl[edge_pt1]
         elif edge_pt1[0] == edge_pt0[0] - 1:
+            assert (edge_pt0[1] == edge_pt1[1])
             grad_vert += lapl[edge_pt0] - lapl[edge_pt1]
         else:
             assert (False)
@@ -643,27 +730,30 @@ def process_image2(image_u8):
 
     end_pts_hori, end_pts_vert = build_end_pts(lapl)
     edgels_matx, grad_mag_max = build_edgels(lapl, end_pts_hori, end_pts_vert)
-    # edgel_keys = edgels_dict.keys()
 
     # build linked chain from edgels
-    # num_edgels = len(edgel_keys)
 
     chains = list()
-    # i_visited = 0
-    # for e_key in edgel_keys:
-    #     edgel = edgels_dict[e_key]
-    #     # skip already visited edgel
-    #     if edgel['visited']:
-    #         continue
-    #
-    #     # use 2 list so they can be easily linked together
-    #     this_chain = link_edgel(edgels_dict, e_key, lapl.shape)
-    #     chains.append(this_chain)
-    #
-    #     # update iteration count
-    #     i_visited += 1
+    i_visited = 0
+    for irow in range(lapl.shape[0]):
+        for icol in range(lapl.shape[1]):
+            edgel_list = edgels_matx[irow][icol]
+            if len(edgel_list) == 0:
+                continue;
 
-    # print(len(chains))
+            for edgel in edgel_list:
+                # skip already visited edgel
+                if edgel['visited']:
+                    continue
+
+                # use 2 list so they can be easily linked together
+                new_chain = link_edgel(edgels_matx, edgel, lapl.shape)
+                chains.append(new_chain)
+
+            # update iteration count
+            i_visited += 1
+
+    print(len(chains))
 
     # dbg_lapl = dbg.debug_laplacian(lapl) * 255.0
     # cv2.imshow('lapl', dbg_lapl)
