@@ -220,14 +220,23 @@ def debug_edgels(laplacian, edgels_matx, chains, grad_mag_max):
                 # edgel = edgels_dict[e_key]
                 # dbg_g[edgel_idx] = edgel_grad_mag / grad_mag_max
 
-                if chain_index % 3 == 0:
+                if chain_index % 6 == 0:
                     dbg_b[e_key] = 1.0
-                elif chain_index % 3 == 1:
+                elif chain_index % 6 == 1:
                     dbg_g[e_key] = 1.0
-                elif chain_index % 3 == 2:
+                elif chain_index % 6 == 2:
+                    dbg_r[e_key] = 1.0
+                elif chain_index % 6 == 3:
+                    dbg_r[e_key] = 1.0
+                    dbg_g[e_key] = 1.0
+                elif chain_index % 6 == 4:
+                    dbg_g[e_key] = 1.0
+                    dbg_b[e_key] = 1.0
+                elif chain_index % 6 == 5:
+                    dbg_b[e_key] = 1.0
                     dbg_r[e_key] = 1.0
 
-        chain_index += 1
+            chain_index += 1
 
     # for irow in range(laplacian.shape[0]):
     #     for icol in range(laplacian.shape[1]):
