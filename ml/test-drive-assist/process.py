@@ -474,9 +474,13 @@ def make_edgel(edge0, edge1, lapl, end_pts_hori, end_pts_vert, irow, icol):
 
     grad_hori *= np.float32(0.5)
     grad_vert *= np.float32(0.5)
-    edgel['grad'] = np.array([grad_hori, grad_vert], dtype=np.float32)
+    edgel['grad'] = np.array([grad_vert, grad_hori], dtype=np.float32)
     grad_mag = np.sqrt(grad_hori * grad_hori + grad_vert * grad_vert)
     edgel['grad_mag'] = grad_mag
+    theta_rad = np.arctan2(grad_hori, grad_vert, dtype=np.float32)
+    theta_deg = theta_rad * np.float32(180) / np.float32(np.pi)
+    edgel['theta'] = theta_rad
+    edgel['theta_deg'] = theta_deg
     edgel['visited'] = False
 
     return edgel
@@ -762,7 +766,7 @@ def process_image2(image_u8):
     image_blur_u8 = cv2.GaussianBlur(image_grayscale, (5, 5), sigma)
     image_blur_f = image_blur_u8.astype(np.float32) / 255.0
 
-    small_width = image_width // 8
+    small_width = image_width // 16
     small_image_f = imutils.resize(image_blur_f, width=small_width)
 
     # build laplacian pyramid.

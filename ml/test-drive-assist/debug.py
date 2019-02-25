@@ -199,8 +199,37 @@ def debug_laplacian(laplacian):
     dbg_image = cv2.merge((dbg_b, dbg_g, dbg_r))
     return dbg_image
 
-def debug_edgels(laplacian, edgels_matx, chains, grad_mag_max):
-    dbg_b = np.zeros(laplacian.shape)
+def debug_chains(chains, threshold, shape):
+    if len(chains) > 0:
+
+        plt.xlim(0, shape[1])
+        plt.ylim(shape[0], 0)
+
+        cidx = 0
+        for c in chains:
+            chain_grad_mag = c['grad_mag_max']
+            if chain_grad_mag > threshold:
+                chain = c['chain']
+
+                mid_pts = np.zeros((len(chain), 2))
+
+                midx = 0
+                for e in chain:
+                    mid_pts[midx] = e['mid_pt']
+
+                    if cidx == 0:
+                        print(e['quad_idx'], e['grad'], e['theta_deg'])
+                        #print()
+
+                    midx += 1
+
+                plt.scatter(mid_pts[:, 1], mid_pts[:, 0])
+                cidx += 1
+    plt.show()
+
+def debug_edgels(lapl, edgels_matx, chains, grad_mag_max):
+    shape = lapl.shape
+    dbg_b = np.zeros(shape)
     dbg_g = dbg_b.copy()
     dbg_r = dbg_b.copy()
 
@@ -210,18 +239,22 @@ def debug_edgels(laplacian, edgels_matx, chains, grad_mag_max):
 
     threshold = grad_mag_max / 10.0
 
+    debug_chains(chains, threshold, shape)
+
     chain_index = 0
     for c in chains:
         chain_grad_mag = c['grad_mag_max']
         if chain_grad_mag > threshold:
             chain = c['chain']
+
             for edgel in chain:
                 e_key = edgel['quad_idx']
                 # edgel = edgels_dict[e_key]
                 # dbg_g[edgel_idx] = edgel_grad_mag / grad_mag_max
 
                 if chain_index % 6 == 0:
-                    dbg_b[e_key] = 1.0
+                    dbg_b[e_key] = 0.5
+                    dbg_g[e_key] = 1.0
                 elif chain_index % 6 == 1:
                     dbg_g[e_key] = 1.0
                 elif chain_index % 6 == 2:
@@ -237,6 +270,7 @@ def debug_edgels(laplacian, edgels_matx, chains, grad_mag_max):
                     dbg_r[e_key] = 1.0
 
             chain_index += 1
+    print(chain_index)
 
     # for irow in range(laplacian.shape[0]):
     #     for icol in range(laplacian.shape[1]):
