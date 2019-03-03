@@ -877,7 +877,13 @@ def chain_fit_lines(c):
         line_end_pt_0 = line_pt + line_dir * f_min
         line_end_pt_1 = line_pt + line_dir * f_max
 
-        fit_lines.append((line_dir, line_pt, (line_end_pt_0, line_end_pt_1), l_pts.shape[0]))
+        new_fit = {}
+        new_fit['line_dir'] = line_dir
+        new_fit['line_pt'] = line_pt
+        new_fit['end_pts'] = (line_end_pt_0, line_end_pt_1)
+        new_fit['num_pts'] = l_pts.shape[0]
+
+        fit_lines.append(new_fit)
 
     c['lines'] = fit_lines
 
@@ -937,7 +943,7 @@ def process_image2(image_u8):
         if chain_grad_mag > threshold:
             chain_fit_lines(c)
 
-    dbg_image = dbg.debug_edgels(lapl, chains, grad_mag_max) * 255.0
+    dbg_image = dbg.debug_edgels(lapl, chains, threshold) * 255.0
 
     result_image = imutils.resize(dbg_image, width=image_width)
     return result_image.astype(np.uint8)

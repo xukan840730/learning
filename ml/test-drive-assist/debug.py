@@ -279,17 +279,11 @@ def debug_chains(chains, threshold, shape):
 
         # plt.show()
 
-def debug_edgels(lapl, chains, grad_mag_max):
+def debug_edgels(lapl, chains, threshold):
     shape = lapl.shape
     dbg_b = np.zeros(shape)
     dbg_g = dbg_b.copy()
     dbg_r = dbg_b.copy()
-
-    # avoid zero division
-    if grad_mag_max == 0.0:
-        grad_mag_max = 0.1
-
-    threshold = grad_mag_max / 5.0
 
     # debug_chains(chains, threshold, shape)
 
@@ -299,7 +293,7 @@ def debug_edgels(lapl, chains, grad_mag_max):
         if chain_grad_mag > threshold:
             chain = c['chain']
 
-            if chain_index == 14 and False:
+            if False:
                 for edgel in chain:
                     e_key = edgel['quad_idx']
                     # edgel = edgels_dict[e_key]
@@ -329,40 +323,65 @@ def debug_edgels(lapl, chains, grad_mag_max):
     dbg_image = cv2.merge((dbg_b, dbg_g, dbg_r))
 
     chain_index = 0
+    color_index = 0
+
     for c in chains:
         chain_grad_mag = c['grad_mag_max']
         if chain_grad_mag > threshold:
             chain = c['chain']
 
             if 'lines' in c:
-                if chain_index == 14 or True:
+                if True:
                     fit_lines = c['lines']
 
-                    lidx = 0
+                    # choose dominate 2 lines
+                    best_idx = [-1, -1]
+                    best_num_pts = [-1, -1]
+
+                    l_idx = 0
                     for l in fit_lines:
-                        pt0 = l[2][0]
-                        pt1 = l[2][1]
+                        num_pts = l['num_pts']
+                        if num_pts > best_num_pts[0]:
+                            best_idx[1] = best_idx[0]
+                            best_idx[0] = l_idx
+                            best_num_pts[1] = best_num_pts[0]
+                            best_num_pts[0] = num_pts
+                        elif num_pts > best_num_pts[1]:
+                            best_idx[1] = l_idx
+                            best_num_pts[1] = num_pts
 
-                        # if l[3] < 10:
-                        #     continue
+                        l_idx += 1
 
-                        color = (0, 1.0, 0)
-                        if lidx % 6 == 0:
-                            color = (0, 0.5, 1.0)
-                        elif lidx % 6 == 1:
-                            color = (0, 0, 1.0)
-                        elif lidx % 6 == 2:
-                            color = (1.0, 0, 0.0)
-                        elif lidx % 6 == 3:
-                            color = (1.0, 1.0, 0.0)
-                        elif lidx % 6 == 4:
-                            color = (0.0, 1.0, 1.0)
-                        elif lidx % 6 == 5:
-                            color = (1.0, 0.0, 1.0)
+                    for i in best_idx:
+                        if i < 0:
+                            break
+
+                        l = fit_lines[i]
+                        end_pts = l['end_pts']
+                        pt0 = end_pts[0]
+                        pt1 = end_pts[1]
+                        num_pts = l['num_pts']
+
+                        if num_pts < 8:
+                            continue
+
+                        color = (0.0, 0.8, 0.0)
+                        if color_index % 6 == 0:
+                            color = (0, 0.5, 0.8)
+                        elif color_index % 6 == 1:
+                            color = (0, 0, 0.8)
+                        elif color_index % 6 == 2:
+                            color = (0.8, 0, 0.0)
+                        elif color_index % 6 == 3:
+                            color = (0.8, 0.8, 0.0)
+                        elif color_index % 6 == 4:
+                            color = (0.0, 0.8, 0.8)
+                        elif color_index % 6 == 5:
+                            color = (0.8, 0.0, 0.8)
 
                         cv2.line(dbg_image, (pt0[1], pt0[0]), (pt1[1], pt1[0]), color=color)
 
-                        lidx += 1
+                        color_index += 1
 
             chain_index += 1
 
