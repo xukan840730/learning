@@ -449,38 +449,80 @@ def make_edgel(edge0, edge1, lapl, end_pts_hori, end_pts_vert, irow, icol):
     edgel = {}
     edgel['quad_idx'] = (irow, icol)
     edgel['end_pts'] = (end_pt0, end_pt1)
-    edgel['mid_pt'] = (end_pt0 + end_pt1) * 0.5
+    mid_pt = (end_pt0 + end_pt1) * 0.5
+    edgel['mid_pt'] = mid_pt
     edgel['edge'] = edges
 
     grad_hori = np.float32(0.0)
     grad_vert = np.float32(0.0)
-    for e in edges:
-        edge_pt0 = e[0]
-        edge_pt1 = e[1]
-        if edge_pt1[1] == edge_pt0[1] + 1:
-            assert (edge_pt0[0] == edge_pt1[0])
-            grad_hori += np.float32(lapl[edge_pt1] - lapl[edge_pt0])
-        elif edge_pt1[0] == edge_pt0[0] + 1:
-            assert(edge_pt0[1] == edge_pt1[1])
-            grad_vert += np.float32(lapl[edge_pt1] - lapl[edge_pt0])
-        elif edge_pt1[1] == edge_pt0[1] - 1:
-            assert (edge_pt0[0] == edge_pt1[0])
-            grad_hori += np.float32(lapl[edge_pt0] - lapl[edge_pt1])
-        elif edge_pt1[0] == edge_pt0[0] - 1:
-            assert (edge_pt0[1] == edge_pt1[1])
-            grad_vert += np.float32(lapl[edge_pt0] - lapl[edge_pt1])
-        else:
-            assert (False)
 
-    grad_hori *= np.float32(0.5)
-    grad_vert *= np.float32(0.5)
-    edgel['grad'] = np.array([grad_vert, grad_hori], dtype=np.float32)
+    e0_pt0 = edge0[0]
+    e0_pt1 = edge0[1]
+    e1_pt0 = edge1[0]
+    e1_pt1 = edge1[1]
+    if (e0_pt0[0] == e0_pt1[0] and e1_pt0[0] == e1_pt1[0]) or (e0_pt0[1] == e0_pt1[1] and e1_pt0[1] == e1_pt1[1]):
+        grad_hori += lapl[(irow, icol + 1)] - lapl[(irow, icol)]
+        grad_hori += lapl[(irow + 1, icol + 1)] - lapl[(irow + 1, icol)]
+        grad_vert += lapl[(irow + 1, icol)] - lapl[(irow, icol)]
+        grad_vert += lapl[(irow + 1, icol + 1)] - lapl[(irow, icol + 1)]
+
+        grad_hori *= np.float32(0.5)
+        grad_vert *= np.float32(0.5)
+    else:
+        for e in edges:
+            edge_pt0 = e[0]
+            edge_pt1 = e[1]
+            if edge_pt1[1] == edge_pt0[1] + 1:
+                assert (edge_pt0[0] == edge_pt1[0])
+                grad_hori += np.float32(lapl[edge_pt1] - lapl[edge_pt0])
+            elif edge_pt1[0] == edge_pt0[0] + 1:
+                assert(edge_pt0[1] == edge_pt1[1])
+                grad_vert += np.float32(lapl[edge_pt1] - lapl[edge_pt0])
+            elif edge_pt1[1] == edge_pt0[1] - 1:
+                assert (edge_pt0[0] == edge_pt1[0])
+                grad_hori += np.float32(lapl[edge_pt0] - lapl[edge_pt1])
+            elif edge_pt1[0] == edge_pt0[0] - 1:
+                assert (edge_pt0[1] == edge_pt1[1])
+                grad_vert += np.float32(lapl[edge_pt0] - lapl[edge_pt1])
+            else:
+                assert (False)
+
+    grad = np.array([grad_vert, grad_hori], dtype=np.float32)
+    edgel['grad'] = grad
     grad_mag = np.sqrt(grad_hori * grad_hori + grad_vert * grad_vert)
     edgel['grad_mag'] = grad_mag
-    theta_rad = np.arctan2(grad_hori, grad_vert, dtype=np.float32)
+    theta_rad = np.arctan2(grad_vert, grad_hori, dtype=np.float32)
     theta_deg = theta_rad * np.float32(180) / np.float32(np.pi)
+    theta_rad_abs = theta_rad
+    if theta_rad_abs < 0:
+        theta_rad_abs += np.float32(np.pi * 2) # line could be represented by 2 directions!
+    theta_deg_abs = theta_rad_abs * np.float32(180) / np.float32(np.pi)
     edgel['theta'] = theta_rad
     edgel['theta_deg'] = theta_deg
+    edgel['theta_abs'] = theta_rad_abs
+    edgel['theta_deg_abs'] = theta_deg_abs
+
+    tangent_dir_0 = normalize(np.array([grad[1], -grad[0]]))
+
+    # center = np.array([lapl.shape[0] / 2, lapl.shape[1] / 2], dtype=np.float32)
+    center = np.array([0, 0], dtype=np.float32)
+
+    # -mid_pt == (kOrigin - mid_pt)
+    dist_proj_0 = np.dot(tangent_dir_0, center - mid_pt)
+    proj_0 = tangent_dir_0 * dist_proj_0
+    # tangent_pt_0 = mid_pt + proj_0
+    perp_0 = center - mid_pt - proj_0
+    dist_perp_0 = np.linalg.norm(perp_0)
+    edgel['tang_0'] = (tangent_dir_0, dist_proj_0, dist_perp_0)
+
+    tangent_dir_1 = -tangent_dir_0
+    dist_proj_1 = np.dot(tangent_dir_1, center - mid_pt)
+    proj_1 = tangent_dir_1 * dist_proj_1
+    # tangent_pt_1 = mid_pt + proj_1
+    perp_1 = center - mid_pt - proj_1
+    dist_perp_1 = np.linalg.norm(perp_1)
+    edgel['tang_1'] = (tangent_dir_1, dist_proj_1, dist_perp_1)
+
     edgel['visited'] = False
 
     return edgel
@@ -757,6 +799,89 @@ def build_edgels(lapl, end_pts_hori, end_pts_vert):
     return edgels_matx, grad_mag_max
 
 #-----------------------------------------------------------------------------------#
+def chain_fit_lines(c):
+    chain = c['chain']
+
+    num_edgels = len(chain)
+    if num_edgels < 2:
+        return
+
+    num_cluster = num_edgels // 8
+    if num_cluster > 4:
+        num_cluster = 4
+    elif num_cluster < 2:
+        num_cluster = 2
+
+    Z = np.zeros((num_edgels, 2))
+    mid_pts = np.zeros((num_edgels, 2))
+    grads = np.zeros((num_edgels, 2))
+
+    idx = 0
+    for e in chain:
+        tangent_0 = e['tang_0']
+        tangent_dir = tangent_0[0]
+        perp_dist = tangent_0[2]
+        theta_rad = np.arctan2(tangent_dir[1], tangent_dir[0])
+
+        # print(mid_pt, grad, tangent_dir, theta_rad, perp_dist)
+
+        Z[idx, :] = (theta_rad, perp_dist * 0.1)
+        mid_pts[idx, :] = e['mid_pt']
+        grads[idx, :] = e['grad']
+        idx += 1
+
+    # convert to np.float32
+    Z = np.float32(Z)
+
+    # define criteria and apply kmeans()
+    criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 10, 1.0)
+    ret, label, center = cv2.kmeans(Z, num_cluster, None, criteria, 10, cv2.KMEANS_RANDOM_CENTERS)
+
+    fit_lines = list()
+
+    # Now separate the data, Note the flatten()
+    for i_cluster in range(num_cluster):
+        lines = Z[label.ravel() == i_cluster]
+
+        # line_theta = np.average(lines[:, 0])
+        # line_dist = np.average(lines[:, 1])
+        # line_dir = np.array([np.cos(line_theta), np.sin(line_theta)])
+        #
+        # perp_dir = np.array([line_dir[1], -line_dir[0]])
+        # line_pt = perp_dir * line_dist
+        # if line_pt[0] < 0 and line_pt[1] < 0:
+        #     line_pt *= np.float32(-1)
+        #
+        l_pts = mid_pts[label.ravel() == i_cluster]
+        # l_grads = grads[label.ravel() == i_cluster]
+        # l_grads_sum = np.sum(l_grads, axis=0)
+        # l_grads_norm = normalize(l_grads_sum)
+
+        line_fit = cv2.fitLine(l_pts, cv2.DIST_L2, 0, 0.01, 0.01)
+        line_dir = np.zeros(2, dtype=np.float32)
+        line_dir[0] = line_fit[0]
+        line_dir[1] = line_fit[1]
+        line_pt = np.zeros(2, dtype=np.float32)
+        line_pt[0] = line_fit[2]
+        line_pt[1] = line_fit[3]
+
+        f_min = np.float32(10000.0)
+        f_max = np.float32(-10000.0)
+        for i_pts in range(l_pts.shape[0]):
+            v = np.dot(l_pts[i_pts, :] - line_pt, line_dir)
+            if v > f_max:
+                f_max = v
+            if v < f_min:
+                f_min = v
+
+        line_end_pt_0 = line_pt + line_dir * f_min
+        line_end_pt_1 = line_pt + line_dir * f_max
+
+        fit_lines.append((line_dir, line_pt, (line_end_pt_0, line_end_pt_1), l_pts.shape[0]))
+
+    c['lines'] = fit_lines
+
+#-----------------------------------------------------------------------------------#
 def process_image2(image_u8):
     image_grayscale = cv2.cvtColor(image_u8, cv2.COLOR_RGB2GRAY)
     image_height = image_grayscale.shape[0]
@@ -766,7 +891,7 @@ def process_image2(image_u8):
     image_blur_u8 = cv2.GaussianBlur(image_grayscale, (5, 5), sigma)
     image_blur_f = image_blur_u8.astype(np.float32) / 255.0
 
-    small_width = image_width // 16
+    small_width = image_width // 8
     small_image_f = imutils.resize(image_blur_f, width=small_width)
 
     # build laplacian pyramid.
@@ -804,7 +929,15 @@ def process_image2(image_u8):
 
     # dbg_lapl = dbg.debug_laplacian(lapl) * 255.0
     # cv2.imshow('lapl', dbg_lapl)
-    dbg_image = dbg.debug_edgels(lapl, edgels_matx, chains, grad_mag_max) * 255.0
+
+    threshold = grad_mag_max / 5.0
+
+    for c in chains:
+        chain_grad_mag = c['grad_mag_max']
+        if chain_grad_mag > threshold:
+            chain_fit_lines(c)
+
+    dbg_image = dbg.debug_edgels(lapl, chains, grad_mag_max) * 255.0
 
     result_image = imutils.resize(dbg_image, width=image_width)
     return result_image.astype(np.uint8)

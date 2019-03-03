@@ -199,8 +199,60 @@ def debug_laplacian(laplacian):
     dbg_image = cv2.merge((dbg_b, dbg_g, dbg_r))
     return dbg_image
 
+def debug_single_chain(single_chain):
+    chain = single_chain['chain']
+
+    num_edgels = len(chain)
+    num_cluster = num_edgels // 8
+    if num_cluster > 4:
+        num_cluster = 4
+    elif num_cluster < 2:
+        num_cluster = 2
+
+    Z = np.zeros((num_edgels, 2))
+
+    idx = 0
+    for e in chain:
+        mid_pt = e['mid_pt']
+        grad = e['grad']
+        tangent_0 = e['tang_0']
+        tangent_dir = tangent_0[0]
+        perp_dist = tangent_0[2]
+        theta_rad = np.arctan2(tangent_dir[1], tangent_dir[0])
+
+        # print(mid_pt, grad, tangent_dir, theta_rad, perp_dist)
+
+        Z[idx, :] = (theta_rad, perp_dist * 0.1)
+        idx += 1
+
+    # convert to np.float32
+    Z = np.float32(Z)
+
+    # define criteria and apply kmeans()
+    criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 10, 1.0)
+    ret, label, center = cv2.kmeans(Z, num_cluster, None, criteria, 10, cv2.KMEANS_RANDOM_CENTERS)
+
+    # colors = ('r', 'g', 'b', 'y')
+    #
+    # # Now separate the data, Note the flatten()
+    # for i in range(num_cluster):
+    #     A = Z[label.ravel() == i]
+    #
+    #     # Plot the data
+    #     plt.scatter(A[:, 0], A[:, 1], c=colors[i])
+    #
+    # # plt.scatter(center[:, 0], center[:, 1], s=80, c='y', marker='s')
+    # plt.xlabel('Height'), plt.ylabel('Weight')
+    # plt.show()
+
 def debug_chains(chains, threshold, shape):
+
     if len(chains) > 0:
+
+        # for c in chains:
+        #     chain_grad_mag = c['grad_mag_max']
+        #     if chain_grad_mag > threshold:
+        #         debug_single_chain(c)
 
         plt.xlim(0, shape[1])
         plt.ylim(shape[0], 0)
@@ -217,17 +269,17 @@ def debug_chains(chains, threshold, shape):
                 for e in chain:
                     mid_pts[midx] = e['mid_pt']
 
-                    if cidx == 0:
-                        print(e['quad_idx'], e['grad'], e['theta_deg'])
-                        #print()
+                    # if cidx == 0:
+                    #     print(mid_pts[midx], e['grad'], e['theta_deg'], e['theta_deg_abs'])
 
                     midx += 1
 
-                plt.scatter(mid_pts[:, 1], mid_pts[:, 0])
+                # plt.scatter(mid_pts[:, 1], mid_pts[:, 0])
                 cidx += 1
-    plt.show()
 
-def debug_edgels(lapl, edgels_matx, chains, grad_mag_max):
+        # plt.show()
+
+def debug_edgels(lapl, chains, grad_mag_max):
     shape = lapl.shape
     dbg_b = np.zeros(shape)
     dbg_g = dbg_b.copy()
@@ -237,9 +289,9 @@ def debug_edgels(lapl, edgels_matx, chains, grad_mag_max):
     if grad_mag_max == 0.0:
         grad_mag_max = 0.1
 
-    threshold = grad_mag_max / 10.0
+    threshold = grad_mag_max / 5.0
 
-    debug_chains(chains, threshold, shape)
+    # debug_chains(chains, threshold, shape)
 
     chain_index = 0
     for c in chains:
@@ -247,42 +299,73 @@ def debug_edgels(lapl, edgels_matx, chains, grad_mag_max):
         if chain_grad_mag > threshold:
             chain = c['chain']
 
-            for edgel in chain:
-                e_key = edgel['quad_idx']
-                # edgel = edgels_dict[e_key]
-                # dbg_g[edgel_idx] = edgel_grad_mag / grad_mag_max
+            if chain_index == 14 and False:
+                for edgel in chain:
+                    e_key = edgel['quad_idx']
+                    # edgel = edgels_dict[e_key]
+                    # dbg_g[edgel_idx] = edgel_grad_mag / grad_mag_max
 
-                if chain_index % 6 == 0:
-                    dbg_b[e_key] = 0.5
-                    dbg_g[e_key] = 1.0
-                elif chain_index % 6 == 1:
-                    dbg_g[e_key] = 1.0
-                elif chain_index % 6 == 2:
-                    dbg_r[e_key] = 1.0
-                elif chain_index % 6 == 3:
-                    dbg_r[e_key] = 1.0
-                    dbg_g[e_key] = 1.0
-                elif chain_index % 6 == 4:
-                    dbg_g[e_key] = 1.0
-                    dbg_b[e_key] = 1.0
-                elif chain_index % 6 == 5:
-                    dbg_b[e_key] = 1.0
-                    dbg_r[e_key] = 1.0
+                    if chain_index % 6 == 0:
+                        dbg_b[e_key] = 0.3
+                        dbg_g[e_key] = 0.3
+                    elif chain_index % 6 == 1:
+                        dbg_g[e_key] = 0.3
+                    elif chain_index % 6 == 2:
+                        dbg_r[e_key] = 0.3
+                    elif chain_index % 6 == 3:
+                        dbg_r[e_key] = 0.3
+                        dbg_g[e_key] = 0.3
+                    elif chain_index % 6 == 4:
+                        dbg_g[e_key] = 0.3
+                        dbg_b[e_key] = 0.3
+                    elif chain_index % 6 == 5:
+                        dbg_b[e_key] = 0.3
+                        dbg_r[e_key] = 0.3
 
             chain_index += 1
-    print(chain_index)
 
-    # for irow in range(laplacian.shape[0]):
-    #     for icol in range(laplacian.shape[1]):
-    #         edgel_list = edgels_matx[irow][icol]
-    #         if len(edgel_list) > 0:
-    #             for e in edgel_list:
-    #                 grad_mag = e['grad_mag']
-    #                 if (grad_mag >= threshold):
-    #                     dbg_g[irow][icol] = 1.0
-    #                     break
+    # print(chain_index)
 
     dbg_image = cv2.merge((dbg_b, dbg_g, dbg_r))
+
+    chain_index = 0
+    for c in chains:
+        chain_grad_mag = c['grad_mag_max']
+        if chain_grad_mag > threshold:
+            chain = c['chain']
+
+            if 'lines' in c:
+                if chain_index == 14 or True:
+                    fit_lines = c['lines']
+
+                    lidx = 0
+                    for l in fit_lines:
+                        pt0 = l[2][0]
+                        pt1 = l[2][1]
+
+                        # if l[3] < 10:
+                        #     continue
+
+                        color = (0, 1.0, 0)
+                        if lidx % 6 == 0:
+                            color = (0, 0.5, 1.0)
+                        elif lidx % 6 == 1:
+                            color = (0, 0, 1.0)
+                        elif lidx % 6 == 2:
+                            color = (1.0, 0, 0.0)
+                        elif lidx % 6 == 3:
+                            color = (1.0, 1.0, 0.0)
+                        elif lidx % 6 == 4:
+                            color = (0.0, 1.0, 1.0)
+                        elif lidx % 6 == 5:
+                            color = (1.0, 0.0, 1.0)
+
+                        cv2.line(dbg_image, (pt0[1], pt0[0]), (pt1[1], pt1[0]), color=color)
+
+                        lidx += 1
+
+            chain_index += 1
+
     return dbg_image
 
 def proto_histogram(image_gray_u8):
