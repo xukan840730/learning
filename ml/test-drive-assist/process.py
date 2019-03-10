@@ -1,9 +1,14 @@
 import cv2
 import numpy as np
+import common
 import region as rg
 import debug as dbg
+import chain
+import fit_line as fl
 import imutils
 import cProfile, pstats, io
+from mpl_toolkits.mplot3d import Axes3D
+import matplotlib.pyplot as plt
 
 def profile(fnc):
     """ A decorator """
@@ -120,243 +125,24 @@ def process_image(image_u8):
     return expand_regions
 
 #-----------------------------------------------------------------------------------#
-def edge_equal(e0, e1):
-    assert(len(e0) == 2)
-    assert(len(e1) == 2)
-
-    if (e0[0][0] == e0[1][0]):
-        assert(abs(e0[0][1] - e0[1][1]) == 1)
-    elif (e0[0][1] == e0[1][1]):
-        assert(abs(e0[0][0] - e0[1][0]) == 1)
-    else:
-        assert(False)
-
-    if (e1[0][0] == e1[1][0]):
-        assert(abs(e1[0][1] - e1[1][1]) == 1)
-    elif (e1[0][1] == e1[1][1]):
-        assert(abs(e1[0][0] - e1[1][0]) == 1)
-    else:
-        assert(False)
-
-    if e0[0] == e1[0] and e0[1] == e1[1]:
-        return True
-
-    if e0[0] == e1[1] and e0[1] == e1[0]:
-        return True
-
-    return False
+# def edgel_equal(edgel0, edgel1):
+#     edgel0_edges = edgel0['edge']
+#     edgel1_edges = edgel1['edge']
+#
+#     if edge_equal(edgel0_edges[0], edgel1_edges[0]) and edge_equal(edgel0_edges[1], edgel1_edges[1]):
+#         return True
+#
+#     if edge_equal(edgel0_edges[0], edgel1_edges[1]) and edge_equal(edgel0_edges[1], edgel1_edges[0]):
+#         return True
+#
+#     return False
 
 #-----------------------------------------------------------------------------------#
-def get_adj_quad(curr_quad_idx, edge):
-    irow = curr_quad_idx[0]
-    icol = curr_quad_idx[1]
-
-    test_edge0 = ((irow, icol), (irow, icol + 1))
-    if edge_equal(test_edge0, edge):
-        return (irow - 1, icol)
-
-    test_edge1 = ((irow, icol + 1), (irow + 1, icol + 1))
-    if edge_equal(test_edge1, edge):
-        return (irow, icol + 1)
-
-    test_edge2 = ((irow + 1, icol), (irow + 1, icol + 1))
-    if edge_equal(test_edge2, edge):
-        return (irow + 1, icol)
-
-    test_edge3 = ((irow, icol), (irow + 1, icol))
-    if edge_equal(test_edge3, edge):
-        return (irow, icol - 1)
-
-    assert(False)
-
-#-----------------------------------------------------------------------------------#
-def edgel_equal(edgel0, edgel1):
-    edgel0_edges = edgel0['edge']
-    edgel1_edges = edgel1['edge']
-
-    if edge_equal(edgel0_edges[0], edgel1_edges[0]) and edge_equal(edgel0_edges[1], edgel1_edges[1]):
-        return True
-
-    if edge_equal(edgel0_edges[0], edgel1_edges[1]) and edge_equal(edgel0_edges[1], edgel1_edges[0]):
-        return True
-
-    return False
-
-#-----------------------------------------------------------------------------------#
-def find_edgel_in_list(e, list_a):
-    for a in list_a:
-        if edgel_equal(e, a):
-            return True
-    return False
-
-#-----------------------------------------------------------------------------------#
-def link_edgel(edgels_matx, edgel, shape):
-    chain_a = list()
-    chain_b = list()
-
-    quad_idx = edgel['quad_idx']
-
-    first_edgel = edgel
-    first_edgel['visited'] = True
-    chain_a.append(first_edgel)
-    chain_b.append(first_edgel)
-    grad_mag_max = first_edgel['grad_mag']
-
-    frontiers_a = list()
-    frontiers_b = list()
-    frontiers_a.append(first_edgel)
-    frontiers_b.append(first_edgel)
-
-    iter_count = 0
-    while len(frontiers_a) > 0:
-        new_frontiers = list()
-
-        each_edgel = frontiers_a.pop(0)
-        edgel_idx = each_edgel['quad_idx']
-        edges = each_edgel['edge']
-
-        e0 = edges[0]
-        next_idx0 = get_adj_quad(edgel_idx, e0)
-        if next_idx0[0] >= 0 and next_idx0[0] < shape[0] and next_idx0[1] >= 0 and next_idx0[1] < shape[1]:
-            next_edgel_list = edgels_matx[next_idx0[0]][next_idx0[1]]
-            if len(next_edgel_list) > 0:
-                # find next edgel
-                next_edgel = None
-                if len(next_edgel_list) == 1:
-                    next_edgel = next_edgel_list[0]
-                elif len(next_edgel_list) == 2:
-                    for ne in next_edgel_list:
-                        ne_edges = ne['edge']
-                        assert (len(ne_edges) == 2)
-                        for nee in ne_edges:
-                            if edge_equal(nee, e0):
-                                next_edgel = ne
-                                break
-                else:
-                    assert(False)
-
-                if next_edgel and next_edgel['visited'] == False:
-                    # assert(not find_edgel_in_list(next_edgel, chain_a) and not find_edgel_in_list(next_edgel, chain_b))
-                    next_edgel['visited'] = True
-                    grad_mag = next_edgel['grad_mag']
-                    if grad_mag > grad_mag_max:
-                        grad_mag_max = grad_mag
-                    new_frontiers.append(next_edgel)
-                    chain_a.append(next_edgel)
-
-        if iter_count > 0:
-            e1 = edges[1]
-            next_idx1 = get_adj_quad(edgel_idx, e1)
-            if next_idx1[0] >= 0 and next_idx1[0] < shape[0] and next_idx1[1] >= 0 and next_idx1[1] < shape[1]:
-                next_edgel_list = edgels_matx[next_idx1[0]][next_idx1[1]]
-                if len(next_edgel_list) > 0:
-                    # find next edgel
-                    next_edgel = None
-                    if len(next_edgel_list) == 1:
-                        next_edgel = next_edgel_list[0]
-                    elif len(next_edgel_list) == 2:
-                        for ne in next_edgel_list:
-                            ne_edges = ne['edge']
-                            assert(len(ne_edges) == 2)
-                            for nee in ne_edges:
-                                if edge_equal(nee, e1):
-                                    next_edgel = ne
-                                    break
-                    else:
-                        assert (False)
-
-                    if next_edgel and next_edgel['visited'] == False:
-                        # assert(not find_edgel_in_list(next_edgel, chain_a) and not find_edgel_in_list(next_edgel, chain_b))
-                        next_edgel['visited'] = True
-                        grad_mag = next_edgel['grad_mag']
-                        if grad_mag > grad_mag_max:
-                            grad_mag_max = grad_mag
-                        new_frontiers.append(next_edgel)
-                        chain_a.append(next_edgel)
-
-        iter_count += 1
-        frontiers_a = new_frontiers
-
-    iter_count = 0
-    while len(frontiers_b) > 0:
-        new_frontiers = list()
-
-        each_edgel = frontiers_b.pop(0)
-        edgel_idx = each_edgel['quad_idx']
-        edges = each_edgel['edge']
-
-        if iter_count > 0:
-            e0 = edges[0]
-            next_idx0 = get_adj_quad(edgel_idx, e0)
-            if next_idx0[0] >= 0 and next_idx0[0] < shape[0] and next_idx0[1] >= 0 and next_idx0[1] < shape[1]:
-                next_edgel_list = edgels_matx[next_idx0[0]][next_idx0[1]]
-                if len(next_edgel_list) > 0:
-                    # find next edgel
-                    next_edgel = None
-                    if len(next_edgel_list) == 1:
-                        next_edgel = next_edgel_list[0]
-                    elif len(next_edgel_list) == 2:
-                        for ne in next_edgel_list:
-                            ne_edges = ne['edge']
-                            assert(len(ne_edges) == 2)
-                            for nee in ne_edges:
-                                if edge_equal(nee, e1):
-                                    next_edgel = ne
-                                    break
-                    else:
-                        assert (False)
-
-                    if next_edgel and next_edgel['visited'] == False:
-                        # assert(not find_edgel_in_list(next_edgel, chain_a) and not find_edgel_in_list(next_edgel, chain_b))
-                        next_edgel['visited'] = True
-                        grad_mag = next_edgel['grad_mag']
-                        if grad_mag > grad_mag_max:
-                            grad_mag_max = grad_mag
-                        new_frontiers.append(next_edgel)
-                        chain_b.append(next_edgel)
-
-        e1 = edges[1]
-        next_idx1 = get_adj_quad(edgel_idx, e1)
-        if next_idx1[0] >= 0 and next_idx1[0] < shape[0] and next_idx1[1] >= 0 and next_idx1[1] < shape[1]:
-            next_edgel_list = edgels_matx[next_idx1[0]][next_idx1[1]]
-            if len(next_edgel_list) > 0:
-                # find next edgel
-                next_edgel = None
-                if len(next_edgel_list) == 1:
-                    next_edgel = next_edgel_list[0]
-                elif len(next_edgel_list) == 2:
-                    for ne in next_edgel_list:
-                        ne_edges = ne['edge']
-                        assert (len(ne_edges) == 2)
-                        for nee in ne_edges:
-                            if edge_equal(nee, e1):
-                                next_edgel = ne
-                                break
-                else:
-                    assert (False)
-
-                if next_edgel and next_edgel['visited'] == False:
-                    # assert(not find_edgel_in_list(next_edgel, chain_a) and not find_edgel_in_list(next_edgel, chain_b))
-                    next_edgel['visited'] = True
-                    grad_mag = next_edgel['grad_mag']
-                    if grad_mag > grad_mag_max:
-                        grad_mag_max = grad_mag
-                    new_frontiers.append(next_edgel)
-                    chain_b.append(next_edgel)
-
-        frontiers_b = new_frontiers
-
-    final_chain = chain_a.copy()
-    final_chain.reverse()
-    final_chain.pop(len(final_chain) - 1)
-    final_chain.extend(chain_b)
-    final_chain.reverse()
-
-    result = {}
-    result['chain'] = final_chain
-    result['grad_mag_max'] = grad_mag_max
-
-    return result
+# def find_edgel_in_list(e, list_a):
+#     for a in list_a:
+#         if edgel_equal(e, a):
+#             return True
+#     return False
 
 #-----------------------------------------------------------------------------------#
 def laplacian(image_f):
@@ -577,9 +363,9 @@ def get_neighbors(irow, icol, end_pts_hori, end_pts_vert, edgels_matx, rows, col
                 n1 = edgels_neighbor[1]
                 ne0 = n0['edge']
                 ne1 = n1['edge']
-                if edge_equal(ne0[0], edge) or edge_equal(ne0[1], edge):
+                if common.edge_equal(ne0[0], edge) or common.edge_equal(ne0[1], edge):
                     line_neighbors[co] = n0['end_pts']
-                elif edge_equal(ne1[0], edge) or edge_equal(ne1[1], edge):
+                elif common.edge_equal(ne1[0], edge) or common.edge_equal(ne1[1], edge):
                     line_neighbors[co] = n1['end_pts']
                 else:
                     assert(False)
@@ -799,95 +585,6 @@ def build_edgels(lapl, end_pts_hori, end_pts_vert):
     return edgels_matx, grad_mag_max
 
 #-----------------------------------------------------------------------------------#
-def chain_fit_lines(c):
-    chain = c['chain']
-
-    num_edgels = len(chain)
-    if num_edgels < 2:
-        return
-
-    num_cluster = num_edgels // 8
-    if num_cluster > 4:
-        num_cluster = 4
-    elif num_cluster < 2:
-        num_cluster = 2
-
-    Z = np.zeros((num_edgels, 2))
-    mid_pts = np.zeros((num_edgels, 2))
-    grads = np.zeros((num_edgels, 2))
-
-    idx = 0
-    for e in chain:
-        tangent_0 = e['tang_0']
-        tangent_dir = tangent_0[0]
-        perp_dist = tangent_0[2]
-        theta_rad = np.arctan2(tangent_dir[1], tangent_dir[0])
-
-        # print(mid_pt, grad, tangent_dir, theta_rad, perp_dist)
-
-        Z[idx, :] = (theta_rad, perp_dist * 0.1)
-        mid_pts[idx, :] = e['mid_pt']
-        grads[idx, :] = e['grad']
-        idx += 1
-
-    # convert to np.float32
-    Z = np.float32(Z)
-
-    # define criteria and apply kmeans()
-    criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 10, 1.0)
-    ret, label, center = cv2.kmeans(Z, num_cluster, None, criteria, 10, cv2.KMEANS_RANDOM_CENTERS)
-
-    fit_lines = list()
-
-    # Now separate the data, Note the flatten()
-    for i_cluster in range(num_cluster):
-        lines = Z[label.ravel() == i_cluster]
-
-        # line_theta = np.average(lines[:, 0])
-        # line_dist = np.average(lines[:, 1])
-        # line_dir = np.array([np.cos(line_theta), np.sin(line_theta)])
-        #
-        # perp_dir = np.array([line_dir[1], -line_dir[0]])
-        # line_pt = perp_dir * line_dist
-        # if line_pt[0] < 0 and line_pt[1] < 0:
-        #     line_pt *= np.float32(-1)
-        #
-        l_pts = mid_pts[label.ravel() == i_cluster]
-        # l_grads = grads[label.ravel() == i_cluster]
-        # l_grads_sum = np.sum(l_grads, axis=0)
-        # l_grads_norm = normalize(l_grads_sum)
-
-        line_fit = cv2.fitLine(l_pts, cv2.DIST_L2, 0, 0.01, 0.01)
-        line_dir = np.zeros(2, dtype=np.float32)
-        line_dir[0] = line_fit[0]
-        line_dir[1] = line_fit[1]
-        line_pt = np.zeros(2, dtype=np.float32)
-        line_pt[0] = line_fit[2]
-        line_pt[1] = line_fit[3]
-
-        f_min = np.float32(10000.0)
-        f_max = np.float32(-10000.0)
-        for i_pts in range(l_pts.shape[0]):
-            v = np.dot(l_pts[i_pts, :] - line_pt, line_dir)
-            if v > f_max:
-                f_max = v
-            if v < f_min:
-                f_min = v
-
-        line_end_pt_0 = line_pt + line_dir * f_min
-        line_end_pt_1 = line_pt + line_dir * f_max
-
-        new_fit = {}
-        new_fit['line_dir'] = line_dir
-        new_fit['line_pt'] = line_pt
-        new_fit['end_pts'] = (line_end_pt_0, line_end_pt_1)
-        new_fit['num_pts'] = l_pts.shape[0]
-
-        fit_lines.append(new_fit)
-
-    c['lines'] = fit_lines
-
-#-----------------------------------------------------------------------------------#
 def process_image2(image_u8):
     image_grayscale = cv2.cvtColor(image_u8, cv2.COLOR_RGB2GRAY)
     image_height = image_grayscale.shape[0]
@@ -897,7 +594,7 @@ def process_image2(image_u8):
     image_blur_u8 = cv2.GaussianBlur(image_grayscale, (5, 5), sigma)
     image_blur_f = image_blur_u8.astype(np.float32) / 255.0
 
-    small_width = image_width // 8
+    small_width = image_width // 4
     small_image_f = imutils.resize(image_blur_f, width=small_width)
 
     # build laplacian pyramid.
@@ -914,7 +611,7 @@ def process_image2(image_u8):
         for icol in range(lapl.shape[1]):
             edgel_list = edgels_matx[irow][icol]
             if len(edgel_list) == 0:
-                continue;
+                continue
 
             for edgel in edgel_list:
                 # skip already visited edgel
@@ -924,7 +621,7 @@ def process_image2(image_u8):
                 # print((irow, icol))
 
                 # use 2 list so they can be easily linked together
-                new_chain = link_edgel(edgels_matx, edgel, lapl.shape)
+                new_chain = chain.link_edgel(edgels_matx, edgel, lapl.shape)
                 # print(new_chain)
                 chains.append(new_chain)
 
@@ -941,7 +638,7 @@ def process_image2(image_u8):
     for c in chains:
         chain_grad_mag = c['grad_mag_max']
         if chain_grad_mag > threshold:
-            chain_fit_lines(c)
+            fl.chain_fit_lines(c)
 
     dbg_image = dbg.debug_edgels(lapl, chains, threshold) * 255.0
 

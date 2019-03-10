@@ -286,6 +286,7 @@ def debug_edgels(lapl, chains, threshold):
     dbg_r = dbg_b.copy()
 
     # debug_chains(chains, threshold, shape)
+    dbg_idx = 39
 
     chain_index = 0
     for c in chains:
@@ -294,6 +295,7 @@ def debug_edgels(lapl, chains, threshold):
             chain = c['chain']
 
             if False:
+            # if chain_index == dbg_idx:
                 for edgel in chain:
                     e_key = edgel['quad_idx']
                     # edgel = edgels_dict[e_key]
@@ -317,14 +319,12 @@ def debug_edgels(lapl, chains, threshold):
                         dbg_r[e_key] = 0.3
 
             chain_index += 1
-
-    # print(chain_index)
+    print(chain_index)
 
     dbg_image = cv2.merge((dbg_b, dbg_g, dbg_r))
 
     chain_index = 0
     color_index = 0
-
     for c in chains:
         chain_grad_mag = c['grad_mag_max']
         if chain_grad_mag > threshold:
@@ -332,56 +332,61 @@ def debug_edgels(lapl, chains, threshold):
 
             if 'lines' in c:
                 if True:
+                # if chain_index == dbg_idx:
                     fit_lines = c['lines']
 
                     # choose dominate 2 lines
-                    best_idx = [-1, -1]
-                    best_num_pts = [-1, -1]
+                    # best_idx = [-1, -1]
+                    # best_num_pts = [-1, -1]
 
-                    l_idx = 0
-                    for l in fit_lines:
-                        num_pts = l['num_pts']
-                        if num_pts > best_num_pts[0]:
-                            best_idx[1] = best_idx[0]
-                            best_idx[0] = l_idx
-                            best_num_pts[1] = best_num_pts[0]
-                            best_num_pts[0] = num_pts
-                        elif num_pts > best_num_pts[1]:
-                            best_idx[1] = l_idx
-                            best_num_pts[1] = num_pts
+                    # l_idx = 0
+                    # for l in fit_lines:
+                    #     num_pts = l['num_pts']
+                    #     if num_pts > best_num_pts[0]:
+                    #         best_idx[1] = best_idx[0]
+                    #         best_idx[0] = l_idx
+                    #         best_num_pts[1] = best_num_pts[0]
+                    #         best_num_pts[0] = num_pts
+                    #     elif num_pts > best_num_pts[1]:
+                    #         best_idx[1] = l_idx
+                    #         best_num_pts[1] = num_pts
+                    #
+                    #     l_idx += 1
 
-                        l_idx += 1
-
-                    for i in best_idx:
-                        if i < 0:
-                            break
+                    for i in range(len(fit_lines)):
+                    # for i in best_idx:
+                        # if i < 0:
+                        #     break
 
                         l = fit_lines[i]
-                        end_pts = l['end_pts']
-                        pt0 = end_pts[0]
-                        pt1 = end_pts[1]
-                        num_pts = l['num_pts']
+                        seg_grad_mag_max = l['grad_mag_max']
+                        if seg_grad_mag_max > threshold:
 
-                        if num_pts < 8:
-                            continue
+                            end_pts = l['end_pts']
+                            pt0 = end_pts[0]
+                            pt1 = end_pts[1]
 
-                        color = (0.0, 0.8, 0.0)
-                        if color_index % 6 == 0:
-                            color = (0, 0.5, 0.8)
-                        elif color_index % 6 == 1:
-                            color = (0, 0, 0.8)
-                        elif color_index % 6 == 2:
-                            color = (0.8, 0, 0.0)
-                        elif color_index % 6 == 3:
-                            color = (0.8, 0.8, 0.0)
-                        elif color_index % 6 == 4:
-                            color = (0.0, 0.8, 0.8)
-                        elif color_index % 6 == 5:
-                            color = (0.8, 0.0, 0.8)
+                            # num_pts = l['num_pts']
+                            # if num_pts < 8:
+                            #     continue
 
-                        cv2.line(dbg_image, (pt0[1], pt0[0]), (pt1[1], pt1[0]), color=color)
+                            color = (0.0, 0.8, 0.0)
+                            if color_index % 6 == 0:
+                                color = (0, 0.5, 0.8)
+                            elif color_index % 6 == 1:
+                                color = (0, 0, 0.8)
+                            elif color_index % 6 == 2:
+                                color = (0.8, 0, 0.0)
+                            elif color_index % 6 == 3:
+                                color = (0.8, 0.8, 0.0)
+                            elif color_index % 6 == 4:
+                                color = (0.0, 0.8, 0.8)
+                            elif color_index % 6 == 5:
+                                color = (0.8, 0.0, 0.8)
 
-                        color_index += 1
+                            cv2.line(dbg_image, (pt0[1], pt0[0]), (pt1[1], pt1[0]), color=color)
+
+                            color_index += 1
 
             chain_index += 1
 

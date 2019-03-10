@@ -8,7 +8,8 @@ import process
 #     canny = cv2.Canny(blur, 40, 100)
 #     return canny
 
-image_u8 = cv2.imread('test_image_tiny.jpg')
+# image_u8 = cv2.imread('test_image_tiny.jpg')
+image_u8 = cv2.imread('garmin20-daytime1-tiny.jpg')
 # image_canny = canny(image_u8)
 # cv2.imshow('canny', image_canny)
 image_u8 = cv2.resize(image_u8, (320, 256))
