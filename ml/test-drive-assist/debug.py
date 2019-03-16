@@ -294,7 +294,7 @@ def debug_edgels(lapl, chains, threshold):
         if chain_grad_mag > threshold:
             chain = c['chain']
 
-            if False:
+            if True:
             # if chain_index == dbg_idx:
                 for edgel in chain:
                     e_key = edgel['quad_idx']
@@ -323,6 +323,11 @@ def debug_edgels(lapl, chains, threshold):
 
     dbg_image = cv2.merge((dbg_b, dbg_g, dbg_r))
 
+    # row1 = int(0.40 * 128)
+    # row2 = int(0.65 * 128)
+    # cv2.line(dbg_image, (0, row1), (160, row1), (0, 1.0, 0))
+    # cv2.line(dbg_image, (0, row2), (160, row2), (0, 1.0, 0))
+
     chain_index = 0
     color_index = 0
     for c in chains:
@@ -331,7 +336,7 @@ def debug_edgels(lapl, chains, threshold):
             chain = c['chain']
 
             if 'lines' in c:
-                if True:
+                if False:
                 # if chain_index == dbg_idx:
                     fit_lines = c['lines']
 

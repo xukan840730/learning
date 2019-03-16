@@ -190,14 +190,16 @@ def process_image2(image_u8):
     image_width = image_grayscale.shape[1]
 
     sigma = 1.5
-    image_blur_u8 = cv2.GaussianBlur(image_grayscale, (5, 5), sigma)
+    image_blur_u8 = cv2.GaussianBlur(image_grayscale, (9, 9), sigma)
     image_blur_f = image_blur_u8.astype(np.float32) / 255.0
 
-    small_width = image_width // 4
+    small_width = image_width // 2
     small_image_f = imutils.resize(image_blur_f, width=small_width)
 
     # build laplacian pyramid.
     lapl = laplacian(small_image_f)
+    # dbg_lapl = dbg.debug_laplacian(lapl) * 255.0
+    # cv2.imshow('dbg_lapl', dbg_lapl)
 
     end_pts_hori, end_pts_vert = build_end_pts(lapl)
     edgels_matx, grad_mag_max = el.build_edgels(lapl, end_pts_hori, end_pts_vert)
@@ -229,10 +231,7 @@ def process_image2(image_u8):
 
     # print(len(chains))
 
-    # dbg_lapl = dbg.debug_laplacian(lapl) * 255.0
-    # cv2.imshow('lapl', dbg_lapl)
-
-    threshold = grad_mag_max / 5.0
+    threshold = grad_mag_max / 10.0
 
     for c in chains:
         chain_grad_mag = c['grad_mag_max']

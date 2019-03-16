@@ -1,4 +1,5 @@
 import cv2
+import sys
 import debug as dbg
 import process
 
@@ -8,8 +9,10 @@ import process
 #     canny = cv2.Canny(blur, 40, 100)
 #     return canny
 
+image_name = sys.argv[1]
+
 # image_u8 = cv2.imread('test_image_tiny.jpg')
-image_u8 = cv2.imread('garmin20-daytime1-tiny.jpg')
+image_u8 = cv2.imread(image_name)
 # image_canny = canny(image_u8)
 # cv2.imshow('canny', image_canny)
 image_u8 = cv2.resize(image_u8, (320, 256))
