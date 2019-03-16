@@ -8,6 +8,7 @@ class PiVideoStream:
         # initialize the camera and stream
         self.camera = PiCamera()
         self.camera.resolution = resolution
+        print(self.camera.resolution)
         self.camera.framerate = framerate
         self.rawCapture = PiRGBArray(self.camera, size=resolution)
         self.stream = self.camera.capture_continuous(self.rawCapture,
