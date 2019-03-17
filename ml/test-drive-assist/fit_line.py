@@ -65,12 +65,17 @@ def chain_fit_lines(c):
 
         f_min = np.float32(10000.0)
         f_max = np.float32(-10000.0)
+        f_perp_dist_sum = 0.0
         for i_pts in range(l_pts.shape[0]):
-            v = np.dot(l_pts[i_pts, :] - line_pt, line_dir)
+            a = l_pts[i_pts, :] - line_pt
+            v = np.dot(a, line_dir)
             if v > f_max:
                 f_max = v
             if v < f_min:
                 f_min = v
+            b = a - line_dir * v
+            perp_dist = np.linalg.norm(b)
+            f_perp_dist_sum += perp_dist
 
         line_end_pt_0 = line_pt + line_dir * f_min
         line_end_pt_1 = line_pt + line_dir * f_max
@@ -81,6 +86,8 @@ def chain_fit_lines(c):
         new_line['end_pts'] = (line_end_pt_0, line_end_pt_1)
         new_line['num_pts'] = l_pts.shape[0]
         new_line['grad_mag_max'] = seg_grad_mag_max
+        f_perp_dist_average = f_perp_dist_sum / num_elems
+        new_line['perp_dist_avg'] = f_perp_dist_average
 
         fit_lines.append(new_line)
 
@@ -124,16 +131,20 @@ def rate_lines(c, grad_mag_max_global):
         grad_mag = fl['grad_mag_max']
 
         line_theta = np.arctan2(line_dir[1], line_dir[0], dtype=np.float32)
-        c_theta = rate_theta_rad(line_theta)
+        c_theta = rate_theta_rad(line_theta) * 1.5
 
         c_grad_mag = (grad_mag_max_global - grad_mag) / grad_mag_max_global
-        c_num_pts = clamp_scale(16, 48, 1.0, 0.0, num_pts)
+        c_num_pts = clamp_scale(16, 48, 1.5, 0.0, num_pts)
 
-        c_final = c_theta + c_grad_mag + c_num_pts
+        perp_dist = fl['perp_dist_avg']
+        c_perp_dist = clamp_scale(0.2, 1.0, 0.0, 1.0, perp_dist)
+
+        c_final = c_theta + c_grad_mag + c_num_pts + c_perp_dist
 
         fl['cost_theta'] = c_theta
         fl['cost_grad_mag'] = c_grad_mag
         fl['cost_num_pts'] = c_num_pts
+        fl['cost_perp_dist'] = c_perp_dist
         fl['cost_final'] = c_final
 
 # -----------------------------------------------------------------------------------#
@@ -148,7 +159,7 @@ def sort_fit_lines(chains):
 
         l_idx = 0
         for fl in fit_lines:
-            lines.append((chain_idx, l_idx, fl['cost_final']))
+            lines.append((chain_idx, l_idx, fl['cost_final'], fl['perp_dist_avg']))
             l_idx += 1
 
     lines.sort(key=lambda s: s[2])

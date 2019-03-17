@@ -202,12 +202,12 @@ def link_edgel(edgels_matx, edgel, shape):
     segments.append(seg_end) # begin with element 0
 
     elem_dix = 0
-    last_grad = final_chain[0]['grad']
+    last_grad = final_chain[0]['grad_norm']
 
     for e in final_chain:
         if elem_dix != 0:
-            curr_grad = e['grad']
-            if np.dot(last_grad, curr_grad) < 0.0:
+            curr_grad = e['grad_norm']
+            if np.dot(last_grad, curr_grad) < 0.5:
                 segments.append(elem_dix)
 
             last_grad = curr_grad

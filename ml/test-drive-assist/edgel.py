@@ -152,6 +152,7 @@ def make_edgel(edge0, edge1, lapl, end_pts_hori, end_pts_vert, irow, icol):
 
     grad = np.array([grad_vert, grad_hori], dtype=np.float32)
     edgel['grad'] = grad
+    edgel['grad_norm'] = normalize(grad)
     grad_mag = np.sqrt(grad_hori * grad_hori + grad_vert * grad_vert)
     edgel['grad_mag'] = grad_mag
     theta_rad = np.arctan2(grad_vert, grad_hori, dtype=np.float32)

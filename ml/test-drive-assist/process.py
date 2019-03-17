@@ -252,10 +252,11 @@ def process_image2(image_u8):
 
     sorted_lines = fl.sort_fit_lines(chains)
 
-    for sl in sorted_lines:
-        print(sl)
+    # for sl in sorted_lines:
+    #     print(sl)
 
-    dbg_image = dbg.debug_edgels(lapl, chains, threshold) * 255.0
+    # dbg_image = dbg.debug_edgels(lapl, chains, threshold) * 255.0
+    dbg_image = dbg.debug_sorted_lines(lapl, chains, sorted_lines) * 255.0
 
     result_image = imutils.resize(dbg_image, width=image_width)
     return result_image.astype(np.uint8)

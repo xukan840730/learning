@@ -286,7 +286,8 @@ def debug_edgels(lapl, chains, threshold):
     dbg_r = dbg_b.copy()
 
     # debug_chains(chains, threshold, shape)
-    dbg_idx = 58
+    dbg_idx = -1
+    dbg_idx2 = -1
 
     for c in chains:
         chain_grad_mag = c['grad_mag_max']
@@ -295,31 +296,38 @@ def debug_edgels(lapl, chains, threshold):
             chain_idx = c['chain_index']
 
             # if True:
-            if chain_idx == dbg_idx:
-            # if not c['is_loop']:
-                for edgel in chain:
-                    e_key = edgel['quad_idx']
-                    # edgel = edgels_dict[e_key]
-                    # dbg_g[edgel_idx] = edgel_grad_mag / grad_mag_max
+            if chain_idx != dbg_idx:
+                continue
 
-                    if dbg_idx != -1:
-                        dbg_g[e_key] = 0.3
-                    elif chain_idx % 6 == 0:
-                        dbg_b[e_key] = 0.3
-                        dbg_g[e_key] = 0.3
-                    elif chain_idx % 6 == 1:
-                        dbg_g[e_key] = 0.3
-                    elif chain_idx % 6 == 2:
-                        dbg_r[e_key] = 0.3
-                    elif chain_idx % 6 == 3:
-                        dbg_r[e_key] = 0.3
-                        dbg_g[e_key] = 0.3
-                    elif chain_idx % 6 == 4:
-                        dbg_g[e_key] = 0.3
-                        dbg_b[e_key] = 0.3
-                    elif chain_idx % 6 == 5:
-                        dbg_b[e_key] = 0.3
-                        dbg_r[e_key] = 0.3
+            # if not c['is_loop']:
+            for ie in range(len(chain)):
+                edgel = chain[ie]
+                e_key = edgel['quad_idx']
+                # edgel = edgels_dict[e_key]
+                # dbg_g[edgel_idx] = edgel_grad_mag / grad_mag_max
+
+                if dbg_idx2 != -1 and dbg_idx2 < len(c['segments']):
+                    if ie < c['segments'][dbg_idx2] or ie >= c['segments'][dbg_idx2 + 1]:
+                        continue
+
+                if dbg_idx != -1:
+                    dbg_r[e_key] = 0.3
+                elif chain_idx % 6 == 0:
+                    dbg_b[e_key] = 0.3
+                    dbg_g[e_key] = 0.3
+                elif chain_idx % 6 == 1:
+                    dbg_g[e_key] = 0.3
+                elif chain_idx % 6 == 2:
+                    dbg_r[e_key] = 0.3
+                elif chain_idx % 6 == 3:
+                    dbg_r[e_key] = 0.3
+                    dbg_g[e_key] = 0.3
+                elif chain_idx % 6 == 4:
+                    dbg_g[e_key] = 0.3
+                    dbg_b[e_key] = 0.3
+                elif chain_idx % 6 == 5:
+                    dbg_b[e_key] = 0.3
+                    dbg_r[e_key] = 0.3
 
     dbg_image = cv2.merge((dbg_b, dbg_g, dbg_r))
 
@@ -332,50 +340,80 @@ def debug_edgels(lapl, chains, threshold):
 
             if 'lines' in c:
                 # if True:
-                if chain_idx == dbg_idx:
-                    fit_lines = c['lines']
+                if chain_idx != dbg_idx:
+                    continue
 
-                    # if len(fit_lines) > 4:
+                fit_lines = c['lines']
+
+                for i in range(len(fit_lines)):
+                    if i != dbg_idx2 or dbg_idx2 == -1:
+                        continue
+
+                    l = fit_lines[i]
+                    seg_grad_mag_max = l['grad_mag_max']
+                    if seg_grad_mag_max < threshold:
+                        continue
+
+                    # num_pts = l['num_pts']
+                    # if num_pts < 16:
                     #     continue
 
-                    # if chain_index == dbg_idx:
-                    #     print(chain)
+                    end_pts = l['end_pts']
+                    pt0 = end_pts[0]
+                    pt1 = end_pts[1]
 
-                    for i in range(len(fit_lines)):
-                        l = fit_lines[i]
-                        seg_grad_mag_max = l['grad_mag_max']
-                        if seg_grad_mag_max < threshold:
-                            continue
+                    color = (0.0, 0.8, 0.0)
+                    if dbg_idx != -1:
+                        color = (0, 0.8, 0.0)
+                    elif color_index % 6 == 0:
+                        color = (0, 0.5, 0.8)
+                    elif color_index % 6 == 1:
+                        color = (0, 0, 0.8)
+                    elif color_index % 6 == 2:
+                        color = (0.8, 0, 0.0)
+                    elif color_index % 6 == 3:
+                        color = (0.8, 0.8, 0.0)
+                    elif color_index % 6 == 4:
+                        color = (0.0, 0.8, 0.8)
+                    elif color_index % 6 == 5:
+                        color = (0.8, 0.0, 0.8)
 
-                        num_pts = l['num_pts']
-                        if num_pts < 16:
-                            continue
+                    cv2.line(dbg_image, (pt0[1], pt0[0]), (pt1[1], pt1[0]), color=color)
 
-                        end_pts = l['end_pts']
-                        pt0 = end_pts[0]
-                        pt1 = end_pts[1]
-
-                        color = (0.0, 0.8, 0.0)
-                        if dbg_idx != -1:
-                            color = (0, 0.8, 0.0)
-                        elif color_index % 6 == 0:
-                            color = (0, 0.5, 0.8)
-                        elif color_index % 6 == 1:
-                            color = (0, 0, 0.8)
-                        elif color_index % 6 == 2:
-                            color = (0.8, 0, 0.0)
-                        elif color_index % 6 == 3:
-                            color = (0.8, 0.8, 0.0)
-                        elif color_index % 6 == 4:
-                            color = (0.0, 0.8, 0.8)
-                        elif color_index % 6 == 5:
-                            color = (0.8, 0.0, 0.8)
-
-                        cv2.line(dbg_image, (pt0[1], pt0[0]), (pt1[1], pt1[0]), color=color)
-
-                        color_index += 1
+                    color_index += 1
 
     return dbg_image
+
+def debug_sorted_lines(lapl, chains, sorted_lines):
+    shape = lapl.shape
+    dbg_b = np.zeros(shape)
+    dbg_g = dbg_b.copy()
+    dbg_r = dbg_b.copy()
+
+    dbg_image = cv2.merge((dbg_b, dbg_g, dbg_r))
+
+    green = (0, 1.0, 0)
+    red = (0, 0, 1.0)
+    blue = (1.0, 0, 0)
+    yellow = (0, 1.0, 1.0)
+    pink = (203.0 / 255, 192.0 / 255, 1.0)
+    colors = [green, green, blue, blue, yellow, yellow, pink, pink]
+    thickness = [2, 2, 2, 2, 1, 1, 1, 1]
+
+    irange = min(len(colors), len(sorted_lines))
+
+    for i in range(irange):
+        sl = sorted_lines[i]
+
+        c = chains[sl[0]]
+        l = c['lines'][sl[1]]
+        end_pts = l['end_pts']
+        pt0 = end_pts[0]
+        pt1 = end_pts[1]
+        cv2.line(dbg_image, (pt0[1], pt0[0]), (pt1[1], pt1[0]), color=colors[i], thickness=thickness[i])
+
+    return dbg_image
+
 
 def proto_histogram(image_gray_u8):
     num_bins = 16
