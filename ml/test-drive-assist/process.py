@@ -151,11 +151,16 @@ def laplacian(image_f):
     return lapl
 
 #-----------------------------------------------------------------------------------#
-def build_end_pts(lapl):
+def build_end_pts(lapl, roi):
+    roi_row_0 = roi[0][0]
+    roi_row_1 = roi_row_0 + roi[1][0]
+    roi_col_0 = roi[0][1]
+    roi_col_1 = roi_col_0 + roi[1][1]
+
     # build hori edge end points
     end_pts_hori = {}
-    for irow in range(lapl.shape[0]):
-        for icol in range(lapl.shape[1] - 1):
+    for irow in range(roi_row_0, roi_row_1):
+        for icol in range(roi_col_0, roi_col_1 - 1):
             p0 = (irow, icol)
             p1 = (irow, icol + 1)
             val0 = lapl[p0]
@@ -168,8 +173,8 @@ def build_end_pts(lapl):
 
     # build vert edge end points
     end_pts_vert = {}
-    for icol in range(lapl.shape[1]):
-        for irow in range(lapl.shape[0] - 1):
+    for icol in range(roi_col_0, roi_col_1):
+        for irow in range(roi_row_0, roi_row_1 - 1):
             p0 = (irow, icol)
             p1 = (irow + 1, icol)
             val0 = lapl[p0]
@@ -201,7 +206,12 @@ def process_image2(image_u8):
     # dbg_lapl = dbg.debug_laplacian(lapl) * 255.0
     # cv2.imshow('dbg_lapl', dbg_lapl)
 
-    end_pts_hori, end_pts_vert = build_end_pts(lapl)
+    reg_row_0 = int(lapl.shape[0] * 0.40)
+    reg_row_1 = int(lapl.shape[0] * 0.65)
+    # region of interest
+    roi = ((reg_row_0, 0), (reg_row_1 - reg_row_0, lapl.shape[1]))
+
+    end_pts_hori, end_pts_vert = build_end_pts(lapl, roi)
     edgels_matx, grad_mag_max = el.build_edgels(lapl, end_pts_hori, end_pts_vert)
 
     # build linked chain from edgels

@@ -286,7 +286,7 @@ def debug_edgels(lapl, chains, threshold):
     dbg_r = dbg_b.copy()
 
     # debug_chains(chains, threshold, shape)
-    dbg_idx = 39
+    dbg_idx = -1
 
     chain_index = 0
     for c in chains:
@@ -294,7 +294,7 @@ def debug_edgels(lapl, chains, threshold):
         if chain_grad_mag > threshold:
             chain = c['chain']
 
-            if True:
+            if False:
             # if chain_index == dbg_idx:
                 for edgel in chain:
                     e_key = edgel['quad_idx']
@@ -323,11 +323,6 @@ def debug_edgels(lapl, chains, threshold):
 
     dbg_image = cv2.merge((dbg_b, dbg_g, dbg_r))
 
-    # row1 = int(0.40 * 128)
-    # row2 = int(0.65 * 128)
-    # cv2.line(dbg_image, (0, row1), (160, row1), (0, 1.0, 0))
-    # cv2.line(dbg_image, (0, row2), (160, row2), (0, 1.0, 0))
-
     chain_index = 0
     color_index = 0
     for c in chains:
@@ -336,62 +331,44 @@ def debug_edgels(lapl, chains, threshold):
             chain = c['chain']
 
             if 'lines' in c:
-                if False:
+                if True:
                 # if chain_index == dbg_idx:
                     fit_lines = c['lines']
 
-                    # choose dominate 2 lines
-                    # best_idx = [-1, -1]
-                    # best_num_pts = [-1, -1]
-
-                    # l_idx = 0
-                    # for l in fit_lines:
-                    #     num_pts = l['num_pts']
-                    #     if num_pts > best_num_pts[0]:
-                    #         best_idx[1] = best_idx[0]
-                    #         best_idx[0] = l_idx
-                    #         best_num_pts[1] = best_num_pts[0]
-                    #         best_num_pts[0] = num_pts
-                    #     elif num_pts > best_num_pts[1]:
-                    #         best_idx[1] = l_idx
-                    #         best_num_pts[1] = num_pts
-                    #
-                    #     l_idx += 1
+                    # if len(fit_lines) > 2:
+                    #     continue
 
                     for i in range(len(fit_lines)):
-                    # for i in best_idx:
-                        # if i < 0:
-                        #     break
-
                         l = fit_lines[i]
                         seg_grad_mag_max = l['grad_mag_max']
-                        if seg_grad_mag_max > threshold:
+                        if seg_grad_mag_max < threshold:
+                            continue
 
-                            end_pts = l['end_pts']
-                            pt0 = end_pts[0]
-                            pt1 = end_pts[1]
+                        num_pts = l['num_pts']
+                        if num_pts < 16:
+                            continue
 
-                            # num_pts = l['num_pts']
-                            # if num_pts < 8:
-                            #     continue
+                        end_pts = l['end_pts']
+                        pt0 = end_pts[0]
+                        pt1 = end_pts[1]
 
-                            color = (0.0, 0.8, 0.0)
-                            if color_index % 6 == 0:
-                                color = (0, 0.5, 0.8)
-                            elif color_index % 6 == 1:
-                                color = (0, 0, 0.8)
-                            elif color_index % 6 == 2:
-                                color = (0.8, 0, 0.0)
-                            elif color_index % 6 == 3:
-                                color = (0.8, 0.8, 0.0)
-                            elif color_index % 6 == 4:
-                                color = (0.0, 0.8, 0.8)
-                            elif color_index % 6 == 5:
-                                color = (0.8, 0.0, 0.8)
+                        color = (0.0, 0.8, 0.0)
+                        if color_index % 6 == 0:
+                            color = (0, 0.5, 0.8)
+                        elif color_index % 6 == 1:
+                            color = (0, 0, 0.8)
+                        elif color_index % 6 == 2:
+                            color = (0.8, 0, 0.0)
+                        elif color_index % 6 == 3:
+                            color = (0.8, 0.8, 0.0)
+                        elif color_index % 6 == 4:
+                            color = (0.0, 0.8, 0.8)
+                        elif color_index % 6 == 5:
+                            color = (0.8, 0.0, 0.8)
 
-                            cv2.line(dbg_image, (pt0[1], pt0[0]), (pt1[1], pt1[0]), color=color)
+                        cv2.line(dbg_image, (pt0[1], pt0[0]), (pt1[1], pt1[0]), color=color)
 
-                            color_index += 1
+                        color_index += 1
 
             chain_index += 1
 
