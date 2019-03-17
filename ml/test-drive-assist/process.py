@@ -233,6 +233,7 @@ def process_image2(image_u8):
 
                 # use 2 list so they can be easily linked together
                 new_chain = chain.link_edgel(edgels_matx, edgel, lapl.shape)
+                new_chain['chain_index'] = len(chains)
                 # print(new_chain)
                 chains.append(new_chain)
 
@@ -247,6 +248,12 @@ def process_image2(image_u8):
         chain_grad_mag = c['grad_mag_max']
         if chain_grad_mag > threshold:
             fl.chain_fit_lines(c)
+            fl.rate_lines(c, grad_mag_max)
+
+    sorted_lines = fl.sort_fit_lines(chains)
+
+    for sl in sorted_lines:
+        print(sl)
 
     dbg_image = dbg.debug_edgels(lapl, chains, threshold) * 255.0
 

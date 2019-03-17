@@ -2,6 +2,16 @@ import cv2
 import numpy as np
 
 #-----------------------------------------------------------------------------------#
+def clamp_scale(in0, in1, out0, out1, f):
+    if f < in0:
+        return out0
+    elif f > in1:
+        return out1
+    else:
+        assert(in0 != in1)
+        return (out1 - out0) / (in1 - in0) * (f - in0) + out0
+
+#-----------------------------------------------------------------------------------#
 def chain_fit_lines(c):
 
     segments = c['segments']
@@ -76,39 +86,71 @@ def chain_fit_lines(c):
 
     c['lines'] = fit_lines
 
-        # convert to np.float32
-        # Z = np.float32(Z)
+#-----------------------------------------------------------------------------------#
+def rate_theta_rad(theta_rad):
+    if theta_rad < 0:
+        theta_rad += np.pi
 
-        # define criteria and apply kmeans()
-        # criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 10, 1.0)
-        # ret, label, center = cv2.kmeans(Z, num_segs, None, criteria, 10, cv2.KMEANS_RANDOM_CENTERS)
+    cost = 0.0
+    if theta_rad >= 0 and theta_rad < np.pi * 5 / 12:
+        cost = clamp_scale(0, np.pi * 5 / 12, 1, 0, theta_rad)
+    elif theta_rad >= np.pi * 5 / 12 and theta_rad < np.pi / 2:
+        cost = clamp_scale(np.pi * 5 / 12, np.pi / 2, 0, 1, theta_rad)
+    elif theta_rad >= np.pi / 2 and theta_rad < np.pi * 7 / 12:
+        cost = clamp_scale(np.pi / 2, np.pi * 7 / 12, 1, 0, theta_rad)
+    elif theta_rad >= (np.pi * 7 / 12) and theta_rad < np.pi:
+        cost = clamp_scale(np.pi * 7 / 12, np.pi, 0, 1, theta_rad)
+    elif theta_rad >= np.pi and theta_rad < np.pi * 17 / 12:
+        cost = clamp_scale(np.pi, np.pi * 17 / 12, 1, 0, theta_rad)
+    elif theta_rad >= np.pi * 17 / 12 and theta_rad < np.pi * 3 / 2:
+        cost = clamp_scale(np.pi * 17 / 12, np.pi * 3 / 2, 0, 1, theta_rad)
+    elif theta_rad >= np.pi * 3 / 2 and theta_rad < np.pi * 19 / 12:
+        cost = clamp_scale(np.pi * 3 / 2, np.pi * 19 / 12, 1, 0, theta_rad)
+    else:
+        cost = clamp_scale(np.pi * 19 / 12, np.pi * 2, 0, 1, theta_rad)
 
-    # if num_edgels == 118:
-    #     colors = ('r', 'g', 'b', 'y')
-    #
-    #     for i in chain:
-    #         print(i['quad_idx'], i['mid_pt'], i['grad'], i['theta_deg'])
-    #
-    #     fig = plt.figure()
-    #     ax = fig.add_subplot(111, projection='3d')
-    #
-    #     ax.scatter(Z[:, 0], Z[:, 1], Z[:, 1], c='r', marker='o')
-    #     ax.set_xlabel('x axis')
-    #     ax.set_ylabel('y axis')
-    #     ax.set_zlabel('z axis')
-    #
-    #     plt.show()
-    #
-    #     # # Now separate the data, Note the flatten()
-    #     # for i in range(num_cluster):
-    #     #     A = Z[label.ravel() == i]
-    #     #
-    #     #     # Plot the data
-    #     #     plt.scatter(A[:, 0], A[:, 1], c=colors[i])
-    #     #
-    #     # # plt.scatter(center[:, 0], center[:, 1], s=80, c='y', marker='s')
-    #     # # plt.xlabel('Height'), plt.ylabel('Weight')
-    #     # plt.show()
-    #
-    #     plt.scatter(Z[:, 0], Z[:, 1], c='r')
-    #     plt.show()
+    return cost
+
+
+#-----------------------------------------------------------------------------------#
+def rate_lines(c, grad_mag_max_global):
+    if not 'lines' in c:
+        return
+
+    fit_lines = c['lines']
+    for fl in fit_lines:
+        line_dir = fl['line_dir']
+        num_pts = fl['num_pts']
+        grad_mag = fl['grad_mag_max']
+
+        line_theta = np.arctan2(line_dir[1], line_dir[0], dtype=np.float32)
+        c_theta = rate_theta_rad(line_theta)
+
+        c_grad_mag = (grad_mag_max_global - grad_mag) / grad_mag_max_global
+        c_num_pts = clamp_scale(16, 48, 1.0, 0.0, num_pts)
+
+        c_final = c_theta + c_grad_mag + c_num_pts
+
+        fl['cost_theta'] = c_theta
+        fl['cost_grad_mag'] = c_grad_mag
+        fl['cost_num_pts'] = c_num_pts
+        fl['cost_final'] = c_final
+
+# -----------------------------------------------------------------------------------#
+def sort_fit_lines(chains):
+    lines = list()
+
+    for c in chains:
+        if not 'lines' in c:
+            continue
+        chain_idx = c['chain_index']
+        fit_lines = c['lines']
+
+        l_idx = 0
+        for fl in fit_lines:
+            lines.append((chain_idx, l_idx, fl['cost_final']))
+            l_idx += 1
+
+    lines.sort(key=lambda s: s[2])
+
+    return lines

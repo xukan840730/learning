@@ -286,16 +286,16 @@ def debug_edgels(lapl, chains, threshold):
     dbg_r = dbg_b.copy()
 
     # debug_chains(chains, threshold, shape)
-    dbg_idx = -1
+    dbg_idx = 58
 
-    chain_index = 0
     for c in chains:
         chain_grad_mag = c['grad_mag_max']
         if chain_grad_mag > threshold:
             chain = c['chain']
+            chain_idx = c['chain_index']
 
-            if False:
-            # if chain_index == dbg_idx:
+            # if True:
+            if chain_idx == dbg_idx:
             # if not c['is_loop']:
                 for edgel in chain:
                     e_key = edgel['quad_idx']
@@ -304,42 +304,39 @@ def debug_edgels(lapl, chains, threshold):
 
                     if dbg_idx != -1:
                         dbg_g[e_key] = 0.3
-                    elif chain_index % 6 == 0:
+                    elif chain_idx % 6 == 0:
                         dbg_b[e_key] = 0.3
                         dbg_g[e_key] = 0.3
-                    elif chain_index % 6 == 1:
+                    elif chain_idx % 6 == 1:
                         dbg_g[e_key] = 0.3
-                    elif chain_index % 6 == 2:
+                    elif chain_idx % 6 == 2:
                         dbg_r[e_key] = 0.3
-                    elif chain_index % 6 == 3:
+                    elif chain_idx % 6 == 3:
                         dbg_r[e_key] = 0.3
                         dbg_g[e_key] = 0.3
-                    elif chain_index % 6 == 4:
+                    elif chain_idx % 6 == 4:
                         dbg_g[e_key] = 0.3
                         dbg_b[e_key] = 0.3
-                    elif chain_index % 6 == 5:
+                    elif chain_idx % 6 == 5:
                         dbg_b[e_key] = 0.3
                         dbg_r[e_key] = 0.3
-
-            chain_index += 1
-    print(chain_index)
 
     dbg_image = cv2.merge((dbg_b, dbg_g, dbg_r))
 
-    chain_index = 0
     color_index = 0
     for c in chains:
         chain_grad_mag = c['grad_mag_max']
         if chain_grad_mag > threshold:
             chain = c['chain']
+            chain_idx = c['chain_index']
 
             if 'lines' in c:
-                if True:
-                # if chain_index == dbg_idx:
+                # if True:
+                if chain_idx == dbg_idx:
                     fit_lines = c['lines']
 
-                    if len(fit_lines) > 3:
-                        continue
+                    # if len(fit_lines) > 4:
+                    #     continue
 
                     # if chain_index == dbg_idx:
                     #     print(chain)
@@ -377,8 +374,6 @@ def debug_edgels(lapl, chains, threshold):
                         cv2.line(dbg_image, (pt0[1], pt0[0]), (pt1[1], pt1[0]), color=color)
 
                         color_index += 1
-
-            chain_index += 1
 
     return dbg_image
 
@@ -441,3 +436,34 @@ def proto_histogram(image_gray_u8):
         break
 
     return ranges
+
+
+    # if num_edgels == 118:
+    #     colors = ('r', 'g', 'b', 'y')
+    #
+    #     for i in chain:
+    #         print(i['quad_idx'], i['mid_pt'], i['grad'], i['theta_deg'])
+    #
+    #     fig = plt.figure()
+    #     ax = fig.add_subplot(111, projection='3d')
+    #
+    #     ax.scatter(Z[:, 0], Z[:, 1], Z[:, 1], c='r', marker='o')
+    #     ax.set_xlabel('x axis')
+    #     ax.set_ylabel('y axis')
+    #     ax.set_zlabel('z axis')
+    #
+    #     plt.show()
+    #
+    #     # # Now separate the data, Note the flatten()
+    #     # for i in range(num_cluster):
+    #     #     A = Z[label.ravel() == i]
+    #     #
+    #     #     # Plot the data
+    #     #     plt.scatter(A[:, 0], A[:, 1], c=colors[i])
+    #     #
+    #     # # plt.scatter(center[:, 0], center[:, 1], s=80, c='y', marker='s')
+    #     # # plt.xlabel('Height'), plt.ylabel('Weight')
+    #     # plt.show()
+    #
+    #     plt.scatter(Z[:, 0], Z[:, 1], c='r')
+    #     plt.show()
