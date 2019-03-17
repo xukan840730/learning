@@ -2,6 +2,15 @@ import common
 import numpy as np
 
 #-----------------------------------------------------------------------------------#
+def edge_equal(e0, e1):
+    if e0[0] == e1[0] and e0[1] == e1[1]:
+        return True
+    elif e0[1] == e1[0] and e0[0] == e1[1]:
+        return True
+    else:
+        return False
+
+#-----------------------------------------------------------------------------------#
 def get_adj_quad(curr_quad_idx, edge):
     irow = curr_quad_idx[0]
     icol = curr_quad_idx[1]
@@ -211,5 +220,28 @@ def link_edgel(edgels_matx, edgel, shape):
     result['chain'] = final_chain
     result['grad_mag_max'] = grad_mag_max
     result['segments'] = segments
+
+    is_loop = False
+    if len(final_chain) >= 9:
+        first_node = final_chain[0]
+        final_node = final_chain[len(final_chain) - 1]
+
+        # if 2 nodes have the same edge, treat them as neighbors
+        edge0_0 = first_node['edge'][0]
+        edge0_1 = first_node['edge'][1]
+
+        edge1_0 = final_node['edge'][0]
+        edge1_1 = final_node['edge'][1]
+
+        if edge_equal(edge0_0, edge1_0):
+            is_loop = True
+        elif edge_equal(edge0_0, edge1_1):
+            is_loop = True
+        elif edge_equal(edge0_1, edge1_0):
+            is_loop = True
+        elif edge_equal(edge0_1, edge1_1):
+            is_loop = True
+
+    result['is_loop'] = is_loop
 
     return result

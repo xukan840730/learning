@@ -296,12 +296,15 @@ def debug_edgels(lapl, chains, threshold):
 
             if False:
             # if chain_index == dbg_idx:
+            # if not c['is_loop']:
                 for edgel in chain:
                     e_key = edgel['quad_idx']
                     # edgel = edgels_dict[e_key]
                     # dbg_g[edgel_idx] = edgel_grad_mag / grad_mag_max
 
-                    if chain_index % 6 == 0:
+                    if dbg_idx != -1:
+                        dbg_g[e_key] = 0.3
+                    elif chain_index % 6 == 0:
                         dbg_b[e_key] = 0.3
                         dbg_g[e_key] = 0.3
                     elif chain_index % 6 == 1:
@@ -335,8 +338,11 @@ def debug_edgels(lapl, chains, threshold):
                 # if chain_index == dbg_idx:
                     fit_lines = c['lines']
 
-                    # if len(fit_lines) > 2:
-                    #     continue
+                    if len(fit_lines) > 3:
+                        continue
+
+                    # if chain_index == dbg_idx:
+                    #     print(chain)
 
                     for i in range(len(fit_lines)):
                         l = fit_lines[i]
@@ -353,7 +359,9 @@ def debug_edgels(lapl, chains, threshold):
                         pt1 = end_pts[1]
 
                         color = (0.0, 0.8, 0.0)
-                        if color_index % 6 == 0:
+                        if dbg_idx != -1:
+                            color = (0, 0.8, 0.0)
+                        elif color_index % 6 == 0:
                             color = (0, 0.5, 0.8)
                         elif color_index % 6 == 1:
                             color = (0, 0, 0.8)
