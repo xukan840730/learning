@@ -286,8 +286,8 @@ def debug_edgels(lapl, chains, threshold):
     dbg_r = dbg_b.copy()
 
     # debug_chains(chains, threshold, shape)
-    dbg_idx1 = 23
-    dbg_idx2 = 1
+    dbg_idx1 = -1
+    dbg_idx2 = -1
 
     for c in chains:
         chain_grad_mag = c['grad_mag_max']
@@ -407,11 +407,16 @@ def debug_sorted_lines(lapl, sorted_lines):
 
     irange = min(len(colors), len(sorted_lines))
 
+    dbg_idx = -1
+
     for i in range(irange):
         sl = sorted_lines[i]
 
+        if dbg_idx != -1 and dbg_idx != i:
+            continue
+
         cost_final = sl['cost_final']
-        if cost_final > cost_best * 2:
+        if cost_final > cost_best * 1.75:
             break
 
         end_pts = sl['end_pts']

@@ -13,6 +13,47 @@ def clamp_scale(in0, in1, out0, out1, f):
         assert(in0 != in1)
         return (out1 - out0) / (in1 - in0) * (f - in0) + out0
 
+def calc_lines_dist(l0, l1):
+    l0_a = l0[0]
+    l0_b = l0[1]
+    l1_a = l1[0]
+    l1_b = l1[1]
+
+    d0_a = 0
+    d0_b = 0
+    d1_a = 0
+    d1_b = 0
+
+    if True:
+        l0_norm = common.normalize(l0_b - l0_a)
+        d0 = np.dot(l0_b - l0_a, l0_norm)
+
+        l0_a_to_l1_a = l1_a - l0_a
+        d0_a = np.dot(l0_a_to_l1_a, l0_norm)
+        if d0_a >= 0 and d0_a <= d0:
+            return 0.0 # overlapped
+
+        l0_a_to_l1_b = l1_b - l0_a
+        d0_b = np.dot(l0_a_to_l1_b, l0_norm)
+        if d0_b >= 0 and d0_b <= d0:
+            return 0.0 # overlapped
+
+    if True:
+        l1_norm = common.normalize(l1_b - l1_a)
+        d1 = np.dot(l1_b - l1_a, l1_norm)
+
+        l1_a_to_l0_a = l0_a - l1_a
+        d1_a = np.dot(l1_a_to_l0_a, l1_norm)
+        if d1_a >= 0 and d1_a <= d1:
+            return 0.0 # overlapped
+
+        l1_a_to_l0_b = l0_b - l1_a
+        d1_b = np.dot(l1_a_to_l0_b, l1_norm)
+        if d1_b >= 0 and d1_b <= d1:
+            return 0.0 # overlapped
+
+    return min(abs(d0_a), abs(d0_b), abs(d1_a), abs(d1_b))
+
 #-----------------------------------------------------------------------------------#
 def fit_edgels_to_line(edgels):
     num_elems = len(edgels)
@@ -196,6 +237,7 @@ def sort_fit_lines(chains, threshold1, grad_mag_max):
 
             fl_theta = fl['theta']
             fl_dist_p = fl['dist_p']
+            fl_end_pts = fl['end_pts']
 
             merged = False
             for ml in merged_lines:
@@ -203,16 +245,14 @@ def sort_fit_lines(chains, threshold1, grad_mag_max):
                 ml_theta = ml_info['theta']
                 ml_dist_p = ml_info['dist_p']
 
-                # ml_lines = ml['lines']
-                # if ml_lines[0] == (24, 0):
-                #     print("bb")
-
                 is_close = False
                 threshold_theta = 10.0 * np.pi / 180
                 dist_p_threshold = 8.0
                 if abs(ml_theta - fl_theta) < threshold_theta:
                     if abs(ml_dist_p - fl_dist_p) < dist_p_threshold:
-                        is_close = True
+                        dist = calc_lines_dist(ml_info['end_pts'], fl_end_pts)
+                        if dist < 20:
+                            is_close = True
 
                 if is_close:
                     ml_edgels = ml_info['edgels']
