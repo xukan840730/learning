@@ -214,10 +214,11 @@ def process_image2(image_u8):
     end_pts_hori, end_pts_vert = build_end_pts(lapl, roi)
     edgels_matx, grad_mag_max = el.build_edgels(lapl, end_pts_hori, end_pts_vert)
 
-    # build linked chain from edgels
+    threshold1 = grad_mag_max / 7.0
+    threshold2 = threshold1 / 3.0
 
+    # build linked chain from edgels
     chains = list()
-    i_visited = 0
     for irow in range(lapl.shape[0]):
         for icol in range(lapl.shape[1]):
             edgel_list = edgels_matx[irow][icol]
@@ -229,33 +230,31 @@ def process_image2(image_u8):
                 if edgel['visited']:
                     continue
 
+                edgel_grad_mag = edgel['grad_mag']
+                if edgel_grad_mag < threshold1:
+                    continue
+
                 # print((irow, icol))
 
-                # use 2 list so they can be easily linked together
-                new_chain = chain.link_edgel(edgels_matx, edgel, lapl.shape)
+                new_chain = chain.link_edgel(edgels_matx, edgel, lapl.shape, threshold1, threshold2)
                 new_chain['chain_index'] = len(chains)
                 # print(new_chain)
                 chains.append(new_chain)
 
-            # update iteration count
-            i_visited += 1
-
-    # print(len(chains))
-
-    threshold = grad_mag_max / 10.0
+    print(len(chains))
 
     for c in chains:
         chain_grad_mag = c['grad_mag_max']
-        if chain_grad_mag > threshold:
+        if chain_grad_mag > threshold1:
             fl.chain_fit_lines(c)
             fl.rate_lines(c, grad_mag_max)
 
     sorted_lines = fl.sort_fit_lines(chains)
 
-    # for sl in sorted_lines:
-    #     print(sl)
+    for sl in sorted_lines:
+        print(sl)
 
-    # dbg_image = dbg.debug_edgels(lapl, chains, threshold) * 255.0
+    # dbg_image = dbg.debug_edgels(lapl, chains, threshold1) * 255.0
     dbg_image = dbg.debug_sorted_lines(lapl, chains, sorted_lines) * 255.0
 
     result_image = imutils.resize(dbg_image, width=image_width)

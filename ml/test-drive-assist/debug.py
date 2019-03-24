@@ -286,18 +286,21 @@ def debug_edgels(lapl, chains, threshold):
     dbg_r = dbg_b.copy()
 
     # debug_chains(chains, threshold, shape)
-    dbg_idx = -1
+    dbg_idx1 = 40
     dbg_idx2 = -1
 
     for c in chains:
+        continue
         chain_grad_mag = c['grad_mag_max']
-        if chain_grad_mag > threshold:
+        if chain_grad_mag > threshold or dbg_idx1 != -1:
             chain = c['chain']
             chain_idx = c['chain_index']
 
             # if True:
-            if chain_idx != dbg_idx:
+            if chain_idx != dbg_idx1 and dbg_idx1 != -1:
                 continue
+
+            debug_list = list()
 
             # if not c['is_loop']:
             for ie in range(len(chain)):
@@ -306,11 +309,13 @@ def debug_edgels(lapl, chains, threshold):
                 # edgel = edgels_dict[e_key]
                 # dbg_g[edgel_idx] = edgel_grad_mag / grad_mag_max
 
+                debug_list.append((e_key, edgel['grad_mag']))
+
                 if dbg_idx2 != -1 and dbg_idx2 < len(c['segments']):
                     if ie < c['segments'][dbg_idx2] or ie >= c['segments'][dbg_idx2 + 1]:
                         continue
 
-                if dbg_idx != -1:
+                if dbg_idx1 != -1:
                     dbg_r[e_key] = 0.3
                 elif chain_idx % 6 == 0:
                     dbg_b[e_key] = 0.3
@@ -340,13 +345,13 @@ def debug_edgels(lapl, chains, threshold):
 
             if 'lines' in c:
                 # if True:
-                if chain_idx != dbg_idx:
+                if chain_idx != dbg_idx1 and dbg_idx1 != -1:
                     continue
 
                 fit_lines = c['lines']
 
-                for i in range(len(fit_lines)):
-                    if i != dbg_idx2 or dbg_idx2 == -1:
+                for iz in range(len(fit_lines)):
+                    if i != dbg_idx2 and dbg_idx2 != -1:
                         continue
 
                     l = fit_lines[i]
@@ -363,7 +368,7 @@ def debug_edgels(lapl, chains, threshold):
                     pt1 = end_pts[1]
 
                     color = (0.0, 0.8, 0.0)
-                    if dbg_idx != -1:
+                    if dbg_idx1 != -1:
                         color = (0, 0.8, 0.0)
                     elif color_index % 6 == 0:
                         color = (0, 0.5, 0.8)
@@ -397,8 +402,14 @@ def debug_sorted_lines(lapl, chains, sorted_lines):
     blue = (1.0, 0, 0)
     yellow = (0, 1.0, 1.0)
     pink = (203.0 / 255, 192.0 / 255, 1.0)
-    colors = [green, green, blue, blue, yellow, yellow, pink, pink]
-    thickness = [2, 2, 2, 2, 1, 1, 1, 1]
+    colors = [green, green, blue, blue, yellow, yellow, pink, pink,
+              green, green, blue, blue, yellow, yellow, pink, pink,
+              green, green, blue, blue, yellow, yellow, pink, pink,
+              green, green, blue, blue, yellow, yellow, pink, pink]
+    thickness = [2, 2, 2, 2, 1, 1, 1, 1,
+                 1, 1, 1, 1, 1, 1, 1, 1,
+                 1, 1, 1, 1, 1, 1, 1, 1,
+                 1, 1, 1, 1, 1, 1, 1, 1,]
 
     irange = min(len(colors), len(sorted_lines))
 

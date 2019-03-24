@@ -34,7 +34,10 @@ def get_adj_quad(curr_quad_idx, edge):
     assert(False)
 
 #-----------------------------------------------------------------------------------#
-def link_edgel(edgels_matx, edgel, shape):
+def link_edgel(edgels_matx, edgel, shape, threshold1, threshold2):
+
+    # threshold1 is big, threshold2 is small, just like canny edge detector
+
     chain_a = list()
     chain_b = list()
 
@@ -81,12 +84,13 @@ def link_edgel(edgels_matx, edgel, shape):
 
                 if next_edgel and next_edgel['visited'] == False:
                     # assert(not find_edgel_in_list(next_edgel, chain_a) and not find_edgel_in_list(next_edgel, chain_b))
-                    next_edgel['visited'] = True
-                    grad_mag = next_edgel['grad_mag']
-                    if grad_mag > grad_mag_max:
-                        grad_mag_max = grad_mag
-                    new_frontiers.append(next_edgel)
-                    chain_a.append(next_edgel)
+                    next_edgel_grad_mag = next_edgel['grad_mag']
+                    if next_edgel_grad_mag >= threshold2:
+                        next_edgel['visited'] = True
+                        if next_edgel_grad_mag > grad_mag_max:
+                            grad_mag_max = next_edgel_grad_mag
+                        new_frontiers.append(next_edgel)
+                        chain_a.append(next_edgel)
 
         if iter_count > 0:
             e1 = edges[1]
@@ -111,12 +115,13 @@ def link_edgel(edgels_matx, edgel, shape):
 
                     if next_edgel and next_edgel['visited'] == False:
                         # assert(not find_edgel_in_list(next_edgel, chain_a) and not find_edgel_in_list(next_edgel, chain_b))
-                        next_edgel['visited'] = True
-                        grad_mag = next_edgel['grad_mag']
-                        if grad_mag > grad_mag_max:
-                            grad_mag_max = grad_mag
-                        new_frontiers.append(next_edgel)
-                        chain_a.append(next_edgel)
+                        next_edgel_grad_mag = next_edgel['grad_mag']
+                        if next_edgel_grad_mag >= threshold2:
+                            next_edgel['visited'] = True
+                            if next_edgel_grad_mag > grad_mag_max:
+                                grad_mag_max = next_edgel_grad_mag
+                            new_frontiers.append(next_edgel)
+                            chain_a.append(next_edgel)
 
         iter_count += 1
         frontiers_a = new_frontiers
@@ -152,12 +157,13 @@ def link_edgel(edgels_matx, edgel, shape):
 
                     if next_edgel and next_edgel['visited'] == False:
                         # assert(not find_edgel_in_list(next_edgel, chain_a) and not find_edgel_in_list(next_edgel, chain_b))
-                        next_edgel['visited'] = True
-                        grad_mag = next_edgel['grad_mag']
-                        if grad_mag > grad_mag_max:
-                            grad_mag_max = grad_mag
-                        new_frontiers.append(next_edgel)
-                        chain_b.append(next_edgel)
+                        next_edgel_grad_mag = next_edgel['grad_mag']
+                        if next_edgel_grad_mag >= threshold2:
+                            next_edgel['visited'] = True
+                            if next_edgel_grad_mag > grad_mag_max:
+                                grad_mag_max = next_edgel_grad_mag
+                            new_frontiers.append(next_edgel)
+                            chain_b.append(next_edgel)
 
         e1 = edges[1]
         next_idx1 = get_adj_quad(edgel_idx, e1)
@@ -181,12 +187,13 @@ def link_edgel(edgels_matx, edgel, shape):
 
                 if next_edgel and next_edgel['visited'] == False:
                     # assert(not find_edgel_in_list(next_edgel, chain_a) and not find_edgel_in_list(next_edgel, chain_b))
-                    next_edgel['visited'] = True
-                    grad_mag = next_edgel['grad_mag']
-                    if grad_mag > grad_mag_max:
-                        grad_mag_max = grad_mag
-                    new_frontiers.append(next_edgel)
-                    chain_b.append(next_edgel)
+                    next_edgel_grad_mag = next_edgel['grad_mag']
+                    if next_edgel_grad_mag >= threshold2:
+                        next_edgel['visited'] = True
+                        if next_edgel_grad_mag > grad_mag_max:
+                            grad_mag_max = next_edgel_grad_mag
+                        new_frontiers.append(next_edgel)
+                        chain_b.append(next_edgel)
 
         frontiers_b = new_frontiers
 
