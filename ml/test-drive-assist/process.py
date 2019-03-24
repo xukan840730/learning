@@ -241,21 +241,15 @@ def process_image2(image_u8):
                 # print(new_chain)
                 chains.append(new_chain)
 
-    print(len(chains))
-
     for c in chains:
         chain_grad_mag = c['grad_mag_max']
         if chain_grad_mag > threshold1:
             fl.chain_fit_lines(c)
-            fl.rate_lines(c, grad_mag_max)
 
-    sorted_lines = fl.sort_fit_lines(chains)
+    sorted_lines = fl.sort_fit_lines(chains, threshold1, grad_mag_max)
 
-    for sl in sorted_lines:
-        print(sl)
-
-    dbg_image = dbg.debug_edgels(lapl, chains, threshold1) * 255.0
-    # dbg_image = dbg.debug_sorted_lines(lapl, chains, sorted_lines) * 255.0
+    # dbg_image = dbg.debug_edgels(lapl, chains, threshold1) * 255.0
+    dbg_image = dbg.debug_sorted_lines(lapl, sorted_lines) * 255.0
 
     result_image = imutils.resize(dbg_image, width=image_width)
     return result_image.astype(np.uint8)

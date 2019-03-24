@@ -2,13 +2,6 @@ import numpy as np
 import common
 
 #-----------------------------------------------------------------------------------#
-def normalize(v):
-    norm = np.linalg.norm(v)
-    if norm == 0:
-       return np.zeros(v.shape)
-    return v / norm
-
-#-----------------------------------------------------------------------------------#
 def get_neighbors(irow, icol, end_pts_hori, end_pts_vert, edgels_matx, rows, cols):
 
     # clockwise
@@ -152,7 +145,7 @@ def make_edgel(edge0, edge1, lapl, end_pts_hori, end_pts_vert, irow, icol):
 
     grad = np.array([grad_vert, grad_hori], dtype=np.float32)
     edgel['grad'] = grad
-    edgel['grad_norm'] = normalize(grad)
+    edgel['grad_norm'] = common.normalize(grad)
     grad_mag = np.sqrt(grad_hori * grad_hori + grad_vert * grad_vert)
     edgel['grad_mag'] = grad_mag
     theta_rad = np.arctan2(grad_vert, grad_hori, dtype=np.float32)
@@ -166,7 +159,7 @@ def make_edgel(edge0, edge1, lapl, end_pts_hori, end_pts_vert, irow, icol):
     edgel['theta_abs'] = theta_rad_abs
     edgel['theta_deg_abs'] = theta_deg_abs
 
-    tangent_dir_0 = normalize(np.array([grad[1], -grad[0]]))
+    tangent_dir_0 = common.normalize(np.array([grad[1], -grad[0]]))
 
     # center = np.array([lapl.shape[0] / 2, lapl.shape[1] / 2], dtype=np.float32)
     center = np.array([0, 0], dtype=np.float32)
@@ -195,13 +188,13 @@ def make_edgel(edge0, edge1, lapl, end_pts_hori, end_pts_vert, irow, icol):
 def make_edgel_quad(end_pts, line_neighbors, irow, icol, lapl, end_pts_hori, end_pts_vert):
     line_a_0 = end_pts['rt'] - end_pts['up']
     line_a_1 = end_pts['lt'] - end_pts['dw']
-    line_a_0_norm = normalize(line_a_0)
-    line_a_1_norm = normalize(line_a_1)
+    line_a_0_norm = common.normalize(line_a_0)
+    line_a_1_norm = common.normalize(line_a_1)
 
     line_b_0 = end_pts['dw'] - end_pts['rt']
     line_b_1 = end_pts['up'] - end_pts['lt']
-    line_b_0_norm = normalize(line_b_0)
-    line_b_1_norm = normalize(line_b_1)
+    line_b_0_norm = common.normalize(line_b_0)
+    line_b_1_norm = common.normalize(line_b_1)
 
     line_up = line_neighbors['up'][1] - line_neighbors['up'][0]
     if line_up[0] > 0:
@@ -219,10 +212,10 @@ def make_edgel_quad(end_pts, line_neighbors, irow, icol, lapl, end_pts_hori, end
     if line_lt[1] > 0:
         line_lt = -line_lt
 
-    line_up_norm = normalize(line_up)
-    line_rt_norm = normalize(line_rt)
-    line_dw_norm = normalize(line_dw)
-    line_lt_norm = normalize(line_lt)
+    line_up_norm = common.normalize(line_up)
+    line_rt_norm = common.normalize(line_rt)
+    line_dw_norm = common.normalize(line_dw)
+    line_lt_norm = common.normalize(line_lt)
 
     test_a = np.dot(line_a_0_norm, line_up_norm)
     test_a += np.dot(-line_a_0_norm, line_rt_norm)

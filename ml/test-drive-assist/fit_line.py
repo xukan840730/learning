@@ -1,5 +1,7 @@
 import cv2
 import numpy as np
+import matplotlib.pyplot as plt
+import common
 
 #-----------------------------------------------------------------------------------#
 def clamp_scale(in0, in1, out0, out1, f):
@@ -10,6 +12,76 @@ def clamp_scale(in0, in1, out0, out1, f):
     else:
         assert(in0 != in1)
         return (out1 - out0) / (in1 - in0) * (f - in0) + out0
+
+#-----------------------------------------------------------------------------------#
+def fit_edgels_to_line(edgels):
+    num_elems = len(edgels)
+    Z = np.zeros((num_elems, 2))
+    mid_pts = np.zeros((num_elems, 2))
+    grads = np.zeros((num_elems, 2))
+    seg_grad_mag_max = 0.0
+
+    idx = 0
+    for i_elem in range(num_elems):
+        e = edgels[i_elem]
+
+        tangent_0 = e['tang_0']
+        tangent_dir = tangent_0[0]
+        # proj_dist = tangent_0[1]
+        perp_dist = tangent_0[2]
+        theta_rad = np.arctan2(tangent_dir[1], tangent_dir[0])
+
+        # print(mid_pt, grad, tangent_dir, theta_rad, perp_dist)
+
+        Z[idx, :] = (theta_rad, perp_dist * 0.1)
+        mid_pts[idx, :] = e['mid_pt']
+        grads[idx, :] = e['grad']
+        if e['grad_mag'] > seg_grad_mag_max:
+            seg_grad_mag_max = e['grad_mag']
+        idx += 1
+
+    l_pts = mid_pts
+    line_fit = cv2.fitLine(l_pts, cv2.DIST_L2, 0, 0.01, 0.01)
+    line_dir = np.zeros(2, dtype=np.float32)
+    line_dir[0] = line_fit[0]
+    line_dir[1] = line_fit[1]
+    line_pt = np.zeros(2, dtype=np.float32)
+    line_pt[0] = line_fit[2]
+    line_pt[1] = line_fit[3]
+
+    f_min = np.float32(10000.0)
+    f_max = np.float32(-10000.0)
+    f_perp_dist_sum = 0.0
+    for i_pts in range(l_pts.shape[0]):
+        a = l_pts[i_pts, :] - line_pt
+        v = np.dot(a, line_dir)
+        if v > f_max:
+            f_max = v
+        if v < f_min:
+            f_min = v
+        b = a - line_dir * v
+        perp_dist = np.linalg.norm(b)
+        f_perp_dist_sum += perp_dist
+
+    line_end_pt_0 = line_pt + line_dir * f_min
+    line_end_pt_1 = line_pt + line_dir * f_max
+
+    new_line = {}
+    new_line['line_dir'] = line_dir
+    new_line['line_pt'] = line_pt
+    new_line['end_pts'] = (line_end_pt_0, line_end_pt_1)
+    new_line['edgels'] = edgels
+    new_line['grad_mag_max'] = seg_grad_mag_max
+    f_perp_dist_average = f_perp_dist_sum / num_elems
+    new_line['perp_dist_avg'] = f_perp_dist_average
+
+    # perp_dist
+    new_line['dist_p'] = np.linalg.norm(-line_pt - (line_dir * np.dot(line_dir, -line_pt)))
+
+    line_theta = np.arctan2(line_dir[1], line_dir[0], dtype=np.float32)
+    new_line['theta'] = line_theta
+
+    return new_line
 
 #-----------------------------------------------------------------------------------#
 def chain_fit_lines(c):
@@ -30,65 +102,13 @@ def chain_fit_lines(c):
         num_elems = seg_end - seg_start
         assert(num_elems > 0)
 
-        Z = np.zeros((num_elems, 2))
-        mid_pts = np.zeros((num_elems, 2))
-        grads = np.zeros((num_elems, 2))
-        seg_grad_mag_max = 0.0
-
-        idx = 0
+        edgel_list = list()
         for i_elem in range(num_elems):
             e = chain[seg_start + i_elem]
+            edgel_list.append(e)
 
-            tangent_0 = e['tang_0']
-            tangent_dir = tangent_0[0]
-            # proj_dist = tangent_0[1]
-            perp_dist = tangent_0[2]
-            theta_rad = np.arctan2(tangent_dir[1], tangent_dir[0])
-
-            # print(mid_pt, grad, tangent_dir, theta_rad, perp_dist)
-
-            Z[idx, :] = (theta_rad, perp_dist * 0.1)
-            mid_pts[idx, :] = e['mid_pt']
-            grads[idx, :] = e['grad']
-            if e['grad_mag'] > seg_grad_mag_max:
-                seg_grad_mag_max = e['grad_mag']
-            idx += 1
-
-        l_pts = mid_pts
-        line_fit = cv2.fitLine(l_pts, cv2.DIST_L2, 0, 0.01, 0.01)
-        line_dir = np.zeros(2, dtype=np.float32)
-        line_dir[0] = line_fit[0]
-        line_dir[1] = line_fit[1]
-        line_pt = np.zeros(2, dtype=np.float32)
-        line_pt[0] = line_fit[2]
-        line_pt[1] = line_fit[3]
-
-        f_min = np.float32(10000.0)
-        f_max = np.float32(-10000.0)
-        f_perp_dist_sum = 0.0
-        for i_pts in range(l_pts.shape[0]):
-            a = l_pts[i_pts, :] - line_pt
-            v = np.dot(a, line_dir)
-            if v > f_max:
-                f_max = v
-            if v < f_min:
-                f_min = v
-            b = a - line_dir * v
-            perp_dist = np.linalg.norm(b)
-            f_perp_dist_sum += perp_dist
-
-        line_end_pt_0 = line_pt + line_dir * f_min
-        line_end_pt_1 = line_pt + line_dir * f_max
-
-        new_line = {}
-        new_line['line_dir'] = line_dir
-        new_line['line_pt'] = line_pt
-        new_line['end_pts'] = (line_end_pt_0, line_end_pt_1)
-        new_line['num_pts'] = l_pts.shape[0]
-        new_line['grad_mag_max'] = seg_grad_mag_max
-        f_perp_dist_average = f_perp_dist_sum / num_elems
-        new_line['perp_dist_avg'] = f_perp_dist_average
-
+        new_line = fit_edgels_to_line(edgel_list)
+        new_line['line_idx'] = len(fit_lines)
         fit_lines.append(new_line)
 
     c['lines'] = fit_lines
@@ -121,47 +141,118 @@ def rate_theta_rad(theta_rad):
 
 #-----------------------------------------------------------------------------------#
 def rate_lines(c, grad_mag_max_global):
-    if not 'lines' in c:
-        return
+    fl = c['line_info']
 
-    fit_lines = c['lines']
-    for fl in fit_lines:
-        line_dir = fl['line_dir']
-        num_pts = fl['num_pts']
-        grad_mag = fl['grad_mag_max']
+    line_dir = fl['line_dir']
+    num_pts = len(fl['edgels'])
+    grad_mag = fl['grad_mag_max']
 
-        line_theta = np.arctan2(line_dir[1], line_dir[0], dtype=np.float32)
-        c_theta = rate_theta_rad(line_theta) * 1.5
+    c_theta = rate_theta_rad(fl['theta']) * 1.5
 
-        c_grad_mag = (grad_mag_max_global - grad_mag) / grad_mag_max_global
-        c_num_pts = clamp_scale(16, 48, 1.5, 0.0, num_pts)
+    c_grad_mag = (grad_mag_max_global - grad_mag) / grad_mag_max_global
+    c_num_pts = clamp_scale(16, 48, 1.5, 0.0, num_pts)
 
-        perp_dist = fl['perp_dist_avg']
-        c_perp_dist = clamp_scale(0.2, 1.0, 0.0, 1.0, perp_dist)
+    perp_dist = fl['perp_dist_avg']
+    c_perp_dist = clamp_scale(0.2, 1.0, 0.0, 1.0, perp_dist)
 
-        c_final = c_theta + c_grad_mag + c_num_pts + c_perp_dist
+    c_final = c_theta + c_grad_mag + c_num_pts + c_perp_dist
 
-        fl['cost_theta'] = c_theta
-        fl['cost_grad_mag'] = c_grad_mag
-        fl['cost_num_pts'] = c_num_pts
-        fl['cost_perp_dist'] = c_perp_dist
-        fl['cost_final'] = c_final
+    fl['cost_theta'] = c_theta
+    fl['cost_grad_mag'] = c_grad_mag
+    fl['cost_num_pts'] = c_num_pts
+    fl['cost_perp_dist'] = c_perp_dist
+    fl['cost_final'] = c_final
 
 # -----------------------------------------------------------------------------------#
-def sort_fit_lines(chains):
-    lines = list()
+def sort_fit_lines(chains, threshold1, grad_mag_max):
+    threshold_num_pts = 5
 
+    # dbg_lines = np.zeros((len(lines), 2))
+    #
+    # l_idx = 0
+    # for l in lines:
+    #     theta_rad = l[4]
+    #     dist_p = l[5]
+    #     dbg_lines[l_idx, :] = (theta_rad, dist_p)
+    #     l_idx += 1
+    #
+    # plt.scatter(dbg_lines[:, 0], dbg_lines[:, 1])
+    # plt.show()
+
+    # merge lines
+    merged_lines = list()
     for c in chains:
         if not 'lines' in c:
             continue
         chain_idx = c['chain_index']
         fit_lines = c['lines']
 
-        l_idx = 0
         for fl in fit_lines:
-            lines.append((chain_idx, l_idx, fl['cost_final'], fl['perp_dist_avg']))
-            l_idx += 1
+            if fl['grad_mag_max'] < threshold1:
+                continue
 
-    lines.sort(key=lambda s: s[2])
+            if len(fl['edgels']) < threshold_num_pts:
+                continue
 
-    return lines
+            fl_theta = fl['theta']
+            fl_dist_p = fl['dist_p']
+
+            merged = False
+            for ml in merged_lines:
+                ml_info = ml['line_info']
+                ml_theta = ml_info['theta']
+                ml_dist_p = ml_info['dist_p']
+
+                # ml_lines = ml['lines']
+                # if ml_lines[0] == (24, 0):
+                #     print("bb")
+
+                is_close = False
+                threshold_theta = 10.0 * np.pi / 180
+                dist_p_threshold = 8.0
+                if abs(ml_theta - fl_theta) < threshold_theta:
+                    if abs(ml_dist_p - fl_dist_p) < dist_p_threshold:
+                        is_close = True
+
+                if is_close:
+                    ml_edgels = ml_info['edgels']
+                    fl_edgels = fl['edgels']
+                    merged_edgels = ml_edgels + fl_edgels
+                    merged_l = fit_edgels_to_line(merged_edgels)
+                    ml['lines'].append((chain_idx, fl['line_idx']))
+                    ml['line_info'] = merged_l
+
+                    merged = True
+                    break
+
+            # create a new one if not existed
+            if not merged:
+                new_merged = {}
+                new_merged_lines = list()
+                new_merged_lines.append((chain_idx, fl['line_idx']))
+                new_merged['lines'] = new_merged_lines
+                new_merged['line_info'] = fl
+
+                merged_lines.append(new_merged)
+
+    # rating
+    for ml in merged_lines:
+        rate_lines(ml, grad_mag_max)
+
+    # sorting
+    sorted_lines = list()
+    for ml in merged_lines:
+        fl = ml['line_info']
+        sorted_lines.append((ml['lines'], fl['cost_final'], fl['perp_dist_avg'], fl['theta'], fl['dist_p'], fl['end_pts']))
+
+    sorted_lines.sort(key=lambda s: s[1])
+
+    sorted_lines_res = list()
+    for sl in sorted_lines:
+        new_res = {}
+        new_res['lines'] = sl[0] # 'lines'
+        new_res['cost_final'] = sl[1] # 'cost_final'
+        new_res['end_pts'] = sl[5]  # 'end_pts'
+        sorted_lines_res.append(new_res)
+
+    return sorted_lines_res

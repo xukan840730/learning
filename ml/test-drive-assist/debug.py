@@ -286,8 +286,8 @@ def debug_edgels(lapl, chains, threshold):
     dbg_r = dbg_b.copy()
 
     # debug_chains(chains, threshold, shape)
-    dbg_idx1 = -1
-    dbg_idx2 = -1
+    dbg_idx1 = 23
+    dbg_idx2 = 1
 
     for c in chains:
         chain_grad_mag = c['grad_mag_max']
@@ -299,16 +299,12 @@ def debug_edgels(lapl, chains, threshold):
             if chain_idx != dbg_idx1 and dbg_idx1 != -1:
                 continue
 
-            debug_list = list()
-
             # if not c['is_loop']:
             for ie in range(len(chain)):
                 edgel = chain[ie]
                 e_key = edgel['quad_idx']
                 # edgel = edgels_dict[e_key]
                 # dbg_g[edgel_idx] = edgel_grad_mag / grad_mag_max
-
-                debug_list.append((e_key, edgel['grad_mag']))
 
                 if dbg_idx2 != -1 and dbg_idx2 < len(c['segments']):
                     if ie < c['segments'][dbg_idx2] or ie >= c['segments'][dbg_idx2 + 1]:
@@ -389,36 +385,36 @@ def debug_edgels(lapl, chains, threshold):
 
     return dbg_image
 
-def debug_sorted_lines(lapl, chains, sorted_lines):
+def debug_sorted_lines(lapl, sorted_lines):
     shape = lapl.shape
     dbg_b = np.zeros(shape)
     dbg_g = dbg_b.copy()
     dbg_r = dbg_b.copy()
 
     dbg_image = cv2.merge((dbg_b, dbg_g, dbg_r))
+    if len(sorted_lines) == 0:
+        return dbg_image
 
     green = (0, 1.0, 0)
     red = (0, 0, 1.0)
     blue = (1.0, 0, 0)
     yellow = (0, 1.0, 1.0)
     pink = (203.0 / 255, 192.0 / 255, 1.0)
-    colors = [green, green, blue, blue, yellow, yellow, pink, pink,
-              green, green, blue, blue, yellow, yellow, pink, pink,
-              green, green, blue, blue, yellow, yellow, pink, pink,
-              green, green, blue, blue, yellow, yellow, pink, pink]
-    thickness = [2, 2, 2, 2, 1, 1, 1, 1,
-                 1, 1, 1, 1, 1, 1, 1, 1,
-                 1, 1, 1, 1, 1, 1, 1, 1,
-                 1, 1, 1, 1, 1, 1, 1, 1,]
+    colors = [green, green, blue, blue, yellow, yellow]
+    thickness = [2, 2, 2, 2, 1, 1]
+
+    cost_best = sorted_lines[0]['cost_final']
 
     irange = min(len(colors), len(sorted_lines))
 
     for i in range(irange):
         sl = sorted_lines[i]
 
-        c = chains[sl[0]]
-        l = c['lines'][sl[1]]
-        end_pts = l['end_pts']
+        cost_final = sl['cost_final']
+        if cost_final > cost_best * 2:
+            break
+
+        end_pts = sl['end_pts']
         pt0 = end_pts[0]
         pt1 = end_pts[1]
         cv2.line(dbg_image, (pt0[1], pt0[0]), (pt1[1], pt1[0]), color=colors[i], thickness=thickness[i])
