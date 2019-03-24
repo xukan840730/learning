@@ -34,6 +34,40 @@ def get_adj_quad(curr_quad_idx, edge):
     assert(False)
 
 #-----------------------------------------------------------------------------------#
+def link_helper(edgel_idx, ee, edgels_matx, shape, threshold2, new_frontiers, chain):
+    grad_mag_max = 0.0
+
+    next_idx0 = get_adj_quad(edgel_idx, ee)
+    if next_idx0[0] >= 0 and next_idx0[0] < shape[0] and next_idx0[1] >= 0 and next_idx0[1] < shape[1]:
+        next_edgel_list = edgels_matx[next_idx0[0]][next_idx0[1]]
+        if len(next_edgel_list) > 0:
+            # find next edgel
+            next_edgel = None
+            if len(next_edgel_list) == 1:
+                next_edgel = next_edgel_list[0]
+            elif len(next_edgel_list) == 2:
+                for ne in next_edgel_list:
+                    ne_edges = ne['edge']
+                    assert (len(ne_edges) == 2)
+                    for nee in ne_edges:
+                        if common.edge_equal(nee, ee):
+                            next_edgel = ne
+                            break
+            else:
+                assert(False)
+
+            if next_edgel and next_edgel['visited'] == False:
+                next_edgel_grad_mag = next_edgel['grad_mag']
+                if next_edgel_grad_mag >= threshold2:
+                    next_edgel['visited'] = True
+                    if next_edgel_grad_mag > grad_mag_max:
+                        grad_mag_max = next_edgel_grad_mag
+                    new_frontiers.append(next_edgel)
+                    chain.append(next_edgel)
+
+    return grad_mag_max
+
+#-----------------------------------------------------------------------------------#
 def link_edgel(edgels_matx, edgel, shape, threshold1, threshold2):
 
     # threshold1 is big, threshold2 is small, just like canny edge detector
@@ -62,66 +96,17 @@ def link_edgel(edgels_matx, edgel, shape, threshold1, threshold2):
         edgel_idx = each_edgel['quad_idx']
         edges = each_edgel['edge']
 
-        e0 = edges[0]
-        next_idx0 = get_adj_quad(edgel_idx, e0)
-        if next_idx0[0] >= 0 and next_idx0[0] < shape[0] and next_idx0[1] >= 0 and next_idx0[1] < shape[1]:
-            next_edgel_list = edgels_matx[next_idx0[0]][next_idx0[1]]
-            if len(next_edgel_list) > 0:
-                # find next edgel
-                next_edgel = None
-                if len(next_edgel_list) == 1:
-                    next_edgel = next_edgel_list[0]
-                elif len(next_edgel_list) == 2:
-                    for ne in next_edgel_list:
-                        ne_edges = ne['edge']
-                        assert (len(ne_edges) == 2)
-                        for nee in ne_edges:
-                            if common.edge_equal(nee, e0):
-                                next_edgel = ne
-                                break
-                else:
-                    assert(False)
-
-                if next_edgel and next_edgel['visited'] == False:
-                    # assert(not find_edgel_in_list(next_edgel, chain_a) and not find_edgel_in_list(next_edgel, chain_b))
-                    next_edgel_grad_mag = next_edgel['grad_mag']
-                    if next_edgel_grad_mag >= threshold2:
-                        next_edgel['visited'] = True
-                        if next_edgel_grad_mag > grad_mag_max:
-                            grad_mag_max = next_edgel_grad_mag
-                        new_frontiers.append(next_edgel)
-                        chain_a.append(next_edgel)
+        if True:
+            e0 = edges[0]
+            t = link_helper(edgel_idx, e0, edgels_matx, shape, threshold2, new_frontiers, chain_a)
+            if t > grad_mag_max:
+                grad_mag_max = t
 
         if iter_count > 0:
             e1 = edges[1]
-            next_idx1 = get_adj_quad(edgel_idx, e1)
-            if next_idx1[0] >= 0 and next_idx1[0] < shape[0] and next_idx1[1] >= 0 and next_idx1[1] < shape[1]:
-                next_edgel_list = edgels_matx[next_idx1[0]][next_idx1[1]]
-                if len(next_edgel_list) > 0:
-                    # find next edgel
-                    next_edgel = None
-                    if len(next_edgel_list) == 1:
-                        next_edgel = next_edgel_list[0]
-                    elif len(next_edgel_list) == 2:
-                        for ne in next_edgel_list:
-                            ne_edges = ne['edge']
-                            assert(len(ne_edges) == 2)
-                            for nee in ne_edges:
-                                if common.edge_equal(nee, e1):
-                                    next_edgel = ne
-                                    break
-                    else:
-                        assert (False)
-
-                    if next_edgel and next_edgel['visited'] == False:
-                        # assert(not find_edgel_in_list(next_edgel, chain_a) and not find_edgel_in_list(next_edgel, chain_b))
-                        next_edgel_grad_mag = next_edgel['grad_mag']
-                        if next_edgel_grad_mag >= threshold2:
-                            next_edgel['visited'] = True
-                            if next_edgel_grad_mag > grad_mag_max:
-                                grad_mag_max = next_edgel_grad_mag
-                            new_frontiers.append(next_edgel)
-                            chain_a.append(next_edgel)
+            t = link_helper(edgel_idx, e1, edgels_matx, shape, threshold2, new_frontiers, chain_a)
+            if t > grad_mag_max:
+                grad_mag_max = t
 
         iter_count += 1
         frontiers_a = new_frontiers
@@ -136,65 +121,17 @@ def link_edgel(edgels_matx, edgel, shape, threshold1, threshold2):
 
         if iter_count > 0:
             e0 = edges[0]
-            next_idx0 = get_adj_quad(edgel_idx, e0)
-            if next_idx0[0] >= 0 and next_idx0[0] < shape[0] and next_idx0[1] >= 0 and next_idx0[1] < shape[1]:
-                next_edgel_list = edgels_matx[next_idx0[0]][next_idx0[1]]
-                if len(next_edgel_list) > 0:
-                    # find next edgel
-                    next_edgel = None
-                    if len(next_edgel_list) == 1:
-                        next_edgel = next_edgel_list[0]
-                    elif len(next_edgel_list) == 2:
-                        for ne in next_edgel_list:
-                            ne_edges = ne['edge']
-                            assert(len(ne_edges) == 2)
-                            for nee in ne_edges:
-                                if common.edge_equal(nee, e1):
-                                    next_edgel = ne
-                                    break
-                    else:
-                        assert (False)
+            t = link_helper(edgel_idx, e0, edgels_matx, shape, threshold2, new_frontiers, chain_b)
+            if t > grad_mag_max:
+                grad_mag_max = t
 
-                    if next_edgel and next_edgel['visited'] == False:
-                        # assert(not find_edgel_in_list(next_edgel, chain_a) and not find_edgel_in_list(next_edgel, chain_b))
-                        next_edgel_grad_mag = next_edgel['grad_mag']
-                        if next_edgel_grad_mag >= threshold2:
-                            next_edgel['visited'] = True
-                            if next_edgel_grad_mag > grad_mag_max:
-                                grad_mag_max = next_edgel_grad_mag
-                            new_frontiers.append(next_edgel)
-                            chain_b.append(next_edgel)
+        if True:
+            e1 = edges[1]
+            t = link_helper(edgel_idx, e1, edgels_matx, shape, threshold2, new_frontiers, chain_b)
+            if t > grad_mag_max:
+                grad_mag_max = t
 
-        e1 = edges[1]
-        next_idx1 = get_adj_quad(edgel_idx, e1)
-        if next_idx1[0] >= 0 and next_idx1[0] < shape[0] and next_idx1[1] >= 0 and next_idx1[1] < shape[1]:
-            next_edgel_list = edgels_matx[next_idx1[0]][next_idx1[1]]
-            if len(next_edgel_list) > 0:
-                # find next edgel
-                next_edgel = None
-                if len(next_edgel_list) == 1:
-                    next_edgel = next_edgel_list[0]
-                elif len(next_edgel_list) == 2:
-                    for ne in next_edgel_list:
-                        ne_edges = ne['edge']
-                        assert (len(ne_edges) == 2)
-                        for nee in ne_edges:
-                            if common.edge_equal(nee, e1):
-                                next_edgel = ne
-                                break
-                else:
-                    assert (False)
-
-                if next_edgel and next_edgel['visited'] == False:
-                    # assert(not find_edgel_in_list(next_edgel, chain_a) and not find_edgel_in_list(next_edgel, chain_b))
-                    next_edgel_grad_mag = next_edgel['grad_mag']
-                    if next_edgel_grad_mag >= threshold2:
-                        next_edgel['visited'] = True
-                        if next_edgel_grad_mag > grad_mag_max:
-                            grad_mag_max = next_edgel_grad_mag
-                        new_frontiers.append(next_edgel)
-                        chain_b.append(next_edgel)
-
+        iter_count += 1
         frontiers_b = new_frontiers
 
     final_chain = chain_a.copy()

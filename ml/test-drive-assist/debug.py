@@ -286,11 +286,10 @@ def debug_edgels(lapl, chains, threshold):
     dbg_r = dbg_b.copy()
 
     # debug_chains(chains, threshold, shape)
-    dbg_idx1 = 40
+    dbg_idx1 = -1
     dbg_idx2 = -1
 
     for c in chains:
-        continue
         chain_grad_mag = c['grad_mag_max']
         if chain_grad_mag > threshold or dbg_idx1 != -1:
             chain = c['chain']
@@ -338,6 +337,7 @@ def debug_edgels(lapl, chains, threshold):
 
     color_index = 0
     for c in chains:
+        continue
         chain_grad_mag = c['grad_mag_max']
         if chain_grad_mag > threshold:
             chain = c['chain']
@@ -350,7 +350,7 @@ def debug_edgels(lapl, chains, threshold):
 
                 fit_lines = c['lines']
 
-                for iz in range(len(fit_lines)):
+                for i in range(len(fit_lines)):
                     if i != dbg_idx2 and dbg_idx2 != -1:
                         continue
 
