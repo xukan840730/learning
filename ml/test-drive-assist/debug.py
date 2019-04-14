@@ -415,14 +415,20 @@ def debug_sorted_lines(lapl, sorted_lines):
         if dbg_idx != -1 and dbg_idx != i:
             continue
 
-        cost_final = sl['cost_final']
-        if cost_final > cost_best * 1.75:
-            break
+        # cost_final = sl['cost_final']
+        # if cost_final > cost_best * 5.0:
+        #     break
 
         end_pts = sl['end_pts']
         pt0 = end_pts[0]
         pt1 = end_pts[1]
-        cv2.line(dbg_image, (pt0[1], pt0[0]), (pt1[1], pt1[0]), color=colors[i], thickness=thickness[i])
+
+        input_p0 = (int(pt0[1]), int(pt0[0]))
+        input_p1 = (int(pt1[1]), int(pt1[0]))
+        c = colors[i]
+        th = thickness[i]
+
+        cv2.line(dbg_image, input_p0, input_p1, color=c, thickness=th)
 
     return dbg_image
 
