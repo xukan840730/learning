@@ -385,11 +385,41 @@ def debug_edgels(lapl, chains, threshold):
 
     return dbg_image
 
-def debug_sorted_lines(lapl, sorted_lines):
+def debug_sorted_lines(lapl, chains, sorted_lines):
     shape = lapl.shape
     dbg_b = np.zeros(shape)
     dbg_g = dbg_b.copy()
     dbg_r = dbg_b.copy()
+
+    drawEdgels = True
+
+    dbg_idx = -1
+
+    # first phase: paint edgels
+    if drawEdgels:
+        if dbg_idx < len(sorted_lines):
+            sl = sorted_lines[dbg_idx]
+
+            dbg_idx2 = -1
+
+            sl_lines = sl['lines']
+            for si in range(len(sl_lines)):
+                # if dbg_idx2 != si:
+                #     continue
+
+                sll = sl_lines[si]
+                chain_idx = sll[0]
+                seg_idx = sll[1]
+                slc = chains[chain_idx]
+                seg_start = slc['segments'][seg_idx]
+                seg_end = slc['segments'][seg_idx + 1]
+
+                chain_edgels = slc['chain']
+                for iedgel in range(seg_start, seg_end):
+                    edgel = chain_edgels[iedgel]
+                    e_key = edgel['quad_idx']
+
+                    dbg_r[e_key] = 1.0
 
     dbg_image = cv2.merge((dbg_b, dbg_g, dbg_r))
     if len(sorted_lines) == 0:
@@ -400,35 +430,55 @@ def debug_sorted_lines(lapl, sorted_lines):
     blue = (1.0, 0, 0)
     yellow = (0, 1.0, 1.0)
     pink = (203.0 / 255, 192.0 / 255, 1.0)
-    colors = [green, green, blue, blue, yellow, yellow]
-    thickness = [2, 2, 2, 2, 1, 1]
+    # colors = [green, green, blue, blue, yellow, yellow]
 
     cost_best = sorted_lines[0]['cost_final']
 
-    irange = min(len(colors), len(sorted_lines))
+    # irange = min(len(colors), len(sorted_lines))
+    irange = len(sorted_lines)
 
-    dbg_idx = -1
+    # dbg_idx = 0
+    drawLine = True
 
-    for i in range(irange):
-        sl = sorted_lines[i]
+    if drawLine:
+        if dbg_idx < 0:
+            # draw all sorted_lines:
+            for i in range(irange):
+                sl = sorted_lines[i]
 
-        if dbg_idx != -1 and dbg_idx != i:
-            continue
+                # cost_final = sl['cost_final']
+                # if cost_final > cost_best * 5.0:
+                #     break
 
-        # cost_final = sl['cost_final']
-        # if cost_final > cost_best * 5.0:
-        #     break
+                end_pts = sl['end_pts']
+                pt0 = end_pts[0]
+                pt1 = end_pts[1]
 
-        end_pts = sl['end_pts']
-        pt0 = end_pts[0]
-        pt1 = end_pts[1]
+                input_p0 = (int(pt0[1]), int(pt0[0]))
+                input_p1 = (int(pt1[1]), int(pt1[0]))
+                c = yellow
+                th = 1
 
-        input_p0 = (int(pt0[1]), int(pt0[0]))
-        input_p1 = (int(pt1[1]), int(pt1[0]))
-        c = colors[i]
-        th = thickness[i]
+                cv2.line(dbg_image, input_p0, input_p1, color=c, thickness=th)
+        else:
+            # draw selected line
+            if dbg_idx < len(sorted_lines):
+                sl = sorted_lines[dbg_idx]
 
-        cv2.line(dbg_image, input_p0, input_p1, color=c, thickness=th)
+                # cost_final = sl['cost_final']
+                # if cost_final > cost_best * 5.0:
+                #     break
+
+                end_pts = sl['end_pts']
+                pt0 = end_pts[0]
+                pt1 = end_pts[1]
+
+                input_p0 = (int(pt0[1]), int(pt0[0]))
+                input_p1 = (int(pt1[1]), int(pt1[0]))
+                c = yellow
+                th = 1
+
+                cv2.line(dbg_image, input_p0, input_p1, color=c, thickness=th)
 
     return dbg_image
 
