@@ -198,7 +198,8 @@ def process_image2(image_u8):
     image_blur_u8 = cv2.GaussianBlur(image_grayscale, (9, 9), sigma)
     image_blur_f = image_blur_u8.astype(np.float32) / 255.0
 
-    small_width = image_width // 2
+    # small_width = image_width // 2
+    small_width = image_width
     small_image_f = imutils.resize(image_blur_f, width=small_width)
 
     # build laplacian pyramid.
@@ -214,7 +215,8 @@ def process_image2(image_u8):
     end_pts_hori, end_pts_vert = build_end_pts(lapl, roi)
     edgels_matx, grad_mag_max = el.build_edgels(lapl, end_pts_hori, end_pts_vert)
 
-    threshold1 = grad_mag_max / 8.0
+    threshold1 = grad_mag_max / 5.0
+    # threshold1 = grad_mag_max / 8.0
     threshold2 = threshold1 / 3.0
 
     # build linked chain from edgels
@@ -241,20 +243,20 @@ def process_image2(image_u8):
                 # print(new_chain)
                 chains.append(new_chain)
 
-    for c in chains:
-        chain_grad_mag = c['grad_mag_max']
-        if chain_grad_mag > threshold1:
-            fl.chain_fit_lines(c)
-
-    row_threshold = int(lapl.shape[0] * 0.50)
-
-    sorted_lines = fl.sort_fit_lines(chains, threshold1, grad_mag_max, row_threshold, lapl.shape)
+    # for c in chains:
+    #     chain_grad_mag = c['grad_mag_max']
+    #     if chain_grad_mag > threshold1:
+    #         fl.chain_fit_lines(c)
+    #
+    # row_threshold = int(lapl.shape[0] * 0.50)
+    #
+    # sorted_lines = fl.sort_fit_lines(chains, threshold1, grad_mag_max, row_threshold, lapl.shape)
 
     # for sl in sorted_lines:
     #     print(sl)
 
-    # dbg_image = dbg.debug_edgels(lapl, chains, threshold1) * 255.0
-    dbg_image = dbg.debug_sorted_lines(lapl, chains, sorted_lines) * 255.0
+    dbg_image = dbg.debug_edgels(lapl, chains, threshold1) * 255.0
+    # dbg_image = dbg.debug_sorted_lines(lapl, chains, sorted_lines) * 255.0
 
     result_image = imutils.resize(dbg_image, width=image_width)
     return result_image.astype(np.uint8)
