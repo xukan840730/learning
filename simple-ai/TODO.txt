@@ -1,0 +1,9 @@
+High level ideas:
+
+1) dynamic neural network: grows when learning, shrink when regulation (sleeping).
+2) iteractive approach: object detection and motion estimation.
+	1. to help object detection:
+		1. color contrast
+		2. motion
+		3. depth
+3) maximize unsupervise learning to find patterns.
