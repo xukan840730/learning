@@ -1,0 +1,3 @@
+unsupervised learning:
+	1) babies can tell something is moving, assume they don't have much supervised learning
+	2) compare 2 consecutive frames and find simliar and difference.
