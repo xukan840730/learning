@@ -1,7 +1,8 @@
 import numpy as np
-import primitive as prim
+import shapes.pre_defined as spd
+import shapes.visualize as pvis
 
 print("Hello World!")
 
-horiLine = prim.PrimitiveShape()
-vertLine = prim.PrimitiveShape()
+pvis.visualize(spd.g_horiLine)
+pvis.visualize(spd.g_vertLine)

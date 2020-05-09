@@ -21,4 +21,9 @@ class PrimitiveShape:
         pass
 
     def setShapeMask(self, shapeMask):
+        assert(shapeMask.shape[0] > 0)
+        assert(shapeMask.shape[1] > 0)
         self._shapeMask = shapeMask
+
+    def getShapeMask(self):
+        return self._shapeMask
