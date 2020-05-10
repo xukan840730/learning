@@ -12,7 +12,7 @@ def visualize(primShape):
                 img_float[irow, icol] = 0.8
 
     # draw center of mass
-    (cx, cy) = unsplutil.center_of_mass(shapeMask)
+    (cx, cy) = unsplutil.getImageMaskCenterOfMass(shapeMask)
     ix = int(round(cx))
     iy = int(round(cy))
     if ix >= 0 and ix < shapeMask.shape[0] and iy >= 0 and iy < shapeMask.shape[1]:

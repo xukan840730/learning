@@ -1,7 +1,8 @@
 import numpy as np
 from sklearn.decomposition import PCA
 
-def center_of_mass(shapeMask):
+# getImageMaskCenterOfMass: get imageMask center of mass
+def getImageMaskCenterOfMass(shapeMask):
     num_rows = shapeMask.shape[0]
     num_cols = shapeMask.shape[1]
     m = np.zeros([num_rows, num_cols])
@@ -24,7 +25,7 @@ def center_of_mass(shapeMask):
 
     return (cx, cy)
 
-def test_pca(shapeMask, num_comp):
+def testPCA(shapeMask, num_comp):
     num_rows = shapeMask.shape[0]
     num_cols = shapeMask.shape[1]
 
