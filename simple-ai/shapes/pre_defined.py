@@ -1,3 +1,4 @@
+import math as math
 import numpy as np
 import primitive as prim
 
@@ -25,14 +26,15 @@ _triangleData[num_rows_odd - 1, :] = True
 
 for irow in range(1, num_rows_odd - 1):
     fcol1 = -(num_rows_odd - half_rows_odd) / num_rows_odd * irow + half_cols_odd
-    icol1 = round(fcol1)
+    icol1 = math.ceil(fcol1)
     assert(icol1 >= 0 and icol1 < num_cols_odd)
-    _triangleData[irow, icol1] = True
 
     fcol2 = (num_rows_odd - half_rows_odd) / num_rows_odd * irow + half_cols_odd
-    icol2 = round(fcol2)
+    icol2 = math.ceil(fcol2)
     assert (icol2 >= 0 and icol2 < num_cols_odd)
-    _triangleData[irow, icol2] = True
+
+    for jcol in range(icol1, icol2):
+        _triangleData[irow, jcol] = True
 
 g_triangle = prim.PrimitiveShape()
 g_triangle.setShapeMask(_triangleData)
