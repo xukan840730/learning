@@ -12,3 +12,6 @@ High level ideas:
 
 4) knowledge database:
 	1. link 5 senses.
+
+5) current goal:
+    1. imageMask to polar coordinate system.

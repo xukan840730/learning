@@ -8,3 +8,5 @@ print("Hello World!")
 # pvis.visualize(spd.g_horiLine)
 # pvis.visualize(spd.g_vertLine)
 pvis.visualize(spd.g_triangle)
+
+# unslutil.test_pca(spd.g_triangle.getShapeMask(), 2)

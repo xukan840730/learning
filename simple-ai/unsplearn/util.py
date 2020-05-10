@@ -1,4 +1,5 @@
 import numpy as np
+from sklearn.decomposition import PCA
 
 def center_of_mass(shapeMask):
     num_rows = shapeMask.shape[0]
@@ -22,3 +23,22 @@ def center_of_mass(shapeMask):
     cy = np.sum(dy * np.arange(num_cols))
 
     return (cx, cy)
+
+def test_pca(shapeMask, num_comp):
+    num_rows = shapeMask.shape[0]
+    num_cols = shapeMask.shape[1]
+
+    num_set_bits = np.count_nonzero(shapeMask)
+    X = np.empty([num_set_bits, 2])
+
+    index = 0
+    for irow in range(num_rows):
+        for icol in range(num_cols):
+            if shapeMask[irow, icol]:
+                X[index, :] = (irow, icol)
+                index = index + 1
+
+    pca = PCA(n_components=num_comp)
+    pca.fit(X)
+    print(pca.components_)
+    # print(pca.explained_variance_)
