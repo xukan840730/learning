@@ -13,6 +13,7 @@ print("Hello World!")
 # unslutil.test_pca(spd.g_triangle.getShapeMask(), 2)
 
 imCom = unslutil.getImageMaskCenterOfMass(spd.g_triangle.getShapeMask())
-x = unslpolar.imageMaskToPolarCoords(spd.g_triangle.getShapeMask(), imCom)
+imagePolarMask = unslpolar.imageMaskToPolarCoords(spd.g_triangle.getShapeMask(), imCom)
 
-# print(x)
+imagePolarHist = unslpolar.imagePolarHistogram(imagePolarMask)
+print(imagePolarHist)

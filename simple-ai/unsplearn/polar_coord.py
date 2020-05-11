@@ -48,3 +48,27 @@ def imageMaskToPolarCoords(imageMask, origin):
         result.append(samples)
 
     return result
+
+def imagePolarHistogram(imagePolarMask):
+    num_levels = len(imagePolarMask)
+    # num_bins = imagePolarMask[num_levels - 1].size
+    num_bins = 16
+    bins = np.zeros(num_bins, dtype=int)
+
+    #TODO: PARRALIZE
+    ilevel = 0
+    for level in imagePolarMask:
+        if level.size > 1:
+            num_nonzeros = np.count_nonzero(level)
+            if level.size != num_nonzeros:
+                for isample in range(level.size):
+                    if level[isample]:
+                        num_samples = level.size
+                        bin_idx_f = isample / num_samples * num_bins
+                        bin_idx_i = int(bin_idx_f)
+                        bins[bin_idx_i] += ilevel
+
+        ilevel += 1
+
+
+    return bins
