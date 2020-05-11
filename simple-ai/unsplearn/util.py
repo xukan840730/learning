@@ -1,5 +1,5 @@
 import numpy as np
-from sklearn.decomposition import PCA
+# from sklearn.decomposition import PCA
 
 # getImageMaskCenterOfMass: get imageMask center of mass
 def getImageMaskCenterOfMass(shapeMask):
@@ -23,7 +23,7 @@ def getImageMaskCenterOfMass(shapeMask):
     cx = np.sum(dx * np.arange(num_rows))
     cy = np.sum(dy * np.arange(num_cols))
 
-    return (cx, cy)
+    return (cx + 0.5, cy + 0.5)
 
 def testPCA(shapeMask, num_comp):
     num_rows = shapeMask.shape[0]

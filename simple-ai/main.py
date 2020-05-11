@@ -14,7 +14,6 @@ print("Hello World!")
 
 imCom = unslutil.getImageMaskCenterOfMass(spd.g_triangle.getShapeMask())
 imagePolarMask = unslpolar.imageMaskToPolarCoords(spd.g_triangle.getShapeMask(), imCom)
-print(imagePolarMask)
 
-imagePolarHist = unslpolar.imagePolarHistogram(imagePolarMask)
-print(imagePolarHist)
+# imagePolarHist = unslpolar.imagePolarHistogram(imagePolarMask)
+# print(imagePolarHist)
