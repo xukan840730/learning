@@ -1,4 +1,5 @@
 import numpy as np
+import matplotlib.pyplot as plt
 import shapes.pre_defined as spd
 import shapes.visualize as pvis
 import unsplearn.util as unslutil
@@ -13,7 +14,11 @@ print("Hello World!")
 # unslutil.test_pca(spd.g_triangle.getShapeMask(), 2)
 
 imCom = unslutil.getImageMaskCenterOfMass(spd.g_triangle.getShapeMask())
-imagePolarMask = unslpolar.imageMaskToPolarCoords(spd.g_triangle.getShapeMask(), imCom)
+imagePolarMask = unslpolar.imageMaskToPolarCoords2(spd.g_triangle.getShapeMask(), imCom)
+# print(imagePolarMask)
 
-# imagePolarHist = unslpolar.imagePolarHistogram(imagePolarMask)
-# print(imagePolarHist)
+imagePolarHist = unslpolar.imagePolarHistogram(imagePolarMask)
+print(imagePolarHist)
+
+imagePolarMean = np.mean(imagePolarHist)
+imagePolarMedian = np.median(imagePolarHist)

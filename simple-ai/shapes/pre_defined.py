@@ -2,7 +2,7 @@ import math as math
 import numpy as np
 import primitive as prim
 
-num_rows_odd = 8 - 1
+num_rows_odd = 16 - 1
 num_cols_odd = num_rows_odd
 half_rows_odd = int(num_rows_odd / 2)
 half_cols_odd = int(num_cols_odd / 2)
