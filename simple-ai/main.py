@@ -10,15 +10,17 @@ print("Hello World!")
 # pvis.visualize(spd.g_horiLine)
 # pvis.visualize(spd.g_vertLine)
 # pvis.visualize(spd.g_triangle)
+# pvis.visualize(spd.g_square)
 
 # unslutil.test_pca(spd.g_triangle.getShapeMask(), 2)
 
-imCom = unslutil.getImageMaskCenterOfMass(spd.g_triangle.getShapeMask())
-imagePolarMask = unslpolar.imageMaskToPolarCoords2(spd.g_triangle.getShapeMask(), imCom)
+# testShape = spd.g_triangle
+testShape = spd.g_square
+imCom = unslutil.getImageMaskCenterOfMass(testShape.getShapeMask())
+imagePolarMask = unslpolar.imageMaskToPolarCoords2(testShape.getShapeMask(), imCom)
 # print(imagePolarMask)
 
 imagePolarHist = unslpolar.imagePolarHistogram(imagePolarMask)
 print(imagePolarHist)
-
-imagePolarMean = np.mean(imagePolarHist)
-imagePolarMedian = np.median(imagePolarHist)
+# imagePolarMean = np.mean(imagePolarHist)
+# imagePolarMedian = np.median(imagePolarHist)

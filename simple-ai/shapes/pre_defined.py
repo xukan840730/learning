@@ -38,3 +38,15 @@ for irow in range(1, num_rows_odd - 1):
 
 g_triangle = prim.PrimitiveShape()
 g_triangle.setShapeMask(_triangleData)
+
+# square outline
+_squareData = np.zeros([num_rows_odd, num_cols_odd], dtype=bool)
+
+padding_row = int(math.floor(num_rows_odd / 4))
+padding_col = int(math.floor(num_cols_odd / 4))
+for irow in range(padding_row, num_rows_odd - padding_row):
+    for icol in range(padding_col, num_cols_odd - padding_col):
+        _squareData[irow, icol] = True
+
+g_square = prim.PrimitiveShape()
+g_square.setShapeMask(_squareData)

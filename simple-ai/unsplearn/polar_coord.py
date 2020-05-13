@@ -76,37 +76,37 @@ def imageMaskToPolarCoords2(imageMask, origin):
     radius_f = max(x_radius, y_radius)
     radius_i = int(radius_f)
 
-    grid_vals = np.zeros([num_rows + 2, num_cols + 2], dtype=float)
-    for irow in range(grid_vals.shape[0]):
-        for icol in range(grid_vals.shape[1]):
-            v = 0.0
-            count = 0
-            irow_minus_1 = irow - 1
-            icol_minus_1 = icol - 1
-
-            if irow < num_rows and icol < num_cols:
-                if 0 <= irow_minus_1 and irow_minus_1 < num_rows and 0 <= icol_minus_1 and icol_minus_1 < num_cols:
-                    if imageMask[irow_minus_1, icol_minus_1]:
-                        v += 1.0
-                    count += 1
-
-                if 0 <= irow_minus_1 and irow_minus_1 < num_rows and 0 <= icol and icol < num_cols:
-                    if imageMask[irow_minus_1, icol]:
-                        v += 1.0
-                    count += 1
-
-                if 0 <= irow and irow < num_rows and 0 <= icol_minus_1 and icol_minus_1 < num_cols:
-                    if imageMask[irow, icol_minus_1]:
-                        v += 1.0
-                    count += 1
-
-                if 0 <= irow and irow < num_rows and 0 <= icol and icol < num_cols:
-                    if imageMask[irow, icol]:
-                        v += 1.0
-                    count += 1
-
-                assert(count > 0)
-                grid_vals[irow, icol] = v / count
+    # grid_vals = np.zeros([num_rows + 2, num_cols + 2], dtype=float)
+    # for irow in range(grid_vals.shape[0]):
+    #     for icol in range(grid_vals.shape[1]):
+    #         v = 0.0
+    #         count = 0
+    #         irow_minus_1 = irow - 1
+    #         icol_minus_1 = icol - 1
+    #
+    #         if irow < num_rows and icol < num_cols:
+    #             if 0 <= irow_minus_1 and irow_minus_1 < num_rows and 0 <= icol_minus_1 and icol_minus_1 < num_cols:
+    #                 if imageMask[irow_minus_1, icol_minus_1]:
+    #                     v += 1.0
+    #                 count += 1
+    #
+    #             if 0 <= irow_minus_1 and irow_minus_1 < num_rows and 0 <= icol and icol < num_cols:
+    #                 if imageMask[irow_minus_1, icol]:
+    #                     v += 1.0
+    #                 count += 1
+    #
+    #             if 0 <= irow and irow < num_rows and 0 <= icol_minus_1 and icol_minus_1 < num_cols:
+    #                 if imageMask[irow, icol_minus_1]:
+    #                     v += 1.0
+    #                 count += 1
+    #
+    #             if 0 <= irow and irow < num_rows and 0 <= icol and icol < num_cols:
+    #                 if imageMask[irow, icol]:
+    #                     v += 1.0
+    #                 count += 1
+    #
+    #             assert(count > 0)
+    #             grid_vals[irow, icol] = v / count
 
     result = []
     for ir in range(radius_i):
