@@ -14,13 +14,16 @@ print("Hello World!")
 
 # unslutil.test_pca(spd.g_triangle.getShapeMask(), 2)
 
-# testShape = spd.g_triangle
-testShape = spd.g_square
+testShape = spd.g_triangle
+# testShape = spd.g_square
 imCom = unslutil.getImageMaskCenterOfMass(testShape.getShapeMask())
 imagePolarMask = unslpolar.imageMaskToPolarCoords2(testShape.getShapeMask(), imCom)
 # print(imagePolarMask)
 
 imagePolarHist = unslpolar.imagePolarHistogram(imagePolarMask)
-print(imagePolarHist)
+imageDominantAxis = unslpolar.findDominantAxis(imagePolarHist)
 # imagePolarMean = np.mean(imagePolarHist)
 # imagePolarMedian = np.median(imagePolarHist)
+
+for i in imageDominantAxis:
+    print(i)

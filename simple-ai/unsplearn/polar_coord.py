@@ -1,5 +1,6 @@
 import math as math
 import numpy as np
+import numpy.linalg as linalg
 import utils.util as util
 
 # Discrete polar coordinates system
@@ -182,3 +183,75 @@ def imagePolarHistogram(imagePolarMask):
         level_f += 1.0
 
     return bins
+
+def findDominantAxis(imagePolarHist):
+    print(imagePolarHist)
+
+    _mean = np.mean(imagePolarHist)
+    num_elements = imagePolarHist.shape[0]
+
+    _mask = imagePolarHist > _mean
+
+    axis_ranges = []
+
+    while True:
+        max_v = 0
+        max_idx = -1
+
+        for idx in range(imagePolarHist.shape[0]):
+            if _mask[idx]:
+                if imagePolarHist[idx] > max_v:
+                    max_v = imagePolarHist[idx]
+                    max_idx = idx
+
+        if max_idx < 0:
+            break
+
+        new_range = []
+        new_range.append(max_idx)
+
+        new_idx = max_idx
+        while True:
+            new_idx = (new_idx + 1) % num_elements
+            if _mask[new_idx] and new_idx != max_idx: # stop at myself
+                new_range.append(new_idx)
+            else:
+                break
+
+        new_idx = max_idx
+        while True:
+            new_idx = (new_idx - 1 + num_elements) % num_elements
+            if _mask[new_idx] and new_idx != max_idx: # stop at myself
+                new_range.append(new_idx)
+            else:
+                break
+
+        axis_ranges.append(new_range)
+
+        # add new_range to masks
+        _mask[new_range] = False
+
+    result = []
+
+    for ir in axis_ranges:
+        each_axis = {}
+        vec_total = np.zeros([2], dtype=float)
+
+        for iangle in ir:
+            angle_rad = math.pi * 2 / num_elements * iangle
+            vec = np.zeros([2], dtype=float)
+            vec[0] = math.cos(angle_rad)
+            vec[1] = math.sin(angle_rad)
+            vec *= imagePolarHist[iangle]
+            vec_total += vec
+
+        vec_angle_rad = math.atan2(vec_total[1], vec_total[0])
+        vec_strength = math.sqrt(np.dot(vec_total, vec_total))
+
+        each_axis['angle_rad'] = vec_angle_rad
+        each_axis['strength'] = vec_strength
+        each_axis['range'] = ir
+
+        result.append(each_axis)
+
+    return result
