@@ -14,4 +14,8 @@ High level ideas:
 	1. link 5 senses.
 
 5) current goal:
+	1. divide image to regions
+
+6) finshed goal:
     1. imageMask to polar coordinate system.
+	
