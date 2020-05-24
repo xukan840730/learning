@@ -14,3 +14,11 @@ iterative method:
 	
 knowledge database:
 	1) let's do some pattern learning on primitive shape.
+
+
+Reference:
+	1) some cool existing tech:
+		* superpixel: modified kmean
+		* graph-cut: need prior info
+		* active-contour: optimization tech, seems too slow
+		* region descriptor: region features
