@@ -1,9 +1,10 @@
 import cv2 as cv2
-import matplotlib.pyplot as plt
-
+import region.region_basic as rb
+import utils.util as util
 
 def test1():
-    img = cv2.imread('data\single\photo-road.jpg', cv2.IMREAD_COLOR)
-    cv2.imshow('image', img)
-    cv2.waitKey(0)
-    cv2.destoryAllWindows()
+    img_u8 = cv2.imread('data\single\photo-road.jpg', cv2.IMREAD_COLOR)
+    img_f = util.image_u8_to_f(img_u8)
+    # pixel_similarity = rb.pixel_similarity(img_f)
+    rb.block_phase_1(img_f)
+
