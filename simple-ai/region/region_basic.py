@@ -51,22 +51,76 @@ def pixel_similarity(img_float):
     return res
 
 ### block phase
+def merge_nearby_similar_pixels(image_f, region_id_local, region_id_new, first_idx, block_size, offset):
+    curr_indices = []
+    curr_indices.append(first_idx)
+
+    threshold = 1.0
+
+    image_size_x = image_f.shape[0]
+    image_size_y = image_f.shape[1]
+
+    # collect nearby pixels
+    while len(curr_indices) > 0:
+        new_indices = []
+
+        # first iteration:
+        for ic in curr_indices:
+            # up
+            idx_up = ic + np.array([-1, 0])
+            # down
+            idx_down = ic + np.array([1, 0])
+            # left
+            idx_left = ic + np.array([0, -1])
+            # right
+            idx_right = ic + np.array([0, 1])
+
+            new_pixels = [idx_up, idx_down, idx_left, idx_right]
+
+            for new_p in new_pixels:
+                if in_bound(new_p, block_size):
+                    if region_id_local[new_p[0], new_p[1]] == -1:
+
+                        image_ic = offset + ic
+                        image_ip = offset + new_p
+
+                        if image_ip[0] < image_size_x and image_ip[1] < image_size_y:
+
+                            diff = dist_rgb_l1(image_f[image_ic[0], image_ic[1]], image_f[image_ip[0], image_ip[1]])
+                            if diff < threshold:
+                                region_id_local[new_p[0], new_p[1]] = region_id_new
+                                new_indices.append(new_p)
+
+        curr_indices = new_indices
+
+
 def block_phase_1_internal(image_f, i_block_x, i_block_y, block_size_x, block_size_y):
-    _mask = np.zeros([block_size_x, block_size_y], dtype=bool)
     _region_id_local = np.zeros([block_size_x, block_size_y], dtype=int)
+    _region_id_local[:] = -1
+
+    offset = np.zeros([2], dtype=int)
+    offset[0] = i_block_x * block_size_x
+    offset[1] = i_block_y * block_size_y
+
+    block_size = np.zeros([2], dtype=int)
+    block_size[0] = block_size_x
+    block_size[1] = block_size_y
 
     region_id_new = 0
     while True:
-        t = _mask == False
-        if len(t) == 0:
-            break;
+        t = np.argwhere(_region_id_local == -1)
+        if t.size == 0:
+            break
 
         # expansion from first element.
-        first_idx = t[0]
-        _mask[first_idx] = True
-        _region_id_local[first_idx] = region_id_new
+        first_idx = t[0, :]
+        _region_id_local[first_idx[0], first_idx[1]] = region_id_new
 
-        break;
+        # merge nearby similar pixels into region
+        merge_nearby_similar_pixels(image_f, _region_id_local, region_id_new, first_idx, block_size, offset)
+
+        # increase region-id
+        region_id_new += 1
 
 
 ### block phase
