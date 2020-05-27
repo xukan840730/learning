@@ -94,7 +94,15 @@ def merge_nearby_similar_pixels(image_f, region_id_local, region_id_new, first_i
         curr_indices = new_indices
 
 
-def block_phase_1_internal(image_f, i_block_x, i_block_y, block_size_x, block_size_y):
+def block_phase_1_internal(image_f, block_i, block_size, num_blocks, image_region_id_global):
+    block_size_x = block_size[0]
+    block_size_y = block_size[1]
+
+    i_block_x = block_i[0]
+    i_block_y = block_i[1]
+
+    i_block_global = i_block_x * num_blocks[1] + i_block_y
+
     _region_id_local = np.zeros([block_size_x, block_size_y], dtype=int)
     _region_id_local[:] = -1
 
@@ -106,6 +114,7 @@ def block_phase_1_internal(image_f, i_block_x, i_block_y, block_size_x, block_si
     block_size[0] = block_size_x
     block_size[1] = block_size_y
 
+    # each block begins with unique region-id
     region_id_new = 0
     while True:
         t = np.argwhere(_region_id_local == -1)
@@ -122,6 +131,16 @@ def block_phase_1_internal(image_f, i_block_x, i_block_y, block_size_x, block_si
         # increase region-id
         region_id_new += 1
 
+    # if region_id_new >= 2:
+    #     print(region_id_new)
+
+    _region_id_local += i_block_global * block_size_x * block_size_y
+
+    # copy result to image_region_id_global
+    for ix in range(block_size_x):
+        for iy in range(block_size_y):
+            image_region_id_global[offset[0] + ix, offset[1] + iy] = _region_id_local[ix, iy]
+
 
 ### block phase
 def block_phase_1(image_f):
@@ -130,15 +149,33 @@ def block_phase_1(image_f):
     image_shape[0] = image_f.shape[0]
     image_shape[1] = image_f.shape[1]
 
+    block_size = np.zeros([2], dtype=int)
     block_size_x = 3
     block_size_y = 3
+    block_size[0] = block_size_x
+    block_size[1] = block_size_y
+
+    image_shape_pad = np.zeros([2], dtype=int)
+    image_shape_pad[0] = (image_f.shape[0] + block_size_x - 1) // block_size_x * block_size_x
+    image_shape_pad[1] = (image_f.shape[1] + block_size_y - 1) // block_size_y * block_size_y
 
     # calucate number of blocks
+    num_blocks = np.zeros([2], dtype=int)
     num_blocks_x = int(math.ceil(image_shape[0] / block_size_x))
     num_blocks_y = int(math.ceil(image_shape[1] / block_size_y))
+    num_blocks[0] = num_blocks_x
+    num_blocks[1] = num_blocks_y
 
     num_blocks_total = num_blocks_x * num_blocks_y
 
+    image_region_id_global = np.zeros(image_shape_pad, dtype=int)
+    image_region_id_global[:] = -1
+
     for i_block_x in range(num_blocks_x):
         for i_block_y in range(num_blocks_y):
-            block_phase_1_internal(image_f, i_block_x, i_block_y, block_size_x, block_size_y)
+            block_i = np.zeros([2], dtype=int)
+            block_i[0] = i_block_x
+            block_i[1] = i_block_y
+            block_phase_1_internal(image_f, block_i, block_size, num_blocks, image_region_id_global)
+
+    return image_region_id_global
