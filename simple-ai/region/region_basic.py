@@ -55,7 +55,7 @@ def merge_nearby_similar_pixels(image_f, region_id_local, region_id_new, first_i
     curr_indices = []
     curr_indices.append(first_idx)
 
-    threshold = 1.0
+    threshold = 0.3
 
     image_size_x = image_f.shape[0]
     image_size_y = image_f.shape[1]
@@ -150,8 +150,8 @@ def block_phase_1(image_f):
     image_shape[1] = image_f.shape[1]
 
     block_size = np.zeros([2], dtype=int)
-    block_size_x = 3
-    block_size_y = 3
+    block_size_x = 5
+    block_size_y = 5
     block_size[0] = block_size_x
     block_size[1] = block_size_y
 
@@ -173,6 +173,10 @@ def block_phase_1(image_f):
 
     for i_block_x in range(num_blocks_x):
         for i_block_y in range(num_blocks_y):
+
+            if i_block_x == 11 and i_block_y == 8:
+                print(i_block_x, i_block_y);
+
             block_i = np.zeros([2], dtype=int)
             block_i[0] = i_block_x
             block_i[1] = i_block_y
