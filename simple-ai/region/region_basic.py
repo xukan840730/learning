@@ -18,6 +18,11 @@ def in_bound(pixel, image_shape):
     else:
         return False
 
+def single_pad(a, b):
+    c = (a + b - 1) // b * b
+    return c
+
+
 def pixel_similarity(img_float):
 
     image_shape = np.zeros([2], dtype=int)
@@ -143,21 +148,18 @@ def block_phase_1_internal(image_f, block_i, block_size, num_blocks, image_regio
 
 
 ### block phase
-def block_phase_1(image_f):
+def block_phase_1(image_f, block_size):
 
     image_shape = np.zeros([2], dtype=int)
     image_shape[0] = image_f.shape[0]
     image_shape[1] = image_f.shape[1]
 
-    block_size = np.zeros([2], dtype=int)
-    block_size_x = 5
-    block_size_y = 5
-    block_size[0] = block_size_x
-    block_size[1] = block_size_y
+    block_size_x = block_size[0]
+    block_size_y = block_size[1]
 
     image_shape_pad = np.zeros([2], dtype=int)
-    image_shape_pad[0] = (image_f.shape[0] + block_size_x - 1) // block_size_x * block_size_x
-    image_shape_pad[1] = (image_f.shape[1] + block_size_y - 1) // block_size_y * block_size_y
+    image_shape_pad[0] = single_pad(image_f.shape[0], block_size_x)
+    image_shape_pad[1] = single_pad(image_f.shape[1], block_size_y)
 
     # calucate number of blocks
     num_blocks = np.zeros([2], dtype=int)
@@ -174,8 +176,8 @@ def block_phase_1(image_f):
     for i_block_x in range(num_blocks_x):
         for i_block_y in range(num_blocks_y):
 
-            if i_block_x == 11 and i_block_y == 8:
-                print(i_block_x, i_block_y);
+            # if i_block_x == 11 and i_block_y == 8:
+            #     print(i_block_x, i_block_y)
 
             block_i = np.zeros([2], dtype=int)
             block_i[0] = i_block_x
@@ -183,3 +185,55 @@ def block_phase_1(image_f):
             block_phase_1_internal(image_f, block_i, block_size, num_blocks, image_region_id_global)
 
     return image_region_id_global
+
+def block_merge_hori_single_step(image_f, image_region_id, i_block, block_size_double):
+    assert(block_size_double[0] % 2 == 0)
+    assert(block_size_double[1] % 2 == 0)
+
+    row_offset = block_size_double[0] // 2
+    num_cols = block_size_double[1]
+
+    offset = np.zeros([2], dtype=int)
+    offset[0] = i_block[0] * block_size_double[0]
+    offset[1] = i_block[1] * block_size_double[1]
+
+    # visit_mask_local: 2 center rows
+    visit_mask_local = np.zeros([2, block_size_double[1]], dtype=bool)
+
+    for i_col in range(num_cols):
+        pixel_idx_x_0 = offset[0] + row_offset
+        pixel_idx_x_1 = pixel_idx_x_0 + 1
+        pixel_idx_y = offset[1] + i_col
+
+
+
+def block_merge_vert_single_step(image_f, image_region_id, i_block, block_size_double):
+    assert (block_size_double[0] % 2 == 0)
+    assert (block_size_double[1] % 2 == 0)
+
+def block_merge_single_step(image_f, image_region_id, block_size):
+
+    image_shape = np.zeros([2], dtype=int)
+    image_shape[0] = image_f.shape[0]
+    image_shape[1] = image_f.shape[1]
+
+    block_size_x = block_size[0]
+    block_size_y = block_size[1]
+
+    block_size_double = np.zeros([2], dtype=int)
+    block_size_double[0] = block_size_x * 2
+    block_size_double[1] = block_size_y * 2
+
+    num_merged_blocks = np.zeros([2], dtype=int)
+    num_merged_blocks_x = int(math.ceil(image_shape[0] / block_size_double[0]))
+    num_merged_blocks_y = int(math.ceil(image_shape[1] / block_size_double[1]))
+
+    for i_block_x in range(num_merged_blocks[0]):
+        for i_block_y in range(num_merged_blocks[1]):
+
+            block_i = np.zeros([2], dtype=int)
+            block_i[0] = i_block_x
+            block_i[1] = i_block_y
+
+            block_merge_hori_single_step(image_f, image_region_id, block_i, block_size_double)
+            block_merge_vert_single_step(image_f, image_region_id, block_i, block_size_double)

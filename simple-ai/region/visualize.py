@@ -10,9 +10,9 @@ def visualize_image_region(image_region):
         for iy in range(image_region.shape[1]):
             idx = image_region[ix, iy] % 5
             if idx == 0:
-                channel_b[ix, iy] = 1.0
-                channel_g[ix, iy] = 1.0
-                channel_r[ix, iy] = 1.0
+                channel_b[ix, iy] = 0.0
+                channel_g[ix, iy] = 0.0
+                channel_r[ix, iy] = 0.0
             elif idx == 1:
                 channel_b[ix, iy] = 1.0
             elif idx == 2:
