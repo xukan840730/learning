@@ -23,7 +23,8 @@ def affine_forward(x, w, b):
   # will need to reshape the input into rows.                                 #
   #############################################################################
   x2 = x.reshape((x.shape[0], w.shape[0]))
-  out = np.dot(x2, w) + b
+  dotp = np.dot(x2, w)
+  out = dotp + b
   #############################################################################
   #                             END OF YOUR CODE                              #
   #############################################################################
@@ -676,7 +677,8 @@ def softmax_loss(x, y):
   probs = np.exp(x - np.max(x, axis=1, keepdims=True))
   probs /= np.sum(probs, axis=1, keepdims=True)
   N = x.shape[0]
-  loss = -np.sum(np.log(probs[np.arange(N), y])) / N
+  t = probs[np.arange(N), y]
+  loss = -np.sum(np.log(t)) / N
   dx = probs.copy()
   dx[np.arange(N), y] -= 1
   dx /= N

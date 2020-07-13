@@ -23,8 +23,8 @@ if False:
     small_data = {
         'X_train': data['X_train'][:num_train],
         'y_train': data['y_train'][:num_train],
-        'X_val': data['X_val'],
-        'y_val': data['y_val'],
+        'X_val': data['X_val'][:num_train],
+        'y_val': data['y_val'][:num_train],
     }
 
     weight_scale = 1e-2
@@ -64,15 +64,15 @@ else:
     small_data_2['y_val'] = Y_val_2
 
     # weight_scale = 1e-2
-    weight_scale = 0.1
+    weight_scale = 1.0
     # learning_rate = 1e-2 # was 1e-4
     learning_rate = 1.0
 
-    model = FullyConnectedNet([2], input_dim=2, num_classes=2,
+    model = FullyConnectedNet([2, 2], input_dim=2, num_classes=2,
               weight_scale=weight_scale, dtype=np.float64)
 
     solver = Solver(model, small_data_2,
-                print_every=10, num_epochs=100, batch_size=4,
+                print_every=10, num_epochs=1000, batch_size=4,
                 update_rule='sgd',
                 optim_config={
                   'learning_rate': learning_rate,
