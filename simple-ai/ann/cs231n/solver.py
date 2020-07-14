@@ -150,7 +150,7 @@ class Solver(object):
       self.optim_configs[p] = d
 
 
-  def _step(self):
+  def _step_calc_loss(self):
     """
     Make a single gradient update. This is called by train() and should not
     be called manually.
@@ -169,6 +169,9 @@ class Solver(object):
     loss, grads = self.model.loss(X_batch, y_batch)
     self.loss_history.append(loss)
 
+    return loss, grads
+
+  def _step_params_update(self, grads):
     # Perform a parameter update
     for p, w in self.model.params.items():
       dw = grads[p]
@@ -203,6 +206,9 @@ class Solver(object):
       X = X[mask]
       y = y[mask]
 
+    if batch_size > N:
+      batch_size = N
+
     # Compute predictions in batches
     num_batches = int(N / batch_size)
     if N % batch_size != 0:
@@ -214,7 +220,17 @@ class Solver(object):
       scores = self.model.loss(X[start:end])
       y_pred.append(np.argmax(scores, axis=1))
     y_pred = np.hstack(y_pred)
-    acc = np.mean(y_pred == y)
+
+    acc = None
+    if y_pred.shape == y.shape:
+      acc = np.mean(y_pred == y)
+    else:
+      y_pred_2 = np.zeros(y.shape)
+      for i in range(y_pred_2.shape[0]):
+        y_pred_2[i, y_pred[i]] = 1
+
+      acc = np.mean(y_pred_2 == y)
+
 
     return acc
 
@@ -228,7 +244,12 @@ class Solver(object):
     num_iterations = int(self.num_epochs * iterations_per_epoch)
 
     for t in range(num_iterations):
-      self._step()
+      loss, grads = self._step_calc_loss()
+
+      if loss < 1e-8:
+        break
+
+      self._step_params_update(grads)
 
       # Maybe print training loss
       if self.verbose and t % self.print_every == 0:
