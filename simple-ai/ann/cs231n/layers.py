@@ -683,3 +683,9 @@ def softmax_loss(x, y):
   dx[np.arange(N), y] -= 1
   dx /= N
   return loss, dx
+
+def square_error_loss(x, y):
+  t = x - y
+  loss = 0.5 * np.dot(t, t)
+  dx = t
+  return loss, dx
