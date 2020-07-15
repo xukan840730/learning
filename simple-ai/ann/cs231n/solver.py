@@ -116,6 +116,8 @@ class Solver(object):
     self.print_every = kwargs.pop('print_every', 10)
     self.verbose = kwargs.pop('verbose', True)
 
+    self.use_acc_2 = kwargs.pop('use_acc_2', False)
+
     # Throw an error if there are extra keyword arguments
     if len(kwargs) > 0:
       extra = ', '.join('"%s"' % k for k in kwargs.keys())
@@ -231,9 +233,55 @@ class Solver(object):
 
       acc = np.mean(y_pred_2 == y)
 
-
     return acc
 
+  def check_accuracy_2(self, X, y, num_samples=None, batch_size=100):
+    """
+    Check accuracy of the model on the provided data.
+
+    Inputs:
+    - X: Array of data, of shape (N, d_1, ..., d_k)
+    - y: Array of labels, of shape (N,)
+    - num_samples: If not None, subsample the data and only test the model
+      on num_samples datapoints.
+    - batch_size: Split X and y into batches of this size to avoid using too
+      much memory.
+
+    Returns:
+    - acc: Scalar giving the fraction of instances that were correctly
+      classified by the model.
+    """
+
+    # Maybe subsample the data
+    N = X.shape[0]
+    if num_samples is not None and N > num_samples:
+      mask = np.random.choice(N, num_samples)
+      N = num_samples
+      X = X[mask]
+      y = y[mask]
+
+    if batch_size > N:
+      batch_size = N
+
+    # Compute predictions in batches
+    num_batches = int(N / batch_size)
+    if N % batch_size != 0:
+      num_batches += 1
+    y_pred = []
+    for i in range(num_batches):
+      start = i * batch_size
+      end = (i + 1) * batch_size
+      scores = self.model.loss(X[start:end])
+      err0 = 0.5 * np.square(scores - y)
+      err1 = np.sqrt(np.sum(err0, axis=1))
+      err2 = 1.0 - err1
+      err2[err2 < 0.0] = 0.0
+      y_pred.append(err2)
+
+    y_pred = np.hstack(y_pred)
+
+    acc = np.mean(y_pred)
+    return acc
 
   def train(self):
     """
@@ -268,9 +316,14 @@ class Solver(object):
       first_it = (t == 0)
       last_it = (t == num_iterations + 1)
       if first_it or last_it or epoch_end:
-        train_acc = self.check_accuracy(self.X_train, self.y_train,
-                                        num_samples=1000)
-        val_acc = self.check_accuracy(self.X_val, self.y_val)
+        if self.use_acc_2:
+          train_acc = self.check_accuracy_2(self.X_train, self.y_train,
+                                          num_samples=1000)
+          val_acc = self.check_accuracy_2(self.X_val, self.y_val)
+        else:
+          train_acc = self.check_accuracy(self.X_train, self.y_train,
+                                          num_samples=1000)
+          val_acc = self.check_accuracy(self.X_val, self.y_val)
         self.train_acc_history.append(train_acc)
         self.val_acc_history.append(val_acc)
 

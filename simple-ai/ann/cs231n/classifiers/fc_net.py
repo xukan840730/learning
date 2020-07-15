@@ -348,7 +348,7 @@ class FullyConnectedNet(object):
     return loss, grads
 
 
-class FullyConnectedNet2(object):
+class FullyConnectedNetSqrErr(object):
   """
   A fully-connected neural network with an arbitrary number of hidden layers,
   ReLU nonlinearities, and a softmax loss function. This will also implement

@@ -6,8 +6,8 @@ from cs231n.gradient_check import eval_numerical_gradient, eval_numerical_gradie
 from cs231n.solver import Solver
 
 def visualize_data(model):
-    test_data_x = np.linspace(-1.5, 1.5, 20)
-    test_data_y = np.linspace(-1.5, 1.5, 20)
+    test_data_x = np.linspace(-2., 2., 20)
+    test_data_y = np.linspace(-2., 2., 20)
     test_data = np.zeros([test_data_x.size * test_data_y.size, 2])
 
     for ix in range(test_data_x.size):
@@ -38,30 +38,50 @@ def visualize_data(model):
 
     plt.show()
 
-X_train_2 = np.array([[1, 1],
-                      [-1, -1],
-                      [-1, 1],
-                      [1, -1],
-                      ])
-
 # X_train_2 = np.array([[1, 1],
 #                       [-1, -1],
 #                       [-1, 1],
 #                       [1, -1],
-#                       [0, 2],
-#                       [2, 0],
-#                       [0, -2],
-#                       [-2, 0],
-#                       [0, 0],
-#                       [-2, 2],
-#                       [2, -2]])
+#                       ])
+
+X_train_2 = np.array([[1, 1],
+                      [-1, -1],
+                      [-1, 1],
+                      [1, -1],
+                      [0, 2],
+                      [2, 0],
+                      [0, -2],
+                      [-2, 0],
+                      [0, 0],
+                      [-2, 2],
+                      [2, -2],
+                      [0, 1],
+                      [1, 0],
+                      [0, -1],
+                      [-1, 0]])
+
+# Y_train_2 = np.array([[1, 0],
+#                       [1, 0],
+#                       [0, 1],
+#                       [0, 1]])
 
 Y_train_2 = np.array([[1, 0],
                       [1, 0],
                       [0, 1],
-                      [0, 1]])
+                      [0, 1],
+                      [1, 0],
+                      [1, 0],
+                      [1, 0],
+                      [1, 0],
+                      [0, 1],
+                      [0, 1],
+                      [0, 1],
+                      [0.5, 0.5],
+                      [0.5, 0.5],
+                      [0.5, 0.5],
+                      [0.5, 0.5]])
 
-# Y_train_2 = np.array([1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 0])
+assert(X_train_2.shape[0] == Y_train_2.shape[0])
 
 X_val_2 = X_train_2.copy()
 Y_val_2 = Y_train_2.copy()
@@ -77,25 +97,26 @@ weight_scale = 0.1
 # learning_rate = 1e-2 # was 1e-4
 learning_rate = 0.1
 
-model = FullyConnectedNet2([4, 4], input_dim=2, num_classes=2,
+model = FullyConnectedNetSqrErr([4, 4], input_dim=2, num_classes=2,
           weight_scale=weight_scale, dtype=np.float64)
 
 solver = Solver(model, small_data_2,
-            print_every=10, num_epochs=10000, batch_size=4,
+            print_every=10, num_epochs=1000, batch_size=4,
             update_rule='sgd',
             optim_config={
               'learning_rate': learning_rate,
-            }
+            },
+            use_acc_2=True,
      )
 solver.train()
 
 # for k, v in model.params.items():
 #     print(model.params[k])
 
-plt.plot(solver.loss_history, 'o')
-plt.title('Training loss history')
-plt.xlabel('Iteration')
-plt.ylabel('Training loss')
-plt.show()
+# plt.plot(solver.loss_history, 'o')
+# plt.title('Training loss history')
+# plt.xlabel('Iteration')
+# plt.ylabel('Training loss')
+# plt.show()
 
-# visualize_data(model)
+visualize_data(model)
