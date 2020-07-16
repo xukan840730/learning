@@ -272,7 +272,7 @@ class Solver(object):
       start = i * batch_size
       end = (i + 1) * batch_size
       scores = self.model.loss(X[start:end])
-      err0 = 0.5 * np.square(scores - y)
+      err0 = 0.5 * np.square(scores - y[start:end])
       err1 = np.sqrt(np.sum(err0, axis=1))
       err2 = 1.0 - err1
       err2[err2 < 0.0] = 0.0

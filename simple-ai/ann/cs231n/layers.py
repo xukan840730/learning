@@ -685,6 +685,7 @@ def softmax_loss(x, y):
   return loss, dx
 
 def square_error_loss(x, y):
+  assert(x.shape == y.shape)
   t = x - y
   b = np.square(t)
   loss = 0.5 * np.sum(b)
