@@ -106,24 +106,26 @@ weight_scale = 0.1
 # learning_rate = 1e-2 # was 1e-4
 learning_rate = 0.001
 
-model = FullyConnectedNetSqrErr([640, 640, 16], input_dim=16, num_classes=1,
+model = FullyConnectedNetSqrErr([640, 640, 640, 640, 640, 8], input_dim=16, num_classes=1,
           weight_scale=weight_scale, dtype=np.float64)
 
 solver = Solver(model, small_data_2,
-            print_every=100, num_epochs=500, batch_size=100,
+            print_every=100, num_epochs=1000, batch_size=100,
             update_rule='sgd',
             optim_config={
               'learning_rate': learning_rate,
             },
             use_acc_2=True,
-            lr_decay=0.95,
+            lr_decay=0.9999,
      )
 solver.train()
 
 # print(solver.best_params)
 
-# val_data_y_256 = model.loss(data_x[256])
-# val_data_y_2560 = model.loss(data_x[2560])
+test_data_x_256 = data_x[256:258]
+test_data_y_256 = model.loss(test_data_x_256)
+val_data_y_256 = data_y[256:258]
+print(test_data_y_256 - val_data_y_256)
 
 plt.plot(solver.loss_history, 'o')
 plt.title('Training loss history')
