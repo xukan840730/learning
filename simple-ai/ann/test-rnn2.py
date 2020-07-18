@@ -78,6 +78,19 @@ class RNN2(object):
 
         return mulv
 
+    def predict(self, x):
+        prev_s = np.zeros((hidden_dim, 1))
+        # Forward pass
+        for t in range(T):
+            mulu = np.dot(model.U, x)
+            mulw = np.dot(model.W, prev_s)
+            add = mulw + mulu
+            s = sigmoid(add)
+            mulv = np.dot(model.V, s)
+            prev_s = s
+
+        return mulv
+
     def train(self, x, y):
         layers = []
         prev_s = np.zeros((hidden_dim, 1))
@@ -195,8 +208,8 @@ for epoch in range(nepoch):
 
 preds = []
 for i in range(Y.shape[0]):
-    x, y = X[i], Y[i]
-    mulv = model.forward_pass(x)
+    x = X[i]
+    mulv = model.predict(x)
     preds.append(mulv)
 
 preds = np.array(preds)
@@ -207,8 +220,8 @@ plt.show()
 
 preds = []
 for i in range(Y_val.shape[0]):
-    x, y = X_val[i], Y_val[i]
-    mulv = model.forward_pass(x)
+    x = X_val[i]
+    mulv = model.predict(x)
     preds.append(mulv)
 
 preds = np.array(preds)
