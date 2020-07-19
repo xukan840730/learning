@@ -81,7 +81,7 @@ for epoch in range(nepoch):
         # calculate error
         loss_per_record = (y - mulv) ** 2 / 2
         loss += loss_per_record
-    loss = loss / float(y.shape[0])
+    loss = loss / float(Y.shape[0])
 
     # check loss on val
     val_loss = 0.0
@@ -100,7 +100,7 @@ for epoch in range(nepoch):
 
         loss_per_record = (y - mulv) ** 2 / 2
         val_loss += loss_per_record
-    val_loss = val_loss / float(y.shape[0])
+    val_loss = val_loss / float(Y_val.shape[0])
 
     print('Epoch: ', epoch + 1, ', Loss: ', loss, ', Val Loss: ', val_loss)
 
