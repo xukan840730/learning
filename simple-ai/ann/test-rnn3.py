@@ -1,52 +1,110 @@
+
 import math
 import numpy as np
 import matplotlib.pyplot as plt
 
-def generate_data():
-    sin_wave = np.array([math.sin(x) for x in np.arange(200)])
-    # plt.plot(sin_wave[:50])
-    # plt.show()
 
-    X = []
-    Y = []
+# read samples file:
+def read_data():
 
-    seq_len = 50
-    num_records = len(sin_wave) - seq_len
+    file1 = open('gyro-samples-reduced.txt', 'r')
 
-    for i in range(num_records - 50):
-        X.append(sin_wave[i:i + seq_len])
-        Y.append(sin_wave[i + seq_len])
+    group_data = list()
+    groups = list()
 
-    X = np.array(X)
-    X = np.expand_dims(X, axis=2)
+    while True:
 
-    Y = np.array(Y)
-    Y = np.expand_dims(Y, axis=1)
+        # Get next line from file
+        line = file1.readline()
 
-    print(X.shape, Y.shape)
+        # if line is empty
+        # end of file is reached
+        if not line:
+            break
 
-    X_val = []
-    Y_val = []
+        texts = line.split()
+        if len(texts) == 0:
 
-    for i in range(num_records - 50, num_records):
-        X_val.append(sin_wave[i:i + seq_len])
-        Y_val.append(sin_wave[i + seq_len])
+            if len(group_data) > 0:
+                groups.append(group_data)
+                group_data = list()
 
-    X_val = np.array(X_val)
-    X_val = np.expand_dims(X_val, axis=2)
+            continue
 
-    Y_val = np.array(Y_val)
-    Y_val = np.expand_dims(Y_val, axis=1)
+        # print(texts)
+        # print("Line{}: {}".format(count, line.strip()))
+        text_x = texts[2]
+        text_z = texts[3]
+        text_motor_0 = texts[4]
+        text_motor_1 = texts[5]
 
-    print(X_val.shape, Y_val.shape)
+        gyro_x_str = text_x.split(sep=':')[1].split(',')[0]
+        gyro_x_f = float(gyro_x_str)
 
-    return X, Y, X_val, Y_val
+        gyro_z_str = text_z.split(sep=':')[1].split(',')[0]
+        gyro_z_f = float(gyro_z_str)
 
-X, Y, X_val, Y_val = generate_data()
+        motor_1_str = text_motor_1.split(sep=':')[1]
+        motor_1_f = float(motor_1_str)
+
+        # data_sample = np.array([gyro_x_f, gyro_z_f, motor_1_f])
+        # data_sample = np.array([gyro_x_f, motor_1_f])
+        data_sample = np.array([gyro_x_f])
+        group_data.append(data_sample)
+
+    return groups
+
+def generate_test_data(data_groups):
+    num_samples_per_data = 16
+
+    input = list()
+    output = list()
+
+    for data_group in data_groups:
+        num_item_this_group = len(data_group) - num_samples_per_data
+        for i in range(0, num_item_this_group, 1):
+            num_elem = data_group[i].shape[0]
+            single_data = np.zeros(num_samples_per_data * num_elem)
+            for j in range(num_samples_per_data):
+                single_data[j*num_elem:(j+1)*num_elem] = data_group[i + j]
+            input.append(single_data)
+
+            output.append(data_group[i + num_samples_per_data][0])
+
+    data_x = np.zeros([len(input), input[0].size])
+
+    i = 0
+    for l in input:
+        data_x[i, :] = l
+        i += 1
+
+    data_y = np.zeros([len(output), 1])
+
+    i = 0
+    for l in output:
+        data_y[i, 0] = l
+        i += 1
+
+    return data_x, data_y
+
+data_groups = read_data()
+
+data_x, data_y = generate_test_data(data_groups)
+data_x = np.expand_dims(data_x, axis=2)
+data_y = np.expand_dims(data_y, axis=1)
+
+num_data = data_x.shape[0]
+num_val = 100
+X = data_x[0:num_data - num_val]
+Y = data_y[0:num_data - num_val]
+X_val = data_x[num_data - num_val:num_data]
+Y_val = data_y[num_data - num_val:num_data]
+
+# end of data generation.
 
 learning_rate = 0.0001
 nepoch = 25
-T = 50                   # length of sequence
+T = data_x.shape[1]                   # length of sequence
 hidden_dim = 100
 output_dim = 1
 
