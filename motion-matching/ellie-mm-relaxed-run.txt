@@ -1,0 +1,31 @@
+(define-export *ellie-mm-relaxed-run*
+	(new motion-matching-set
+		:motion-match-id 'ellie-player-explore-run
+		:settings (new motion-matching-settings
+			:blend-table *ellie-mm-blend-settings*
+			:blend-time-sec				0.5
+			:motion-blend-time-sec		0.2
+			:settings-blend-time 		0.3
+			:min-anim-speed-scale		0.9
+			:max-anim-speed-scale		1.0
+			:procedural-rotation-time	0.3
+			:strafing-rotation-time		0.3
+			:allow-mirror				#f
+			:natural-bias 				0.8
+			:motion-settings (new motion-model-settings
+				:max-speed						3.0
+				:trans-clamp-dist				0.01
+				:velocity-spring-const			7.0
+				:velocity-spring-const-decel	10.0
+				:speed-spring-const 			4.6
+				:moving-group-speed-percent-threshold 	0.6
+				:turn-rate-dps					135.0
+				:turn-rate-dps-directional-idle	(new-point-curve (-180.0 114) (-135.0 119) (-90.0  93) (-45.0   58) (45.0    54) (90.0   93)	(135.0 112)	(180.0 122))
+				;:disable-variable-clamp-dist	#t
+				:always-interpolate-facing   	#t
+				:base-yaw-speed-factor 			0.8
+				:projection-mode				(projection-mode ground-plane)
+			)
+		)
+	)
+)

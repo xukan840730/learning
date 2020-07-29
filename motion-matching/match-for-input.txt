@@ -1,0 +1,60 @@
+
+/// --------------------------------------------------------------------------------------------------------------- ///
+I32F MotionMatchingSet::GetNumPoseDimensions() const
+{
+	static CONST_EXPR I32F kPosCount = 3;
+	static CONST_EXPR I32F kVelCount = 3;
+	static CONST_EXPR I32F kFacingCount = 3;
+
+	return (m_pSettings->m_pose.m_numBodies * (kPosCount + kVelCount)) + kFacingCount;
+}
+
+/// --------------------------------------------------------------------------------------------------------------- ///
+I32F MotionMatchingSet::GetNumGoalDimensions() const
+{
+	static CONST_EXPR I32F kPosCount = 3;
+	static CONST_EXPR I32F kVelCount = 3;
+	static CONST_EXPR I32F kFacingCount = 3;
+	static CONST_EXPR I32F kYawSpeedCount = 1;
+
+	const size_t numTrajSamples = m_pSettings->m_goals.m_numTrajSamples + m_pSettings->m_goals.m_numTrajSamplesPrevTraj;
+	const size_t numTrajDimensions = (numTrajSamples * (kPosCount + kVelCount + kFacingCount + kYawSpeedCount));
+
+	const size_t numGoalLocDimensions = m_pSettings->m_goals.m_numGoalLocators * kPosCount;
+
+	return numTrajDimensions + numGoalLocDimensions;
+}
+
+
+/// --------------------------------------------------------------------------------------------------------------- ///
+CharacterMotionMatchLocomotion::RequestAnims()
+=> pLocomotionInterface->GetInput(&m_input);
+=> populate MotionModelInput modelInputPs;
+=> CharacterMotionMatchLocomotion::MatchParams CharacterMotionMatchLocomotion::CreateMatchParams
+	=> 	const Locator curMatchLocPs	   = GetMatchLocatorPs(self);
+		const Locator futureMatchLocPs = GetFutureLocatorPs(curMatchLocPs,
+														self.GetSkeletonId(),
+														maybeCurSample,
+														dt * m_timeScale);
+
+	=> CharacterMotionMatchLocomotion::CreateTrajectory
+		=> Add prev loco history
+		=> GetDesiredTrajectory
+		
+	=> Maybe<AnimSample> CharacterMotionMatchLocomotion::MatchFromInput(const MatchParams& params)
+		=> MotionMatchingSet::FindClosestSampleExisting
+			=> MotionMatchingSet::CreateAnimVectorFromExisting
+				=> const I32F index = GetClosestSampleInTable(m_sampleTable, animSample);
+				=> const MotionMatchingVectorTable::AnimVectorMap& v = VectorTable()[index];
+				=> pVectorOut->head(numPoseDimensions) = v.head(numPoseDimensions); // Copy the pose & extra dimension sections of the vector in the table that is closest to it	
+				=> TrajectoryToVector() // Convert an AnimTrajectory to entries in an AnimVector
+
+			=> CompositeWeights()
+			=> MotionMatchingSet::FindClosestSampleFromVectors
+				=> MotionMatchingSet::FindClosestSampleInternal
+				=> MotionMatchingIndex::GetClosest
+				
+			=> compare closest with current, replace closest if current is better.
+			=> Maybe<AnimSample> res = AnimSampleFromIndex(closest.m_vectorIndex, closest.m_mirror);
+
+=> CharacterMotionMatchLocomotion::ApplyBestSample

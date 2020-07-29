@@ -1,0 +1,7 @@
+class AnimSample
+{
+	ArtItemAnimHandle m_animHandle;
+	float m_phase = 0.0f;
+	float m_rate = 1.0f;
+	bool m_mirror = false;
+};

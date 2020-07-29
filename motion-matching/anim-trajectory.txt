@@ -1,0 +1,34 @@
+class AnimTrajectorySample
+{
+private:
+	Point m_position;
+	Vector m_velocity;
+	Vector m_facing;
+	float m_yawSpeed;
+	float m_timeInFutureSeconds;
+	bool m_posValid;
+	bool m_velValid;
+	bool m_facingValid;
+	bool m_yawSpeedValid;
+
+};
+
+
+class AnimTrajectory
+{
+
+	template <class T>
+	class TrajectoryChannel
+	{
+	public:
+	private:
+		ListArray<T> m_samples;
+		ListArray<F32> m_times;
+	};
+
+	TrajectoryChannel<Point> m_positionTrajectory;
+	TrajectoryChannel<Vector> m_velTrajectory;
+	TrajectoryChannel<Vector> m_facingTrajectory;
+	TrajectoryChannel<float> m_yawSpeedTrajectory;
+
+};
