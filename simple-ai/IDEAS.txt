@@ -15,6 +15,13 @@ iterative method:
 knowledge database:
 	1) let's do some pattern learning on primitive shape.
 
+autoencoder to generate: 
+	1) self
+	2) small variation
+compare their difference to generalize feature:
+	1) translation
+	2) rotation
+	3) scale
 
 Reference:
 	1) some cool existing tech:
