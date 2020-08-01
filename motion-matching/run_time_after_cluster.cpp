@@ -1,4 +1,9 @@
 
+void trajectory_cost() {}
+void pose_cost() {}
+
+
+
 
 float best_dist = FLT_MAX;
 Pose bestPose;
