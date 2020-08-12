@@ -1,0 +1,54 @@
+interviewee: Matthew South
+
+Good morning/evening!
+
+My name is Kan, I am a gameplay programmer from Naughty Dog.
+Nice to chat with you.
+
+This will be a quick technical interview 
+about some programming and math questions
+I will ask a few questions.
+If you are confused about anything, just let me know.
+
+Are you ready?
+
+
+Take a note:
+1) good.
+2) need some time.
+3) good, mention cache, better performance
+ fast add/remove for larger 
+
+4) new heap, big, cost 
+
+5) great
+7) know binary tree. 
+	a) correct
+	b) explained a binary. ensure
+	
+8) hash-table: mention dictionary.
+	constant
+	mention hash collision
+		: mention open hash
+		: mention close hash
+	
+10) correct
+
+11) insane slow getting from RAM
+mention cache L1, L2.
+bring cacheline.
+
+12) mention angle and projection.
+	
+13) 
+	a) correct
+	b) correct
+	c) 
+	
+14) correct
+
+15) mention point normmal
+	
+Feedback.
+
+Do you have any question for me?

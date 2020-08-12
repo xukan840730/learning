@@ -1,0 +1,3 @@
+My issues:
+1) Forget about DP methods.
+2) should have asked the interviewer some questions.
