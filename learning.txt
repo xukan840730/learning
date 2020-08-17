@@ -1,6 +1,7 @@
 LEARNING:
 
 1) Design Pattern
+2) Algorithm.
 2) fast.ai
 3) MIT Autonomous vehicle course
 
