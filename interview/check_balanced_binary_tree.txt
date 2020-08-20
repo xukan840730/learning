@@ -1,0 +1,22 @@
+
+def check_balanced(node):
+	
+	l_node_balanced = false
+	l_node_depth = 0
+	if node.left_node != None:
+		l_node_balanced, l_node_depth = check_balanced(node.left_node)
+		if l_node_balanced == False:
+			return False, l_node_depth
+	
+	r_node_balanced = false
+	r_node_depth = 0
+	if node.right_node != None:
+		r_node_balanced, r_node_depth = check_balanced(node.right_node)
+		if r_node_balanced == False:
+			return False, r_node_depth
+		
+	balanced = l_node_balanced and r_node_balanced and abs(l_node_depth - r_node_depth) <= 1
+	depth = max(l_node_depth, r_node_depth) + 1
+	
+	return balanced, depth
+	

@@ -1,0 +1,28 @@
+subproblems:
+
+suffixes x[i: ->]
+prefixes x[<- :i]
+substrings x[i:j]
+
+
+
+Problem: Parenthesization:
+Given a sequence of matrix multiplication: A0 * A1 * A2 * ... An-1
+Find parenthesization to reduce the number of operations:
+
+Solution:
+1) guessing outermost/last multiplication
+	(A0...Ak-1)*(Ak-1...An-1) has least number of multiplication
+	then we can subdivide the problem.
+	
+2) subproblem = optimal solution of Ai ... Aj-1
+	once the range is less than 2, we can know the output.
+
+3) recurrence:
+	DP(i, j) = min(
+		for k in range(i, j):
+			DP(i, k) + DP(k, j) + cost(Ai:k * Ak:j)
+	)
+	
+
+Problem: Edit Distance:

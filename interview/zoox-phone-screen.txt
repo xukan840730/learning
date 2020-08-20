@@ -1,11 +1,16 @@
-why do I choose zoox?
+Why do I choose zoox?
 	1) because we just ship big game
-	2) I am very interested in AI technology like self driving. can save lifes
+	2) I am very interested in AI technology like self driving. 
+		1) can save lifes
+		2) many challedges: weather, low light, pedistrian behavior, vehicle behavior.
+		
 	
-what's my background:
-	1) gameplay programmer from ND. My main focus is player mechanics, animation, 
+What's my background:
+	1) gameplay programmer from ND. 
+	My main focus is player mechanics, animation, weapon gameplay, etc.
+
 	
-my question for Zoox:
+My question for Zoox:
 	1) what're sim team projects:
 		1) recreate real world senario in simulation tool?
 		does self-driving AI learn from simulation and correct its behavior?
@@ -13,5 +18,6 @@ my question for Zoox:
 		2) do you write your simulator from scratch?
 		
 	2) what's the relationship between sim team and other team?
+
 	
-	
+Offer from tencent: should be here in a week.

@@ -1,0 +1,50 @@
+Common interview topics:
+ 
+Data structure:
+	Linked List
+	Trees
+	Graphs
+	Stack & Queue
+	Heaps
+	Vector / ArrayLists
+	HashTable
+	
+Algorithm:
+	Breadth-First Search
+	Depth-First Search
+	Binary Search
+	Merge Sort
+	Quick Sort
+	
+Concepts:
+	Bit Manipulation
+	Memory (Stack vs Heap)
+	Recursion
+	Dynamic Programming
+	Big O Time & Space
+	
+Data structure:
+	Binary tree, insertion and deletion.
+	Balanced Binary Tree.
+	HashTable implemenation.
+	Heap	
+	Graph Traversal
+
+Computer Archetiture: 
+	Caching, cachelines.
+	
+
+Dynamic Programming:
+	1) "careful brute force"
+	2) guessing + recursion + memorization
+	3) shortest path in some DAG
+	time = #subproblems * time/subproblem
+	
+
+My own experience:
+
+
+Questions for interviewer:
+	1) What's your job in the company.
+	2) How does each team collbrate with other.
+	

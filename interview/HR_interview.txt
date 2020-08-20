@@ -2,7 +2,7 @@ HR_interview:
 
 futher development of game industry:
 diverisity: all kinds of games
-gameplay intensive
+more intensive gameplay and replay value
 innotative/additive gameplay
 
 
@@ -12,3 +12,11 @@ easily accessible high quality: like using cellphone to play zelda
 
 concern about Sino-America relationship:
 It's a factor ordinary people can't control
+
+
+Tech:
+3A games are more expensive to make:
+need free designer so they can focus on gameplay iteration
+1) need simplify workflow (navmesh generation)
+2) automatic process for animator and designer
+
