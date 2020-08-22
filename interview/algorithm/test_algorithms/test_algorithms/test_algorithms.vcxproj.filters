@@ -29,6 +29,9 @@
     <ClCompile Include="longest_parlindromic_substring.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="longest_increasing_sequence.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="test_cases.h">
