@@ -1,0 +1,22 @@
+
+template<typename... Args>
+class EntitiesWith;
+
+template<typename... Args>
+class ConstrainedEntity;
+
+template<typename Component>
+typename std::enable_if_t<!std::is_const_v<Component>, Component&> Get();
+
+typename<typename Component>
+typename std::enable_if_t<std::is_const_v<Component>, const Component&> Get() const;
+
+class VelocitySystem {
+	void Update(float dt) {
+		for (auto& e : GetEntitiesWith<Transform, const RigidBody>()) {
+			const RigidBody& rb = e.Get<const RigidBody>();
+			Transform& tf = e.Get<Transform>();
+			tf.position += rb.velocity * dt;
+		}
+	}
+};

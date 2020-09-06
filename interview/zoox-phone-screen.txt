@@ -18,6 +18,6 @@ My question for Zoox:
 		2) do you write your simulator from scratch?
 		
 	2) what's the relationship between sim team and other team?
-
-	
-Offer from tencent: should be here in a week.
+	3) what's your job at zoox?	
+	4) what's one day at zoox?
+	5) how does your simulator look like?
