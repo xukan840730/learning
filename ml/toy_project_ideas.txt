@@ -1,0 +1,7 @@
+1) find people in my photo 
+2) group photos
+
+kid_classifiers: 
+1) only have a few pictures.
+2) model starts to overfitting. need data argumentation.
+
