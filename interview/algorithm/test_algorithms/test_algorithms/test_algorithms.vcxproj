@@ -139,12 +139,17 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="best_time_to_buy_sell.cpp" />
+    <ClCompile Include="coin_change.cpp" />
     <ClCompile Include="generate_parenthese.cpp" />
     <ClCompile Include="generate_permutations.cpp" />
     <ClCompile Include="generate_subsets.cpp" />
+    <ClCompile Include="linear_partition.cpp" />
+    <ClCompile Include="longest_increasing_sequence.cpp" />
     <ClCompile Include="longest_parlindromic_substring.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="string_edit_distance.cpp" />
+    <ClCompile Include="toplogical_sort.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="test_cases.h" />
