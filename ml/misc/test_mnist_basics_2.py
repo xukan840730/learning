@@ -46,8 +46,8 @@ def train_model(model, opt, epochs, dl, valid_dl):
         train_epoch(model, opt, dl)
         print(validate_epoch(model, valid_dl), end=' ')
 
+print(URLs.MNIST_SAMPLE)
 path = untar_data(URLs.MNIST_SAMPLE)
-
 print("untar_data done!")
 
 threes = (path/'train'/'3').ls().sorted()
@@ -77,16 +77,16 @@ valid_dset = list(zip(valid_x,valid_y))
 
 lr = 1.
 dl = DataLoader(dset, batch_size=256)
-valid_dl = DataLoader(dset, batch_size=256)
+valid_dl = DataLoader(valid_dset, batch_size=256)
 
 choice = 2
 
 if choice == 0:
-    linear_model = nn.Linear(28 * 28, 1)
+    linear_model = nn.Linear(28*28, 1)
     opt = BasicOptim(linear_model.parameters(), lr)
     train_model(linear_model, opt, 20, dl, valid_dl)
 elif choice == 1:
-    linear_model = nn.Linear(28 * 28, 1)
+    linear_model = nn.Linear(28*28, 1)
     opt = SGD(linear_model.parameters(), lr)
     train_model(linear_model, opt, 20, dl, valid_dl)
 else:
@@ -100,4 +100,4 @@ else:
                     loss_func=mnist_loss, metrics=batch_accuracy)
 
     lr = 0.1
-    learn.fit(100, lr=lr)
+    learn.fit(20, lr=lr)
