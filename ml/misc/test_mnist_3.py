@@ -32,6 +32,9 @@ def mnist_loss_2(predictions, targets):
 
 def mnist_loss_3(predictions, targets):
     predictions = predictions.sigmoid()
+
+    # to prevent log(0) happens
+    predictions = torch.clamp(predictions, 0.000001, 0.999999)
     targets_y = torch.zeros(predictions.shape)
     for i in range(predictions.shape[0]):
         targets_y[i][targets[i].item()] = 1.0
@@ -123,12 +126,12 @@ else:
     simple_net = nn.Sequential(
         nn.Linear(28 * 28, 30),
         nn.ReLU(),
-        nn.Linear(30, 30),
-        nn.ReLU(),
+        # nn.Linear(30, 30),
+        # nn.ReLU(),
         nn.Linear(30, 10),
     )
     learn = Learner(dls, simple_net, opt_func=SGD,
                     loss_func=mnist_loss_3, metrics=batch_accuracy)
 
     lr = 0.1
-    learn.fit(8, lr=lr)
+    learn.fit(24, lr=lr)
