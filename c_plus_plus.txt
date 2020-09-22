@@ -1,0 +1,28 @@
+C++:
+
+1) resource management:
+A resource should have an owner:
+- Usually a "handle"
+- A "handle" should present a well-defined and useful abstraction
+
+To represent ownership:
+Don't use pointer!, Instead use handles.
+
+Move sematics:
+
+To return something big:
+Return a Matrix
+Matrix operator+(const Matrix& a, const Matrix& b)
+{
+	Matrix r;
+	// copy a[i] + b[i] into r[i]
+	return r;
+}
+Matrix res = a + b;
+
+Define move a constructor for Matrix
+- Don't copy, but steal the representation.
+
+question: 
+1) shared_pointer? unique_pointer?
+2) factory function?

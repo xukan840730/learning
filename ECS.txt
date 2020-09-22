@@ -1,0 +1,128 @@
+Entity Component System:\
+
+In response to our discussion today, here are some of my thoughts on process updating and how I believe it relates to componentization.
+
+
+
+
+jason_gregory:house_with_garden:  16 hours ago
+Some reasons we might want to componentize a Process:
+Enable code sharing across a large class hierarchy, without requiring derivation from a common base class (has-a rather than is-a).
+Dynamicism: Break a process into bits that can be turned on/off or swapped dynamically. Useful for LOD purposes (swap dynamically between a cheaper and more expensive version of a component), or for features that come and go for gameplay reasons.
+Reduction of complexity: A process is a coarse-grained thing. It's easier to think just about a HealthSystem or a WeaponController, for example, than to think about the Player as a whole.
+Concurrency: Collect data into chunks to enable better parallelization. e.g. instead of a bullet depending on the entire Player process, it might only need to depend on the HealthSystem of the player.
+(edited)
+:100:
+1
+
+
+
+
+
+jason_gregory:house_with_garden:  16 hours ago
+It seems to me that while these (and other) reasons for componentization may sometimes have synergy, they are often at odds with one another.
+e.g. to efficiently solve process update dependencies, we might need to update the Player in, let's say, 5 phases.
+and yet, logically and for code sharing reasons, the player might reasonably be comprised of 100 components.
+I think a key observation here is that if we force ourselves to use components as the "unit" of the job dependency graph for process updating, we would get forced into much higher granularity than we actually need. In the above example, perhaps we only really need 5 phases (4 sync points) to update the player, but we have 100 components.
+
+
+
+
+jason_gregory:house_with_garden:  16 hours ago
+Thinking of the concept of a task/job dependency graph, and its max and avg "degree of concurrency" (DOC), the goal for efficient utilization of the cores is to reduce dependencies, aka sync points, and thereby maximize DOC. (edited) 
+
+
+
+
+jason_gregory:house_with_garden:  16 hours ago
+So the key thing to understand is: Which "parts" of a process' update are dependent on what data? That data might live inside this process, or some other process. Moreover, to Christian's point from today, if we don't care about a one-frame-off delay, then there really isn't a dependency. The only dependencies that matter are when we need the results this frame in order to do our own update for this frame.
+
+
+
+
+jason_gregory:house_with_garden:  16 hours ago
+Anyway, I'm starting to think that one practical way to deal with componentization, as it relates to concurrent process updates, is as follows:
+First componentize based on logical requirements -- i.e. the first few reasons I cited above -- code sharing, dynamicism, complexity reduction, and perhaps others I haven't thought of.
+Then, analyze the specific way in which the given process updates its state each frame.
+Only make changes in the data / componentization if and as needed to solve REAL dependency problems.
+This might involve grouping two or more components into a logical "unit" (I think I've called this a "dependency group" before)... for example, one part of the player's update might depend on some data from the health system and also the world-space joint locations, so they are basically treated as a unit for dependency graph purposes.
+It might also involve breaking a component up. For example, if we started out with local and world space joints in a single component, and later we find that something depends only on the world-space joints, we could perhaps break that component in two to improve DOC.
+Moreover, dependency groups might be fluid during the frame. During one part of the update (one "job") there might be deps on components A, B and C, but during another part (another "job") there might be deps on components B, E and G.
+(edited)
+
+
+
+
+jason_gregory:house_with_garden:  16 hours ago
+So I figure we might want to introduce the concept of "dependency groups" or similar, as a separate concept from both processes and components. A group could contain a process, multiple processes, or a mix of processes and individual components.
+I think this approach is superior to an a priori approach -- one that assumes every component we might come up with is naturally a good granularity choice in terms of the dependency graph. (edited) 
+
+
+
+
+jason_gregory:house_with_garden:  16 hours ago
+Put another way: Components should exist for logical reasons (code sharing, dynamicism, etc.) and then IF they HAPPEN to be useful for dependency graph, great... but that should neither be assumed, nor enforced.
+
+
+
+
+jason_gregory:house_with_garden:  16 hours ago
+OK, that's my rant. Would love others to offer their thoughts in this thread... :slightly_smiling_face:
+
+
+
+
+Ryan Broner  1 hour ago
+I agree with just about all of that and great summary of the benefits of componentization. But I think there may still be some confusion in terminology between the Components (which are just data), and the Updates in the dependency graph that access that data.
+If you're talking about grouping the Updates together I agree completely, and that's one of the things I brought up in our discussion (e.g. grouping all the updates of a single Process together). I think that has merit both for performance, and to hide the internals of a Process that other Processes don't need to know about. For example we probably don't want other Processes to depend on some specific Update of another Process that might get changed/refactored, when the scheduler doesn't need that level of granularity anyway.
+But I'm not sure what problem grouping of Components would solve (or what that even means exactly). When accessing data, you do have to know the specific Component you want to access, so it makes sense to directly reference those specific Components.
+
+
+
+
+jason_gregory:house_with_garden:  1 hour ago
+Well, again, there's Components in terms of ECS, and then there's Components in the more traditional OOP sense.
+In ECS, a Subsystem is a "job" and a Component is a "POD" or "data buffer"... just a struct or buffer of data that various jobs can operate on.
+But in OOP, a Component is a class with both behavior and data that can be "tacked on" to other classes.
+I think, Ryan, that your original implementation of Subystems for the player was more an OOP "component" kind of model. It just happened to be named "subsystem" but we mustn't get that confused with the subsystems of ECS. They're totally different beasts.
+What I think is not quite right about our most-recent direction is that we've allowed ourselves to confuse Ryan's Subsystem with ECS's Subsystem, and then tried to shoe-horn in ECS's Components on top of that. I don't think that's right, and it's why at yesterday's meeting no one was like, "Yes! This is THE solution!" :)
+I'm not sure we need or want ECS. As I've said, ECS is really NOT good for concurrency. So maybe we should stick with Ryan's subsystems as a traditional OOP style "component" model, forget aobut ECS for the moment, and instead focus on how do we add better concurrency to a Process+Subsystem (aka Process+Component) model. (edited) 
+
+
+
+
+jason_gregory:house_with_garden:  1 hour ago
+Why is ECS not good for concurrency? Because by its very nature, each "subsystem" (call it a "job") has "random access" to literally every "component" (call it "data buffer"). That's the polar opposite of what Christian has been proposing, wherein we can clearly define which jobs use which bits of data, and more than that... derive concurrent dependencies from it. i.e. If job A uses data buffers 12, 17 and 39, and job B uses data buffers 17, 21, 102 and 134, then they cannot run in parallel b/c they both try to read/write data buffer 17.
+
+
+
+
+jason_gregory:house_with_garden:  1 hour ago
+(Lets' not refer to ECS components and subsystems using that terminology, b/c its super misleading given Ryan's terminology in the player "subsystem" stuff... let's call them what they are: jobs and data blocks.)
+
+
+
+
+jason_gregory:house_with_garden:  44 minutes ago
+Maybe we ought to rename Ryan's original Subsystem as ProcessComponent, since that's what it really is -- an OOP component in the traditional sense. And in fact, we already have other examples of OOP components in our engine, like DrawControl, FgInstance, FgAnimData, etc. They needn't all use Ryan's system, nor need they all derive from a common base class. But conceptually, they're all traditional OOP components. (ECS just muddies these waters by introducing overlapping terminology that is NOT equivalent!)
+
+
+
+
+jason_gregory:house_with_garden:  24 minutes ago
+So anyway, to Ryan's point about "grouping components" I was speaking in terms of traditional OOP components, NOT ECS COMPONENTS. That's why it sounded nonsensical. And that's why I really kind of dislike that we're even talking about ECS at all. Its terminology is terrible! ECSSubsystem == job, and ECSComponent == data buffer! (edited) 
+
+
+
+
+jason_gregory:house_with_garden:  22 minutes ago
+... (edited) 
+
+
+
+
+jason_gregory:house_with_garden:  22 minutes ago
+(Step 1: Let's get our terminology straight and clear. Step 2: Start talking about solutions.) :stuck_out_tongue:
+
+
+

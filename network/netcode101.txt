@@ -1,0 +1,49 @@
+Netcode 101:
+
+
+Ping: round trip time:
+Client sends an "ICMP echo request" to a game server.
+which sends a "ICMP echo request" back to client device.
+
+
+Client side, server authoritative:
+client does hit regristraion, server need confirm the hit.
+
+
+What affects your ping to game server:
+1) distance
+2) router path, routing, hops
+
+
+What if server can't finish simulation in 16ms:
+1) rubber banding
+2) failed hit regristration
+3) wrong physics,
+etc
+
+
+Dedicated server:
+Pros: 
+	powerful hardware: 
+	high bandwidth connection
+	no player has an advantage when ping is equal
+	
+Cons:
+	Expensive
+	
+	
+Client as host:
+Pros:
+	little cost
+	Players in remote locations can play together at low latency. (Why?)
+	
+Cons:
+	Host player has advantage since has has 0 ping
+	Host player see IP addresses of all clients
+	Anti-cheating
+	
+PvP:
+
+
+Packet loss:
+
