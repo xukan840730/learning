@@ -1,0 +1,705 @@
+//--------------------------------------------------------------------------------------
+// File: post-processing.fx
+//
+// Copyright (c) Naught Dog Inc. All rights reserved.
+//--------------------------------------------------------------------------------------
+
+struct BonusShaderConst
+{
+	uint		m_mode;
+	int			m_isPhotoFilter;
+	float		m_time;
+	float		m_paramA;
+	float		m_paramB;
+	float		m_paramC;
+};
+
+struct PostProcessingConst
+{
+	float4x4	m_viewToWorld;
+	float4x4	m_screenToAltWorldMat;
+	float4		m_cameraPositionWS;
+	float4		m_sonarParam;
+	float4		m_screenScaleOffset;
+	float4		m_filmicTonemapParameterCmp0;
+	float4		m_filmicTonemapParameterCmp1;
+	float4		m_filmicTonemapParameter0;
+	float4		m_filmicTonemapParameter1;
+	float4		m_filmicTonemapParameter2;
+	float4		m_bloomLendParams;
+	float4		m_preMinScaleBiasExp;
+	float4		m_postMinScaleBiasExp;
+	float4		m_contrastGamma;
+	float4		m_tonemapControlParameter;
+	float4		m_tintColorScaleVector;
+	float4		m_tintColorOffsetVector;
+	float4		m_vignetteParams0;
+	float4		m_vignetteParams1;
+	float4		m_vignetteTint;
+	float4		m_vignetteTintOffset;
+	float4		m_lutParams;
+	float4		m_filmGrainOffsetScale;
+	float4		m_filmGrainIntensity;
+	float4		m_filmGrainIntensity2;
+	float4		m_hdrColorControls;
+	uint		m_postMode;
+	uint		m_flags; 
+	float2		m_depthParams;
+	float2		m_linearDepthParams;
+	float2		m_pixelSize;
+	float2		m_bufferSize;
+	float2		m_displayPixelSize;
+	float2		m_displayBufferSize;
+	float		m_healthParam;
+	float		m_healthParamDesat;
+	float		m_fishEyeDistortionStrength;
+	float		m_fishEyeDistortionZoom;
+	float		m_chromaticAberrationAmount;
+	float		m_movieDissolveBlend;
+	float		m_movieWipeBlend;
+	uint		m_movieWipeDirection;
+	uint		m_chapterTitleMovieWidth;
+	uint		m_chapterTitleMovieHeight;
+	uint		m_chapterTitleMovieOffsetX;
+	uint		m_chapterTitleMovieOffsetY;
+	float		m_highlightsAmount;
+	float		m_listenModePriority;
+	float		m_listenModeFade;
+	float		m_listenModeScale;
+	float		m_listenModeEdgeIntensity;
+	float		m_listenModeInvMaxRadius;
+	float		m_listenModeVisibleRadiusScale;
+	float		m_listenModeVisibleRadiusBias;
+	float		m_listenModeVisibleDistanceScale;
+	float		m_listenModeVisibleDistanceBias;
+	uint		m_listenModeVisibleEnabled;
+	float		m_bonusLutBlend;
+	float		m_lutPreTonemap;
+	uint		m_hdrMode;
+	float		m_hdrLdrBlendPower;
+	float		m_hdrBlendAmount;
+	int			m_hdrSplitCoord;
+	float2		m_movieSizeScale;
+	float		m_weightScale;
+	float		m_threshold;
+	uint		m_isHdrMode;
+	uint		m_usePresortDof;
+	float		m_graduatedFilterDensity;
+	float		m_graduatedFilterFalloff;
+	float		m_graduatedFilterOffset;
+	float		m_graduatedFilterFlip;
+	float		m_graduatedFilterScale;
+	int			m_posScale;
+	int			m_posOffset;
+	int			m_highContrastMode;
+	float		m_backgroundBlurEnabled;
+	float		m_backgroundBlurStartDistance;
+	float		m_backgroundBlurFStop;
+	float		m_pixelFilmRatio;
+	float		m_scopePostProcessBlend;
+	float		m_scopeSSRadius;
+	float2		m_scopeSSCenter;
+	float		m_aspect;
+	float		m_sonarMaxRadius;
+	uint		m_sonarType;
+	float		m_painEffectControl;
+
+	BonusShaderConst m_bonus;
+};
+
+// possible values for m_hdrMode
+#define kLdrOnLdr 0
+#define kLdrOnHdr 1
+#define kHdrOnHdr 2
+#define kLdrHdrBlendOnHdr 3
+#define kHdrSplitTestMode 4
+
+// sonar type enum
+#define kSonarTypeDefault	0x0
+#define kSonarTypeEnemy		0x1
+#define kSonarTypePickup	0x2
+
+struct DofBlurConstants
+{
+	float4		m_linearDepthParams;
+	float4		m_sampleBlurDir[2];
+	float4		m_dofBlurParams;
+	float4		m_dofRangeScaleInfo;
+	float4		m_dofRangeOffsetInfo;
+	float4		m_dofIntensityInfo;
+	float		m_focusPlaneDist;
+	float		m_pixelFilmRatio;
+	float		m_lensfocalLength;
+	float		m_fNumber;
+	float		m_minFNumber;
+	float		m_maxBlurRadius;
+	float2		m_pad;
+};
+
+struct DofWeaponScopeParams
+{
+	float2 m_scopeSSCenter;
+	float m_scopeSSRadius;
+	float m_scopePostProcessBlend;
+	float m_scopeDofCoc;
+};
+
+float2 GetFishEyeDistortion(float2 texCoord, float fishEyeDistortionStrength, float2 pixelSize)
+{
+	return sqrt(length(texCoord - 0.5)) * (texCoord - 0.5) * fishEyeDistortionStrength * float2(pixelSize.x/pixelSize.y, 1);
+}
+
+float2 GetDistortionOffset(float2 texCoord, float fishEyeDistortionStrength, float fishEyeDistortionZoom)
+{
+	float2 result = texCoord;
+
+	float2 centeredUv = result - float2(0.5);
+	centeredUv.y /= 1920.0 / 1080.0;	// Correct so that the distortion is always circular, not locked to screen oval
+	float2 fishEyeDistortion = dot(centeredUv, centeredUv) * centeredUv * fishEyeDistortionStrength;
+
+	result = result + fishEyeDistortion;
+	result = (result - float2(0.5)) * fishEyeDistortionZoom + float2(0.5);
+
+	return result;
+}
+
+float3 ApplyExposure(ByteAddressBuffer exposureCtrlTex, float4 tonemapControlParameter, float3 inColor)
+{
+	return max(inColor * asfloat(exposureCtrlTex.Load(0)) + tonemapControlParameter.zzz, 0);
+}
+
+float3 ApplyTonemappingOld(PostProcessingConst* consts, float2 uv, float3 inColor )
+{
+	float3 x = (float3)inColor;
+	float3 oldX = x;
+
+//	let p0	= An - E/F, 
+//	let p1	= (C - An) * B / k,
+//	let p2  = (E - An * F) * D /k^2,
+//  let p3	= B/k
+//	let p4  = D*F/k^2
+
+//	we can get result = p0 + (p1 * x + p2) / (x^2 + p3 * x + p4).
+
+	float p0 = consts->m_filmicTonemapParameterCmp1.x;
+	float p1 = consts->m_filmicTonemapParameterCmp1.y;
+	float p2 = consts->m_filmicTonemapParameterCmp1.z;
+	float p3 = consts->m_filmicTonemapParameterCmp0.x;
+	float p4 = consts->m_filmicTonemapParameterCmp0.y;
+
+	x = p0 + (p1 * x + p2) / ((x + p3) * x + p4);
+
+	if( /*uv.x < consts->m_filmicTonemapParameter0.x*/false )	//SDK 1.7 shader compiler produces wrong result with this block enabled. Temporarily disable it
+	{
+		x.xy = uv;
+		x = oldX;
+	}
+	
+#if 0
+	// also, do contrast and gamma
+	float fGamma = consts->m_contrastGamma.x;
+
+	// apply gamma
+	x = pow( saturate(x), fGamma );
+
+	// apply black point and white point...y is offset, z is scale.	
+	x = consts->m_contrastGamma.y + (x*consts->m_contrastGamma.z);
+#endif
+	
+	return saturate(x);
+}
+
+float4 GetSmoothLayer(Texture2D iptTxBloomBuffer, SamplerState samplerLinear, float2 uv, float3 bufferParams, int layerIdx, bool allChannels = false)
+{
+	float2 intUv = uv * bufferParams.xy + float2(-0.5f, -0.5f);
+	float2 fracUv = frac(intUv);
+	float2 iUv = intUv - fracUv;
+
+	float4 xcubic = cubic(fracUv.x);
+	float4 ycubic = cubic(fracUv.y);
+
+	float4 c = float4(iUv.x - 0.5, iUv.x + 1.5, iUv.y - 0.5, iUv.y + 1.5);
+    float4 s = float4(xcubic.x + xcubic.y, xcubic.z + xcubic.w, ycubic.x + ycubic.y, ycubic.z + ycubic.w);
+    float4 offset = c + float4(xcubic.y, xcubic.w, ycubic.y, ycubic.w) / s;
+
+	float2 pixelSize = 1.0f / bufferParams.xy;
+
+    float4 sample0 = iptTxBloomBuffer.SampleLevel(samplerLinear, float2(offset.x, offset.z) * pixelSize, layerIdx);
+    float4 sample1 = iptTxBloomBuffer.SampleLevel(samplerLinear, float2(offset.y, offset.z) * pixelSize, layerIdx);
+    float4 sample2 = iptTxBloomBuffer.SampleLevel(samplerLinear, float2(offset.x, offset.w) * pixelSize, layerIdx);
+    float4 sample3 = iptTxBloomBuffer.SampleLevel(samplerLinear, float2(offset.y, offset.w) * pixelSize, layerIdx);
+
+    float sx = s.x / (s.x + s.y);
+    float sy = s.z / (s.z + s.w);
+
+    float4 finalColor = lerp(lerp(sample3, sample2, sx), lerp(sample1, sample0, sx), sy); 
+
+	return allChannels ? (finalColor * bufferParams.z) : float4(finalColor.xyz * bufferParams.z, 0.0f);
+}
+
+float3 ApplySaturate( PostProcessingConst* consts, float3 inColor )
+{
+	// 	half saturateRatio = (round(stencilBits / 128.0) == 1.0) ? g_tintColorScaleVector.w : g_tonemapControlParameter.w;
+	// 	OUT.color.rgb = lerp(OUT.color.rgb, dot(OUT.color.rgb, s_luminanceVector), saturateRatio); 
+
+	// [TBD] - use stencil
+
+	// saturate color.
+	inColor = lerp(inColor, dot(inColor, s_luminanceVector).xxx, consts->m_tonemapControlParameter.w); 
+	return inColor;
+}
+
+float3 ApplyTint( PostProcessingConst* consts, float3 inColor )
+{
+	// tint color.
+	float3 tintedColor = inColor * consts->m_tintColorScaleVector.xyz + consts->m_tintColorOffsetVector.xyz;
+	return tintedColor;
+}
+
+// ============================================================================
+
+float3 ApplyFilmGrain( Texture2D<float3> filmGrainTex, SamplerState samplerPoint, float4 filmGrainIntensity, float4 filmGrainIntensity2, float4 filmGrainOffsetScale, float2 uv, float3 inColor, bool applyFade)
+{
+	if (filmGrainIntensity.x == 0)
+		return inColor;
+
+	if(filmGrainIntensity2.y > 0)	// Gradient debug
+		inColor = uv.x;
+
+	float brights = filmGrainIntensity.z;
+	float darks = filmGrainIntensity.y;
+	float mids = filmGrainIntensity2.x;
+
+	float3 filmGrain = filmGrainTex.SampleLevel( samplerPoint, uv * filmGrainOffsetScale.xy + filmGrainOffsetScale.zw, 0).xyz;
+
+	float3 intensity = filmGrainIntensity.x;
+
+	float3 blendColor = saturate(inColor);
+
+	// Control for affecting brights, darks, mids
+	intensity *= lerp(float3(1,1,1), brights.xxx, blendColor);
+	intensity *= lerp(darks.xxx, float3(1,1,1), blendColor);
+	intensity *= lerp(mids.xxx, float3(1,1,1), 1.0 - (blendColor * (1.0 - blendColor)) * 4.0);
+	
+	// Master intensity control, fade out grain for whites and blacks
+	float3 fade = saturate(inColor * (1.0 - inColor) * 4.0); 
+	fade = sqrt(fade) * 0.3;	// Magic number for compatibility with old render settings
+
+	fade = applyFade ? fade : 1.0;
+
+	filmGrain = (filmGrain - 0.5) * intensity * fade;
+
+	float3 outColor = inColor + filmGrain;
+	return outColor;
+}
+
+float3 ApplyLUT( Texture3D lutTex, SamplerState samplerLinear, PostProcessingConst* consts, float3 inColor )
+{
+	// PS3 version is fixed
+	//half3 lutIndex = finalColor*(31.0f/32.0f)+(0.5f/32.0f);
+
+	float3 lutIndex = saturate(inColor) * consts->m_lutParams.y + consts->m_lutParams.z;
+	inColor = lutTex.SampleLevel( samplerLinear, lutIndex, 0).xyz;
+
+	return inColor;
+}
+
+float3 ApplyHighlight( Texture2D highLightTex, Texture2D maskTex, SamplerState samplerLinear, float2 uv, float3 inColor )
+{
+	float3 highlights = highLightTex.SampleLevel(samplerLinear, uv, 0).rgb;		
+	float2 masks = maskTex.SampleLevel(samplerLinear, uv, 0).rg;		
+	float interiorMask  = smoothstep(0.5, 0.3, masks.r);
+	float characterMask = smoothstep(0.2, 0.05, masks.g);		
+
+	inColor += highlights * interiorMask * characterMask * 2.0;
+
+	return inColor;
+}
+
+float3 ApplyBlend( float3 inColor )
+{
+	// [TBD]
+	return inColor;
+}
+
+float CalculateVignette(PostProcessingConst consts, float2 uv)
+{
+	float softness	= consts.m_vignetteParams0.y;
+	float2 stretch	= consts.m_vignetteParams0.zw;
+	
+	float2 vDistToCenter = (uv * consts.m_vignetteParams1.xy + consts.m_vignetteParams1.zw) * stretch;
+	float distToCenter = sqrt(dot(vDistToCenter, vDistToCenter));
+	float vignette = saturate((1.0 - distToCenter * 2.0) * softness);
+	vignette = smoothstep(0, 1, vignette);
+
+	return vignette;
+}
+
+float4 ApplyVignette(PostProcessingConst consts, float2 uv, float3 inColor)
+{
+	float3 tint		= consts.m_vignetteTint.rgb;
+	float vignette	= CalculateVignette(consts, uv);
+
+	float3 colorVignette = lerp(tint, float3(1,1,1), vignette);
+	
+	return float4(inColor * colorVignette, vignette); 
+}
+
+float3 ApplyVignetteOffset(PostProcessingConst consts, float2 uv, float3 inColor)
+{
+	float3 offset	= consts.m_vignetteTintOffset.rgb;
+	offset			*= float3(1.0, 1.0, 1.0) - inColor;
+	float vignette	= CalculateVignette(consts, uv);
+	
+	return inColor + offset * (1.0 - vignette); 
+}
+
+float3 BlendMovie(Texture2D<float3> movieTex, float movieBlend, int2 pos, float3 inColor)
+{
+	float3 movieColor = movieTex[pos];
+	return lerp(inColor, movieColor, movieBlend);
+}
+
+float3 BlendMovieScale(Texture2D<float3> movieTex, SamplerState	linearClampSampler, float movieBlend, float2 uv, float3 inColor)
+{
+	float3 movieColor = movieTex.SampleLevel(linearClampSampler, uv, 0);
+	return lerp(inColor, movieColor, movieBlend);
+}
+
+float3 WipeMovie(Texture2D<float3> movieTex, float movieBlend, int2 pos, float2 bufferSize, float3 inColor, uint wipeDirection)
+{
+	float3 movieColor = movieTex[pos];
+
+	float featherRange = 0.1f;
+	float halfFeatherRange = featherRange / 2.f;
+
+	float startProgress = 0.f - halfFeatherRange;
+	float endProgress = 1.f + halfFeatherRange;
+
+	float blendValue = (1.f - movieBlend);
+	const float actualProgress = startProgress + (endProgress - startProgress) * blendValue;
+
+	const float posNormX = (wipeDirection == 0) ? (pos.x / bufferSize.x) : ((bufferSize.x - pos.x) / bufferSize.x);
+
+	const float leftSide = actualProgress - halfFeatherRange;
+	const float rightSide = actualProgress + halfFeatherRange;
+
+	if (posNormX < leftSide)
+	{
+		return inColor;
+	}
+	else if (posNormX > rightSide)
+	{
+		return movieColor;
+	}
+	else
+	{
+		float t = (posNormX - leftSide) / (rightSide - leftSide);
+		return lerp(inColor, movieColor, t);
+	}
+}
+
+float3 WipeMovieScale(Texture2D<float3> movieTex, SamplerState linearClampSampler, float movieBlend, float2 uv, float2 movieScale, float3 inColor, uint wipeDirection)
+{
+	float3 movieColor = movieTex.SampleLevel(linearClampSampler, uv * movieScale, 0);
+
+	float featherRange = 0.1f;
+	float halfFeatherRange = featherRange / 2.f;
+
+	float startProgress = 0.f - halfFeatherRange;
+	float endProgress = 1.f + halfFeatherRange;
+
+	float blendValue = (1.f - movieBlend);
+	const float actualProgress = startProgress + (endProgress - startProgress) * blendValue;
+
+	const float posNormX = (wipeDirection == 0) ? uv.x : (1.0f - uv.x);
+
+	const float leftSide = actualProgress - halfFeatherRange;
+	const float rightSide = actualProgress + halfFeatherRange;
+
+	if (posNormX < leftSide)
+	{
+		return inColor;
+	}
+	else if (posNormX > rightSide)
+	{
+		return movieColor;
+	}
+	else
+	{
+		float t = (posNormX - leftSide) / (rightSide - leftSide);
+		return lerp(inColor, movieColor, t);
+	}
+}
+
+float3 BlendChapterTitle(Texture2D<float3> movieTex, float3 inColor, int2 pos, int2 movieSize, int offsetX, int offsetY)
+{
+	int2 offset = int2(offsetX, offsetY);	
+
+	if (pos.x >= offset.x && pos.x < offset.x + movieSize.x && 
+		pos.y >= offset.y && pos.y < offset.y + movieSize.y)
+	{
+		int2 moviePos = pos - offset;
+		float3 movieColor = movieTex[moviePos];
+
+		int2 alphaPos = moviePos;
+		alphaPos.y += movieSize.y;
+
+		float3 fakeAlphaC = movieTex[alphaPos];
+		float tt = (fakeAlphaC.r + fakeAlphaC.g + fakeAlphaC.b) / 3.f;
+	
+		return lerp(inColor, movieColor, tt);
+	}
+	else
+	{
+		return inColor;
+	}
+}
+
+float3 BlendChapterTitleScale(Texture2D<float3> movieTex, SamplerState linearClampSampler, float2 sizeScale, float3 inColor, int2 pos, int2 movieSize, int offsetX, int offsetY)
+{
+	int2 offset = int2(int2(offsetX, offsetY) / sizeScale);
+	int2 movieSizeScale = int2(movieSize / sizeScale);
+
+	uint2 texSize;
+	movieTex.GetDimensions(texSize.x, texSize.y);
+
+	if (pos.x >= offset.x && pos.x < offset.x + movieSizeScale.x && 
+		pos.y >= offset.y && pos.y < offset.y + movieSizeScale.y)
+	{
+		float2 moviePos = (pos - offset) * sizeScale;
+		float3 movieColor = movieTex.SampleLevel(linearClampSampler, moviePos / texSize, 0);
+
+		float2 alphaPos = moviePos;
+		alphaPos.y += movieSize.y;
+
+		float3 fakeAlphaC = movieTex.SampleLevel(linearClampSampler, alphaPos / texSize, 0);
+		float tt = (fakeAlphaC.r + fakeAlphaC.g + fakeAlphaC.b) / 3.f;
+	
+		return lerp(inColor, movieColor, tt);
+	}
+	else
+	{
+		return inColor;
+	}
+}
+
+float GetDepthVS(float depthZ, float2 depthParams)
+{
+	return min(depthZ == 1.0f ? 65535.0f : (depthParams.y / (depthZ - depthParams.x)), 50);
+}
+
+float3 ApplyHealthEffectDesat(float healthParamDesat, const float3 inColor)
+{
+	float3 inColorGamma = inColor * inColor;	// linear->gamma 2.0
+
+	float desatColor = Luminance(inColorGamma);
+
+	float3 color = lerp(inColorGamma, desatColor, healthParamDesat);
+
+	float3 finalColor = sqrt(color);	// gamma 2.0->linear
+
+	return finalColor;
+}
+
+float3 ApplyHealthEffect(float healthParam, float healthParamDesat, const float3 inColor)
+{
+	float3 inColorGamma = inColor * inColor;	// linear->gamma 2.0
+
+	float desatColor = Luminance(inColorGamma);
+
+	const float bleachBypassIntensity = 0.5;
+	float3 color = OverlayFloat3(inColorGamma, lerp(0.5, saturate(desatColor), bleachBypassIntensity));
+
+	float3 finalColor = lerp(inColorGamma, color, healthParam);
+
+	finalColor = sqrt(finalColor);	// gamma 2.0->linear
+
+	return finalColor;
+}
+
+float3 ApplyPainEffect(float painEffectControl, const float3 inColor)
+{
+	float3 finalColor = inColor;
+	finalColor = finalColor * finalColor * finalColor * 4.0;	// color at 0.5 will be preserved after the transform
+	finalColor *= 1.5;		// brighten overall
+	finalColor = lerp(inColor, finalColor, painEffectControl);
+	return saturate(finalColor);
+}
+
+float3 ApplyContrastGamma(const float3 inColor, const float4 contrastGamma)
+{
+	float3 outColor = pow( saturate(inColor), contrastGamma.x );
+	outColor = saturate(contrastGamma.y + (outColor*contrastGamma.z));	// Black point and white point
+	return outColor;
+}
+
+float3 ApplyTonemapping( float4 filmicTonemapParameterCmp0, float4 filmicTonemapParameterCmp1, float useFilmicCurve, float2 uv, float3 inColor )
+{
+	if( useFilmicCurve == 0 )
+		return inColor;
+
+	float3 x = inColor;
+
+//	let p0	= An - E/F, 
+//	let p1	= (C - An) * B / k,
+//	let p2  = (E - An * F) * D /k^2,
+//  let p3	= B/k
+//	let p4  = D*F/k^2
+
+//	we can get result = p0 + (p1 * x + p2) / (x^2 + p3 * x + p4).
+
+	float p0 = filmicTonemapParameterCmp1.x;
+	float p1 = filmicTonemapParameterCmp1.y;
+	float p2 = filmicTonemapParameterCmp1.z;
+	float p3 = filmicTonemapParameterCmp0.x;
+	float p4 = filmicTonemapParameterCmp0.y;
+
+	x = p0 + (p1 * x + p2) / ((x + p3) * x + p4);
+
+	return x;
+}
+
+float GetLinearDepth(float z, float2 params)
+{
+	return params.y / (z - params.x);
+}
+
+float3 ApplyHighlights(float2 uv, SamplerState linearSampler, Texture2D<float3> highlightsColorTex, Texture2D<float> highlightsDepthTex, float2 depthParams, float amount, const float3 inColor)
+{
+	float3 finalColor = inColor;
+
+	float highlightsDepthZ = highlightsDepthTex.SampleLevel(linearSampler, uv, 0);
+
+	const float2 highlightOffsets[8] = { normalize(float2(-1, -1)), normalize(float2(-1, 1)), normalize(float2(1, -1)),
+		                                 normalize(float2(1, 1)), float2(1, 0), float2(-1, 0), float2(0, 1),
+		                                 float2(0, -1) };
+
+	if (highlightsDepthZ != 1.0)
+	{
+		float3 highlightsColor	= highlightsColorTex.SampleLevel(linearSampler, uv, 0);
+		float highlightsDepth	= GetLinearDepth(highlightsDepthZ, depthParams);
+
+		float2 sampleDist	= (8.0 / float2(1920, 1080)) / sqrt(highlightsDepth);	// Intentionally hardcoded resolution, should be in UV space not pixel space
+		float maxDepth		= 0.1;
+
+		float delta = 0;
+		for (uint i = 0; i < 8; ++i)
+		{
+			float2 samplePos		= saturate(uv + highlightOffsets[i] * sampleDist);
+			float highlightsSample	= GetLinearDepth(highlightsDepthTex.SampleLevel(linearSampler, samplePos, 0), depthParams);
+			delta					= max(highlightsSample - highlightsDepth, delta);
+		}
+
+		delta = clamp(delta, 0, maxDepth);
+		delta *= delta;
+
+		finalColor += highlightsColor * delta * amount;
+	}
+
+	return finalColor;
+}
+
+float ComputeEdgeOutline(float2 uv, SamplerState linearSampler, Texture2D<float> depth, float2 depthParams, float linearZ)
+{
+	const float2 offsets[8] =
+	{
+		normalize(float2(-1.0f, -1.0f)),
+		normalize(float2(-1.0f,  1.0f)),
+		normalize(float2( 1.0f, -1.0f)),
+		normalize(float2( 1.0f,  1.0f)),
+		float2( 1.0f,  0.0f),
+		float2(-1.0f,  0.0f),
+		float2( 0.0f,  1.0f),
+		float2( 0.0f, -1.0f),
+	};
+
+	float2 radius = (8.0f / float2(1920.0f, 1080.0f)) / sqrt(linearZ); // Intentionally hardcoded resolution.
+
+	float edge = 0.0f;
+	for (uint i = 0; i < 8; i++)
+	{
+		float2 pos = saturate(uv + offsets[i] * radius);
+		float sampleLinearZ = GetLinearDepth(depth.SampleLevel(linearSampler, pos, 0), depthParams);
+		edge = max(sampleLinearZ - linearZ, edge);
+	}
+
+	return edge;
+}
+
+template<typename Func>
+float3 GetListenModeHighlight(float2 uv, int2 dispatchId, Texture2D<float4> visibleTex, Texture2D<float4> hiddenTex, Texture2D<float> depthTex,
+							  SamplerState linearSampler, PostProcessingConst constants, Func hiddenTexExtract)
+{
+	float4 hidden = hiddenTex.SampleLevel(linearSampler, uv, 0);
+	float hiddenIntensity = constants.m_listenModeFade * hiddenTexExtract(hidden) * constants.m_listenModeScale;
+
+	if (!constants.m_listenModeVisibleEnabled)
+	{
+		return hiddenIntensity;
+	}
+
+	float distFromCenter = length(dispatchId - 0.5f * constants.m_bufferSize) * constants.m_listenModeInvMaxRadius;
+	float radiusIntensity = 1.0f - saturate(distFromCenter * constants.m_listenModeVisibleRadiusScale + constants.m_listenModeVisibleRadiusBias);
+
+	float4 visible = visibleTex.SampleLevel(linearSampler, uv, 0);
+	float visibleIntensity = max(constants.m_listenModeFade * radiusIntensity, visible.a) * constants.m_listenModeEdgeIntensity;
+
+	float depthZ = depthTex.SampleLevel(linearSampler, uv, 0);
+	if (depthZ != 1.0)
+	{
+		float linearZ = GetLinearDepth(depthZ, constants.m_depthParams);
+		float edge = ComputeEdgeOutline(uv, linearSampler, depthTex, constants.m_depthParams, linearZ);
+		edge = min(edge, 0.1f);
+
+		float distanceIntensity = 1.0f - saturate(linearZ * constants.m_listenModeVisibleDistanceScale + constants.m_listenModeVisibleDistanceBias);
+
+		visibleIntensity *= edge * edge;
+		visibleIntensity *= max(distanceIntensity, visible.a);
+	}
+
+	return hiddenIntensity + visibleIntensity * visible.rgb;
+}
+
+float3 ApplyListenModeHighlight(float2 uv, int2 dispatchId, Texture2D<float4> visibleTex, Texture2D<float4> hiddenTex, Texture2D<float> depthTex,
+								SamplerState linearSampler, PostProcessingConst constants, float3 inColor)
+{
+	auto hiddenTexExtract = [&](in const float4 value) -> float
+	{
+		return value.a;
+	};
+
+	return inColor + GetListenModeHighlight<decltype(hiddenTexExtract)>(uv, dispatchId, visibleTex, hiddenTex, depthTex, linearSampler, constants, hiddenTexExtract);
+}
+
+float2 GetFogDensityIntegralS(float pixelY, float cameraY, float depthVs, float distanceGamma,
+							  float distanceStart, float fogDensity, float maxDensity, 
+							  float heightStart, float heightRange, float cameraHeightExp,
+							  float distanceEnd)
+{
+	
+	if (fogDensity == 0)
+		return 0;
+		
+	float offsetDepth = clamp(depthVs - distanceStart, 0, distanceEnd - distanceStart);
+
+	// Avoid floating point issues by making sure integral always has a range
+	float heightDelta = pixelY - cameraY; 
+	heightDelta = abs(heightDelta) < 0.01 ? 0.01 : heightDelta;
+	pixelY = cameraY + heightDelta;	
+	
+	// Line Integral of the density function exp2((heightStart-pixelY)*heightRange) on the domain (pixelY, cameraY)
+	float rayDensity = (exp2(pixelY * heightRange) - cameraHeightExp) / (heightRange * heightDelta);
+	
+	// Artistic control
+	float densityBias = 8.0 * fogDensity;
+	float modifiedDepth = pow(offsetDepth * densityBias, distanceGamma) / densityBias;	
+	
+	float scaledDensity = rayDensity * modifiedDepth * fogDensity;
+	
+	// Final density range
+	float density = 1.0-saturate(exp2(-scaledDensity));
+	density = clamp(density, 0, maxDensity);
+
+	return float2(density, scaledDensity);
+}

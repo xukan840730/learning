@@ -1,0 +1,659 @@
+#ifndef GLOBAL_FUNCS_FXI
+#define GLOBAL_FUNCS_FXI
+
+#include "color-util.fxi"
+#include "math-util.fxi"
+
+#define UNROLL [unroll]
+
+#if IS_NEO_MODE
+	static const bool g_isNeoMode = true;
+	static const uint g_numDBs = 16; 
+#else
+	static const bool g_isNeoMode = false;
+	static const uint g_numDBs = 8; 
+#endif
+
+int2 PackHalf4(float4 iptColor)
+{
+	int2 retColor;
+
+	retColor.x = f32tof16(iptColor.x)|(f32tof16(iptColor.y) << 16);
+	retColor.y = f32tof16(iptColor.z)|(f32tof16(iptColor.w) << 16);
+
+	return retColor;
+}
+
+float4 UnpackHalf4(int2 iptValue)
+{
+	float4 retColor;
+
+	retColor.r = f16tof32(asuint(iptValue.x) & 0xffff);
+	retColor.g = f16tof32((asuint(iptValue.x) >> 16) & 0xffff);
+	retColor.b = f16tof32(asuint(iptValue.y) & 0xffff);
+	retColor.a = f16tof32((asuint(iptValue.y) >> 16) & 0xffff);
+
+	return retColor;
+}
+
+float4 UnpackHalf4(uint2 iptValue)
+{
+	return UnpackHalf4(int2(asint(iptValue.x), asint(iptValue.y)));
+}
+
+int PackHalf2(float2 iptColor)
+{
+	return f32tof16(iptColor.x)|(f32tof16(iptColor.y) << 16);
+}
+
+float2 UnpackHalf2(int iptValue)
+{
+	float2 retColor;
+
+	retColor.r = f16tof32(asuint(iptValue) & 0xffff);
+	retColor.g = f16tof32((asuint(iptValue) >> 16) & 0xffff);
+
+	return retColor;
+}
+
+uint PackRg11B10(float3 iptColor)
+{
+	// Convert to R11G11B10
+	float3 clampedColor = clamp(iptColor, 0, 1);
+	uint iR = (uint)(clampedColor.r * 2047.0f + 0.5f);
+	uint iG = (uint)(clampedColor.g * 2047.0f + 0.5f);
+	uint iB = (uint)(clampedColor.b * 1023.0f + 0.5f);
+
+	// Pack into UINT32
+	return (iR << 21) | (iG << 10) | iB;
+}
+
+float3 UnpackRg11B10(uint iptValue)
+{
+	// Unpack from UINT32
+	float iR = (float)(iptValue >> 21);
+	float iG = (float)((iptValue >> 10) & 0x7ff);
+	float iB = (float)(iptValue & 0x0003ff);
+
+	// Convert R11G11B10 to float3
+	return float3(iR/2047.0f, iG/2047.0f, iB/1023.0f);
+}
+
+float4 cubic(float x)
+{
+    float x2 = x * x;
+    float x3 = x2 * x;
+    float4 w;
+    w.x =   -x3 + 3*x2 - 3*x + 1;
+    w.y =  3*x3 - 6*x2       + 4;
+    w.z = -3*x3 + 3*x2 + 3*x + 1;
+    w.w =  x3;
+    return w / 6.f;
+}
+
+uint LoadIntFromByte(ByteAddressBuffer iptBuffer, in uint index)
+{
+	int addr   = index / 2; // index of U32
+	//int offset = index % 4;
+	uint uintData = iptBuffer.Load(addr * 4);
+/*
+	if (offset == 0)
+		uintData = (uintData & 0x000000FF); 
+	if (offset == 1)
+		uintData = (uintData & 0x0000FF00) >> 8;
+	if (offset == 2)
+		uintData = (uintData & 0x00FF0000)>> 16;
+	if (offset == 3)
+		uintData = (uintData & 0xFF000000) >> 24;
+*/
+	//int shift = offset * 8;
+	//int mask = 0xFF << shift;
+	//uintData = (uintData & mask) >> shift;
+	uintData = (uintData & 0xFF);
+
+	return  uintData;
+}
+
+uint LoadU16(ByteAddressBuffer iptBuffer, in uint index)
+{
+	int addr = (index / 2) * 4; 
+	int offs = index & 1;
+	uint uintData = iptBuffer.Load(addr);
+	uintData = (offs) ? (uintData & 0xFFFF0000) >> 16 : (uintData & 0xFFFF);
+	return uintData;
+}
+
+// addressing is done in units of 4 bytes
+uint LoadAsU8(ByteAddressBuffer iptBuffer, in uint address)
+{
+	int addr = address & ~3;
+	int offs = address & 3;  // 0, 1, 2 or 3
+	uint uintData = iptBuffer.Load(addr);
+	return (uintData >> (8 * offs)) & 0xff;
+}
+
+// Note: must be aligned minimum to 2 bytes
+uint LoadAsU16(ByteAddressBuffer iptBuffer, in uint address)
+{
+	int addr = address & ~3;
+	int offs = address & 3;  // 0 or 2
+	uint uintData = iptBuffer.Load(addr);
+	return (uintData >> (8 * offs)) & 0xFFFF;
+}
+
+float LoadAsFloat(ByteAddressBuffer iptBuffer, in uint address)
+{
+	uint uintData = iptBuffer.Load(address);
+	return asfloat(uintData);
+}
+
+float2 LoadAsFloat2(ByteAddressBuffer iptBuffer, in uint address)
+{
+	uint2 uintData = iptBuffer.Load2(address);
+	return float2(asfloat(uintData.x), asfloat(uintData.y));
+}
+
+float3 LoadAsFloat3(ByteAddressBuffer iptBuffer, in uint address)
+{
+	uint3 uintData = iptBuffer.Load3(address);
+	return float3(asfloat(uintData.x), asfloat(uintData.y), asfloat(uintData.z));
+}
+
+float4 LoadAsFloat4(ByteAddressBuffer iptBuffer, in uint address)
+{
+	uint4 uintData = iptBuffer.Load4(address);
+	return float4(asfloat(uintData.x), asfloat(uintData.y), asfloat(uintData.z), asfloat(uintData.w));
+}
+
+float LoadAsFloat(RWByteAddressBuffer iptBuffer, in uint address)
+{
+	uint uintData = iptBuffer.Load(address);
+	return asfloat(uintData);
+}
+
+float2 LoadAsFloat2(RWByteAddressBuffer iptBuffer, in uint address)
+{
+	uint2 uintData = iptBuffer.Load2(address);
+	return float2(asfloat(uintData.x), asfloat(uintData.y));
+}
+
+float3 LoadAsFloat3(RWByteAddressBuffer iptBuffer, in uint address)
+{
+	uint3 uintData = iptBuffer.Load3(address);
+	return float3(asfloat(uintData.x), asfloat(uintData.y), asfloat(uintData.z));
+}
+
+float4 LoadAsFloat4(RWByteAddressBuffer iptBuffer, in uint address)
+{
+	uint4 uintData = iptBuffer.Load4(address);
+	return float4(asfloat(uintData.x), asfloat(uintData.y), asfloat(uintData.z), asfloat(uintData.w));
+}
+
+void StoreAsUInt(RWByteAddressBuffer optBuffer, in uint data, in uint address)
+{
+	optBuffer.Store(address, data);
+}
+
+void StoreAsFloat(RWByteAddressBuffer optBuffer, in float data, in uint address)
+{
+	uint optData= asuint(data);
+	optBuffer.Store(address, optData);
+}
+
+void StoreAsFloat2(RWByteAddressBuffer optBuffer, in float2 data, in uint address)
+{
+	uint2 optData= uint2(asuint(data.x), asuint(data.y));
+	optBuffer.Store2(address, optData);
+}
+
+void StoreAsFloat3(RWByteAddressBuffer optBuffer, in float3 data, in uint address)
+{
+	uint3 optData= uint3(asuint(data.x), asuint(data.y), asuint(data.z));
+	optBuffer.Store3(address, optData);
+}
+
+void StoreAsFloat4(RWByteAddressBuffer optBuffer, in float4 data, in uint address)
+{
+	uint4 optData= uint4(asuint(data.x), asuint(data.y), asuint(data.z), asuint(data.w));
+	optBuffer.Store4(address, optData);
+}
+
+float SlowPow(float x, float exponent)
+{
+	float powBias = 1065353216.0f;
+	float tempX = (float(asuint(x)) - powBias) * exponent + powBias;
+	return asfloat(uint(tempX));
+}
+
+float3 MapColorRange (uniform float3 aColorIn, uniform float4 aMinScaleBiasExp)
+{
+	float3 colorOut;
+
+	float3 tempColor = (aColorIn.rgb * aMinScaleBiasExp.y) + aMinScaleBiasExp.z;
+	colorOut = pow (abs(tempColor), aMinScaleBiasExp.w);
+/*	colorOut = float3(SlowPow(tempColor.x, aMinScaleBiasExp.w), 
+					  SlowPow(tempColor.y, aMinScaleBiasExp.w),
+					  SlowPow(tempColor.z, aMinScaleBiasExp.w));*/
+	return colorOut;
+}
+
+
+static const float cFactor = 3.0f;
+static const float cMinValue = exp(1/257.0f * cFactor);
+static const float cMaxValue = exp(cFactor);
+float CalculateSampleDistribute(float x)
+{
+	return (exp((x * 256.0f/257.0f + 1/257.0f) * cFactor) - cMinValue) / (cMaxValue - cMinValue);
+}
+
+float4 CalculateSampleDistribute4(float4 x)
+{
+	return (exp((x * 256.0f/257.0f + 1/257.0f) * cFactor) - cMinValue) / (cMaxValue - cMinValue);
+}
+
+float ReverseSampleDistribute(float x)
+{
+	return (log(x * (cMaxValue - cMinValue) + cMinValue) / cFactor - 1/257.0f) * 257.0f / 256.0f;
+}
+
+float GetCocRadius(float N, float distance, float focusDist, float f)
+{
+	return (distance - focusDist) / distance * f * f / (N * (focusDist - f));
+}
+
+float3 MaReflect (float3 aInVector, float3 aBaseVector)
+{
+	float3 vReflection;
+	float iDotN = dot (aInVector.xyz, aBaseVector.xyz);
+	vReflection.xyz = (2 * iDotN * aBaseVector.xyz) - aInVector.xyz;
+	return -vReflection.xyz;
+}
+
+float2 GetFogSphericalCoords(float3 pixelDirWS, float angleOffset)
+{
+	float2 viewDirXZ = normalize(pixelDirWS.xz);
+	float3 viewDirXYZ = pixelDirWS;
+
+	// Cheap angle calculation
+	float angleY = 1.0 - ACosApprox(viewDirXYZ.y)/kPi;
+	float angleX = ACosApprox(viewDirXZ.x) / (2.0 * kPi);
+
+	if (viewDirXZ.y < 0)
+		angleX = 1.0 - angleX;	
+
+	angleX += angleOffset;
+
+	if (angleX > 1.0f)
+		angleX -= 1.0f;	
+	
+	return float2(angleX, angleY);
+}
+
+// Encode a normal into a uint32
+uint Vec3ToX11Y11Z10n( float3 v )
+{
+    int x = int(max(min(((float) v.x*2047.f-1.f)*0.5f, 1023.f), -1024.f));
+    int y = int(max(min(((float) v.y*2047.f-1.f)*0.5f, 1023.f), -1024.f));
+    int z = int(max(min(((float) v.z*1023.f-1.f)*0.5f, 511.f), -512.f));
+
+    uint val = (x & 0x7ff) | ((y & 0x7ff) << 11)| ((z & 0x3ff) << 22);
+
+    return val;
+}
+
+float3 X11Y11Z10ToVec3( uint val)
+{
+	uint x1 = (val & 0x7ff) << 21;
+	uint x2 = (x1 >> 21);
+	//	x = float(x2) / 1024.0;
+
+	uint y1 = (val & (0x7ff << 11)) << 10;
+	uint y2 = (y1 >> 21);
+	//	y = float(y2) / 1024.0;
+
+	uint z1 = (val & (0x7ff));
+	uint z2 = (z1 >> 21);
+	//	z = float(z2) / 512.0;
+	
+	return float3(float(x2),float(y2),float(z2)) / float3(1024.0, 1024.0, 512.0);
+}
+
+//X16Y16ToVec3
+float3 X16Y16ToVec3( uint val)
+{
+	int x1 = (val & 0xffff) << 16;
+	int x2 = (x1 >> 16);
+	float x = float(x2) / 32768.f;
+
+	int z1 = (val & (0xffff << 16));
+	int z2 = (z1 >> 16);
+	float z = float(z2) / 32768.f;
+	float y = sqrt ( 1.f - (x*x + z*z));
+	return float3(x,y,z);
+}
+
+uint Vec3ToX16Y16n( float3 v )
+{
+    int x = int(max(min(((float)v.x*65535.f-1.f)*0.5f, 32767.f), -32768.f));
+    int z = int(max(min(((float)v.z*65535.f-1.f)*0.5f, 32767.f), -32768.f));
+
+    uint val = (x & 0xFFFF) | ( (z & 0xFFFF) << 16);
+    return val;
+}
+
+// Alternative to smoothstep
+// return 0 at t < a, 1 at t >b
+float linearstep(float a, float b, float t)
+{
+	return min(1.0, max(0.0, (t-a)/(b-a)));
+	//return saturate(t * (1.0f / (b-a)) + (-a  / (b - a)));
+}
+
+float2 linearstep(float2 a, float2 b, float2 t)
+{
+	return min(1.0, max(0.0, (t-a)/(b-a)));
+	//return saturate(t * (1.0f / (b-a)) + (-a  / (b - a)));
+}
+
+float3 linearstep(float3 a, float3 b, float3 t)
+{
+	return min(1.0, max(0.0, (t-a)/(b-a)));
+	//return saturate(t * (1.0f / (b-a)) + (-a  / (b - a)));
+}
+
+float4 linearstep(float4 a, float4 b, float4 t)
+{
+	return min(1.0, max(0.0, (t-a)/(b-a)));
+	//return saturate(t * (1.0f / (b-a)) + (-a  / (b - a)));
+}
+
+// Reparameterization
+// linear 0 at t < a, 1 at t >b
+float linearparam(float a, float b, float t)
+{
+	return (t-a)/(b-a);
+	//return t * (1.0f / (b-a)) + (-a  / (b - a));
+}
+
+float2 linearparam(float2 a, float2 b, float2 t)
+{
+	return (t-a)/(b-a);
+	//return t * (1.0f / (b-a)) + (-a  / (b - a));
+}
+
+float3 linearparam(float3 a, float3 b, float3 t)
+{
+	return (t-a)/(b-a);
+	//return t * (1.0f / (b-a)) + (-a  / (b - a));
+}
+
+float4 linearparam(float4 a, float4 b, float4 t)
+{
+	return (t-a)/(b-a);
+	//return t * (1.0f / (b-a)) + (-a  / (b - a));
+}
+
+float2 GetCheckerBoardVector(int2 dispatchId, Texture2D<float2> srcTexture)
+{
+	int2 oddEvenLine = dispatchId & 1;
+	float2 srcVector = srcTexture[int2(dispatchId.x / 2, dispatchId.y)];
+	if (oddEvenLine.x != oddEvenLine.y)
+	{
+		srcVector += srcTexture[int2(dispatchId.x / 2, dispatchId.y - 1)] +
+					 srcTexture[int2(dispatchId.x / 2, dispatchId.y + 1)] +
+					 srcTexture[int2(dispatchId.x / 2 - oddEvenLine.y * 2 + 1, dispatchId.y)];
+		srcVector *= 0.25f;
+	}
+
+	return srcVector;
+}
+
+#define FG_PROBE_SH_ORDER 3
+#define FG_PROBE_SH_NUM_COEFFS (FG_PROBE_SH_ORDER * FG_PROBE_SH_ORDER)
+
+#define SH_NUM_COEFFS 9
+#define SH_NUM_TEXTURES ((SH_NUM_COEFFS * 3 + 3) / 4)
+
+struct ShLightProbe
+{
+	float4 m_shCoeffs[SH_NUM_TEXTURES];
+};
+
+float3 CalculateProbeLight(float3 dir, float4 a0, float4 a1, float4 a2, float4 a3, float4 a4, float4 a5, float4 a6, float probeScale)
+{
+	ShLightProbe sh;
+	sh.m_shCoeffs[0] = a0;
+	sh.m_shCoeffs[1] = a1;
+	sh.m_shCoeffs[2] = a2;
+	sh.m_shCoeffs[3] = a3;
+	sh.m_shCoeffs[4] = a4;
+	sh.m_shCoeffs[5] = a5;
+	sh.m_shCoeffs[6] = a6;
+
+	// cos lobe oriented along given direction	
+	const float4 cosLobeShCoeffs[(FG_PROBE_SH_NUM_COEFFS + 3) / 4] =
+	{
+		{
+			kPi *                                 1.0f / (2.0f * sqrt(kPi)),
+			kPi * (2.0f / 3.0f) * (sqrt(3.0f) * dir.y) / (2.0f * sqrt(kPi)),
+			kPi * (2.0f / 3.0f) * (sqrt(3.0f) * dir.z) / (2.0f * sqrt(kPi)),
+			kPi * (2.0f / 3.0f) * (sqrt(3.0f) * dir.x) / (2.0f * sqrt(kPi))
+		},
+		{
+			kPi * (1.0f / 4.0f) * (sqrt(15.0f) * dir.y * dir.x) / (2.0f * sqrt(kPi)),
+			kPi * (1.0f / 4.0f) * (sqrt(15.0f) * dir.y * dir.z) / (2.0f * sqrt(kPi)),
+			kPi * (1.0f / 4.0f) * (sqrt( 5.0f) * (3.0f * dir.z * dir.z - 1.0f)) / (4.0f * sqrt(kPi)),
+			kPi * (1.0f / 4.0f) * (sqrt(15.0f) * dir.x * dir.z) / (2.0f * sqrt(kPi))
+		},
+		{
+			kPi * (1.0f / 4.0f) * (sqrt(15.0f) * (dir.x * dir.x - dir.y * dir.y)) / (4.0f * sqrt(kPi)),
+			0.0, 0.0, 0.0
+		}
+	};
+
+	// do a cos lobe integration along the normal to get the remaining base lighting
+	float3 baseLight;
+
+	baseLight.r = dot(sh.m_shCoeffs[0], cosLobeShCoeffs[0]);
+	baseLight.g = dot(sh.m_shCoeffs[1], cosLobeShCoeffs[0]);
+	baseLight.b = dot(sh.m_shCoeffs[2], cosLobeShCoeffs[0]);
+
+	baseLight.r += dot(sh.m_shCoeffs[3], cosLobeShCoeffs[1]) + (sh.m_shCoeffs[6].x * cosLobeShCoeffs[2].x);
+	baseLight.g += dot(sh.m_shCoeffs[4], cosLobeShCoeffs[1]) + (sh.m_shCoeffs[6].y * cosLobeShCoeffs[2].x);
+	baseLight.b += dot(sh.m_shCoeffs[5], cosLobeShCoeffs[1]) + (sh.m_shCoeffs[6].z * cosLobeShCoeffs[2].x);
+
+	return max(baseLight * probeScale / kPi, 0);
+}
+
+void frisvad(in float3 n, out float3 b1, out float3 b2)
+{
+	if (n.z < -0.9999999f) // Handle the singularity
+	{
+		b1 = float3(0.f, -1.f, 0.f);
+		b2 = float3(-1.f, 0.f, 0.f);
+		return;
+	}
+
+	float a = 1.f / (1.f + n.z);
+	float b = -n.x * n.y * a;
+	b1 = float3(1.f - n.x * n.x * a, b, -n.x);
+	b2 = float3(b, 1.f - n.y * n.y * a, -n.y);
+}
+
+float3 CalculateProbeLightBidir(float3 dir, float4 a0, float4 a1, float4 a2, float4 a3, float4 a4, float4 a5, float4 a6, float probeScale, float passRatio)
+{
+	ShLightProbe sh;
+	sh.m_shCoeffs[0] = a0;
+	sh.m_shCoeffs[1] = a1;
+	sh.m_shCoeffs[2] = a2;
+	sh.m_shCoeffs[3] = a3;
+	sh.m_shCoeffs[4] = a4;
+	sh.m_shCoeffs[5] = a5;
+	sh.m_shCoeffs[6] = a6;
+
+	// cos lobe oriented along given direction	
+	const float4 cosLobeShCoeffs[(FG_PROBE_SH_NUM_COEFFS + 3) / 4] =
+	{
+		{
+			kPi *                                 1.0f / (2.0f * sqrt(kPi)),
+			kPi * (2.0f / 3.0f) * (sqrt(3.0f) * dir.y) / (2.0f * sqrt(kPi)),
+			kPi * (2.0f / 3.0f) * (sqrt(3.0f) * dir.z) / (2.0f * sqrt(kPi)),
+			kPi * (2.0f / 3.0f) * (sqrt(3.0f) * dir.x) / (2.0f * sqrt(kPi))
+		},
+		{
+			kPi * (1.0f / 4.0f) * (sqrt(15.0f) * dir.y * dir.x) / (2.0f * sqrt(kPi)),
+			kPi * (1.0f / 4.0f) * (sqrt(15.0f) * dir.y * dir.z) / (2.0f * sqrt(kPi)),
+			kPi * (1.0f / 4.0f) * (sqrt( 5.0f) * (3.0f * dir.z * dir.z - 1.0f)) / (4.0f * sqrt(kPi)),
+			kPi * (1.0f / 4.0f) * (sqrt(15.0f) * dir.x * dir.z) / (2.0f * sqrt(kPi))
+		},
+		{
+			kPi * (1.0f / 4.0f) * (sqrt(15.0f) * (dir.x * dir.x - dir.y * dir.y)) / (4.0f * sqrt(kPi)),
+			0.0, 0.0, 0.0
+		}
+	};
+
+	// do a cos lobe integration along the normal to get the remaining base lighting
+	float3 colorDirRelated;
+	colorDirRelated.r = dot(sh.m_shCoeffs[0].yzw, cosLobeShCoeffs[0].yzw);
+	colorDirRelated.g = dot(sh.m_shCoeffs[1].yzw, cosLobeShCoeffs[0].yzw);
+	colorDirRelated.b = dot(sh.m_shCoeffs[2].yzw, cosLobeShCoeffs[0].yzw);
+
+	float3 baseLight;
+
+	baseLight.r = sh.m_shCoeffs[0].x * cosLobeShCoeffs[0].x;
+	baseLight.g = sh.m_shCoeffs[1].x * cosLobeShCoeffs[0].x;
+	baseLight.b = sh.m_shCoeffs[2].x * cosLobeShCoeffs[0].x;
+
+	baseLight.r += dot(sh.m_shCoeffs[3], cosLobeShCoeffs[1]) + (sh.m_shCoeffs[6].x * cosLobeShCoeffs[2].x);
+	baseLight.g += dot(sh.m_shCoeffs[4], cosLobeShCoeffs[1]) + (sh.m_shCoeffs[6].y * cosLobeShCoeffs[2].x);
+	baseLight.b += dot(sh.m_shCoeffs[5], cosLobeShCoeffs[1]) + (sh.m_shCoeffs[6].z * cosLobeShCoeffs[2].x);
+
+	baseLight = baseLight + (2.0f * passRatio - 1.0f) * colorDirRelated;
+
+	return max(baseLight * probeScale / kPi, 0);
+}
+
+//--------------------------------------------------------------------------------------
+
+struct VS_PosTex
+{
+    float3 Pos		: ATTR0;
+    float2 Tex		: ATTR1;
+};
+
+//--------------------------------------------------------------------------------------
+
+struct PS_Pos
+{
+    float4 Pos		: SV_POSITION;
+};
+
+struct PS_PosTex
+{
+    float4 Pos		: SV_POSITION;
+    float2 Tex		: TEXCOORD0;
+};
+
+struct PS_PosTex4x2
+{
+    float4 Pos		: SV_POSITION;
+    float4 uv0_uv1	: TEXCOORD0;
+	float4 uv2_uv3	: TEXCOORD1;
+};
+
+struct PS_PosTexColor
+{
+    float4 Pos		: SV_POSITION;
+	float4 color0   : SV_Target0;
+};
+
+struct PixelShaderOutput2
+{
+	float4 color0 : SV_Target0;
+	float4 color1 : SV_Target1;
+};
+
+struct PixelShaderOutput2Uint
+{
+	uint4 color0 : SV_Target0;
+	uint4 color1 : SV_Target1;
+};
+
+struct PixelShaderOutputXy2
+{
+	float2 color0 : SV_Target0;
+	float2 color1 : SV_Target1;
+};
+
+struct PixelShaderOutput4
+{
+	float4 color0 : SV_Target0;
+	float4 color1 : SV_Target1;
+	float4 color2 : SV_Target2;
+	float4 color3 : SV_Target3;
+};
+
+#define kMaxNumCascaded		8
+struct SunShadowConstants
+{
+	float4		m_cascadedLevelDist[kMaxNumCascaded/4];
+	float4		m_cascadedZoffset[kMaxNumCascaded/4];
+	float4		m_parameters0[kMaxNumCascaded];
+	float4		m_parameters1[kMaxNumCascaded];
+	float4		m_matricesRows[3*kMaxNumCascaded];
+	float4		m_sampleBlurDir[2];
+	float4		m_shadowInfo;
+	float4		m_shadowCurveControl;
+	float4		m_blurParams[2];
+	float4		m_shadowParams;
+	float4		m_viewSpaceXyParams;
+	float4		m_sizeParams;
+	float4		m_shadowSizeParams;
+	float4		m_cameraLensParams;
+	float4		m_dofRangeScaleInfo;
+	float4		m_dofRangeOffsetInfo;
+	float4		m_dofIntensityInfo;
+	float4		m_dofBlurParams;
+	float4		m_clipPlaneVS[2];
+	float4		m_heroParameters;
+	float4		m_heroMatricesRows[3];
+	float4		m_heroBlurParams[2];
+	float4		m_heroDepthBiasParams;
+	uint		m_numCascades;
+	uint		m_boxSelection;
+};
+
+struct DrawIndirectArgs
+{
+	uint m_indexCountPerInstance;
+	uint m_instanceCount;
+	uint m_startIndexLocation;
+	uint m_baseVertexLocation;
+	uint m_startInstanceLocation;
+};
+
+// This is the structure of the occlusion queries
+struct OcclusionQueryPair
+{
+	unsigned long m_zPassCountBegin;
+	unsigned long m_zPassCountEnd;
+};
+
+struct OcclusionQueryResults
+{
+	// There is one pair for each DB
+	OcclusionQueryPair m_results[g_numDBs];
+};
+
+#if !defined(SKIP_GLOBAL_SAMPLERS)
+
+SamplerState			g_sSamplerPoint				: register( s0 );
+SamplerState			g_sSamplerLinear			: register( s1 );
+SamplerComparisonState	g_sSamplerShadow			: register( s2 );
+SamplerState			g_sSamplerMipLinear			: register( s3 );
+SamplerState			g_sSamplerLinearRepeat		: register( s4 );
+SamplerState			g_sSamplerAnimatedGobo		: register( s5 );
+
+#endif
+
+#endif

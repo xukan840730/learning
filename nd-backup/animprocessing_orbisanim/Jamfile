@@ -1,0 +1,37 @@
+SubDir TOP shared src ice src tools icelib animprocessing_orbisanim ;
+
+#
+# HEADER FILES
+#
+local lstProjectHeaders = [ FDirName $(SEARCH_SOURCE) ] ;
+lstProjectHeaders += [ FDirName $(TOP) tools src ] ;
+lstProjectHeaders += [ FDirName $(TOP) shared src  ] ;
+lstProjectHeaders += [ FDirName $(TOP) shared src ice src tools ] ;
+lstProjectHeaders += [ FDirName $(TOP) shared src ice src tools icelib ] ;
+lstProjectHeaders += [ FDirName $(TOP) shared src sharedmath pc include ] ;
+
+#
+# SOURCE FILES
+#
+local lstProjectFiles = [ FindCPPFiles $(SEARCH_SOURCE) ] ;
+
+#
+# SOURCE FILES TO BE EXCLUDED FROM COMPILATION
+#
+local lstRemoveFiles = "" ;
+lstProjectFiles = [ FListSubtractRelative $(lstProjectFiles) : $(lstRemoveFiles) ] ;
+
+#
+# SETTINGS FOR THE PROJECT
+#
+EXTRA_DEFINES = PNG_SETJMP_NOT_SUPPORTED ;
+EXTRA_HEADERS = $(lstProjectHeaders) ;
+EXCEPTION_HANDLING = TRUE ;
+MULTITHREADED = TRUE ;
+
+#
+# PROJECT TYPE
+#
+OS_CONFIGURATIONS = nt linux ps3 ;
+USE_PRECOMPILED_HEADER = FALSE ;
+LibProject orbisanim_animprocessing : $(lstProjectFiles) ;

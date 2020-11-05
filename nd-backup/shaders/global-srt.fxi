@@ -1,0 +1,16 @@
+// Skip globals
+#define SKIP_GLOBAL_SAMPLERS 1
+
+#include "global-funcs.fxi"
+
+//--------------------------------------------------------------------------------------
+
+/* struct SamplerSrt */
+/* { */
+/* 	SamplerState sSamplerPoint; */
+/* 	SamplerState sSamplerLinear; */
+/* 	SamplerState sSamplerShadow; */
+/* 	SamplerState sSamplerMipLinear; */
+/* 	SamplerState sSamplerLinearRepeat; */
+/* }; */
+

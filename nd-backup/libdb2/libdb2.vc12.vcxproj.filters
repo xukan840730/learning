@@ -1,0 +1,95 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Jamfile" />
+    <None Include="Bundle.cpp">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="main_test.cpp">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="Anim.cpp">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="FriendlyDB2Types.cpp">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="DatabaseElement.cpp">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="Database.cpp">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="stdafx.cpp">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="QueryElement.cpp">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="ElementFacade.cpp">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="Cutscene.h">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="Actor.h">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="Database.h">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="Bundle.h">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="Level.h">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="stdafx.h">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="Facade.h">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="commontypes.h">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="Anim.h">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="perforce-checker.cpp">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="Actor.cpp">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="perforce-checker.h">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="database-element-impl.h">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="db-query-facades.h">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="database-element.h">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="query-element.h">
+      <Filter>Header Files</Filter>
+    </None>
+  </ItemGroup>
+</Project>

@@ -1,0 +1,615 @@
+#ifndef PATH_TRACER_RAYCAST_FXI
+#define PATH_TRACER_RAYCAST_FXI
+
+#include "global-funcs.fxi"
+#include "path-tracer-ray-intersect.fxi"
+#include "path-tracer-level.fxi"
+
+// ----------------------------------------------------------------------------
+struct HitResult
+{
+	float3								tuv;
+	bool								isLight;
+	int									iInst;
+	int									iMesh;
+	int									iTri;
+	int									pad;
+};
+
+HitResult InitHitResult()
+{
+	HitResult	hres;
+
+	hres.tuv = float3(kMaxT, kMaxT, kMaxT);
+	hres.isLight = false;
+	hres.iInst = -1;
+	hres.iMesh = -1;
+	hres.iTri = -1;
+	hres.pad = 0;
+	return hres;
+}
+
+// ----------------------------------------------------------------------------
+enum PtAccelType
+{
+	kAccelLinearInst,
+	kAccelLinearInstKd,
+	kAccelKdTreeInst,
+	kAccelKdTreeInstKd,
+};
+
+enum PtMetricMode
+{
+	kDebugNone,
+	kDebugNodes,
+	kDebugLeafs,
+	kDebugSphere,
+	kDebugInst,
+	kDebugTri,
+	kDebugNormals,
+	kDebugRayDir,
+	kDebugTValue,
+	kDebugDebug
+};
+
+static uint g_accelType;
+static uint g_useMailbox;
+static int	g_kdStartPrim;
+static int	g_kdEndPrim;
+
+static uint g_numSph;
+static uint g_numInst;
+static uint g_numTri;
+static int	g_objectIndex;
+static int	g_treeIndex;
+
+static int g_threadId;
+
+groupshared	uint g_mboxInstance[kNumInstances >> 5];		// make sure each instance in kd tree gets drawn once only
+
+bool	CheckInstanceMbox(uint instIdx)	
+{
+	// Returns true if not already traversed, sets mbox so we don't draw it again!
+	bool retval = true;
+	uint instOffset = instIdx >> 5;
+	uint instMask = 1<<(instIdx & 0x1f);
+
+	retval = ((g_mboxInstance[instOffset] & instMask) != instMask);
+	g_mboxInstance[instOffset] |= instMask;
+
+	return retval;
+}
+
+// ----------------------------------------------------------------------------
+bool RayVsPrims(Ray r, PtLevel lv, KdTree tree, uint pstart, uint pcount, inout HitResult hres)
+{
+	bool retval = false;
+	uint start = pstart;
+	uint end = start + pcount;
+
+	for (uint iPrim = start; iPrim < end; iPrim++)	
+	{
+		KdMeshPrim prim = TmpToKdMeshPrim(tree.m_prims[iPrim]);
+
+		// prim.m_objIndex can cause divergence here, so deal with it!
+		ulong exec = __s_read_exec();		
+		do
+		{
+			// Pick the first active lane index
+			uint firstActiveLane = __s_ff1_i32_b64(exec);
+
+			// Get the tile index in that lnae
+			int objIndex = __v_readlane_b32((int)prim.m_objIndex, firstActiveLane);
+
+			// Create a mask for all lanes that occur in that tile
+			ulong laneMask = __v_cmp_eq_u32((int)prim.m_objIndex, objIndex);
+
+			// Only execute the code on this tile index
+			if (__v_cndmask_b32(0, 1, laneMask))
+			{
+				PtMesh mesh = lv.m_meshArray->m_meshes[objIndex];
+				//uint iTri = prim.m_primIndex*3;
+				//uint3 tri = uint3(mesh.m_idx[iTri+0], mesh.m_idx[iTri+1], mesh.m_idx[iTri+2]);
+				uint3 tri = prim.m_triangleIdx;
+				g_numTri++;
+
+				float3 tuv = RayVsTriangle(r, tri, mesh.m_pos);
+				if (tuv.x < hres.tuv.x)
+				{
+					hres.iMesh = objIndex;
+					hres.iTri = tree.m_indices[iPrim];
+					hres.tuv = tuv;
+
+					retval = true;
+				}
+			}
+
+			// Since we are done with this lane (i.e this tile index), update the execution mask
+			exec &= ~laneMask;
+
+		// When all lanes are processed, exec will be zero and we can exit
+		} while (exec != 0);
+
+		if (r.shadowRay && retval)
+			break;
+	}
+
+	return retval;
+}
+
+bool RayVsTris(Ray r, PtLevel lv, uint iMesh, inout HitResult hres)
+{
+	bool	retval = false;
+
+	PtMesh						mesh = lv.m_meshArray->m_meshes[iMesh];
+	DataBuffer<uint>			idx = mesh.m_idx;
+	DataBuffer<float4>			verts = mesh.m_pos;
+
+	uint	start = 0;
+	uint	end;
+	idx.GetDimensions(end);
+
+#ifdef DEBUG
+	if (g_kdStartPrim >= 0 && g_kdEndPrim > g_kdStartPrim)
+	{
+		start = min((uint)g_kdStartPrim*3, end);
+		end = min((uint)g_kdEndPrim*3, end);
+	}
+#endif
+
+	for (uint iTri = start; iTri < end; iTri+=3)
+	{
+		uint3 tri = uint3(idx[iTri], idx[iTri+1], idx[iTri+2]);
+		g_numTri++;
+
+		float3 tuv = RayVsTriangle(r, tri, verts);
+		if (tuv.x < hres.tuv.x)
+		{
+			hres.iTri = iTri;
+			hres.tuv = tuv;
+
+			retval = true;
+			if (r.shadowRay)
+				break;
+		}
+	}
+
+	return retval;
+}
+
+// ----------------------------------------------------------------------------
+void RayVsInstanceLinear(Ray r, PtLevel lv, uint iInst, inout HitResult hres)
+{
+	float4 sphere = lv.m_boundSpheres[iInst];
+	PtInstance inst = lv.m_inst[iInst];
+
+#ifdef DEBUG
+	if ((inst.m_protoIdx >= 0) && (lv.m_protoHidden[inst.m_protoIdx>>5] & 1<<(inst.m_protoIdx & 0x1f)))
+		return;
+#endif
+
+	// Sphere cast pre test
+	float2 tbounds = RayVsSphere(r, sphere);
+	tbounds.x = max(tbounds.x, 0.f);
+
+	g_numSph++;
+	if (tbounds.x < hres.tuv.x && tbounds.y > 0.f)
+	{
+		g_numInst++;
+
+		if (inst.m_protoIdx == -1)
+		{
+			hres.tuv.x = tbounds.x;
+			hres.iInst = iInst;
+			hres.iMesh = -1;
+			return;
+		}
+
+		// Transform the ray to this space
+		Ray lr = r;
+		lr.pos = mul(float4(r.pos, 1.f), inst.m_worldToObj).xyz;
+		lr.dir = mul(float4(r.dir, 0.f), inst.m_worldToObj).xyz;
+
+		PtPrototype	proto = lv.m_protoArray->m_protos[inst.m_protoIdx];
+		uint	mfirst = proto.m_meshStart;
+		uint	mlast = proto.m_meshEnd;
+
+		for (uint iMesh = mfirst; iMesh < mlast; iMesh++)
+		{
+			if (RayVsTris(lr, lv, iMesh, hres))
+			{
+				hres.iInst = iInst;
+				hres.iMesh = iMesh;
+				if (lr.shadowRay)
+					break;
+			}
+		}
+	}
+}
+
+void RayVsInstanceKd(Ray r, PtLevel lv, uint iInst, inout HitResult hres)
+{
+	float4 sphere = lv.m_boundSpheres[iInst];
+	PtInstance inst = lv.m_inst[iInst];
+
+#ifdef DEBUG
+	if ((inst.m_protoIdx >= 0) && (lv.m_protoHidden[inst.m_protoIdx>>5] & 1<<(inst.m_protoIdx & 0x1f)))
+		return;
+#endif
+
+	// Sphere cast pre test
+	float2 tbounds = RayVsSphere(r, sphere);
+	tbounds.x = max(tbounds.x, 0.f);
+
+	g_numSph++;
+	if (tbounds.x < hres.tuv.x && tbounds.y > 0.f)
+	{
+		if (g_kdTraversalIdx <= g_kdSelTraversalIndex)
+		{
+			g_objectIndex = iInst;
+			g_tboundsOut = tbounds;
+		}
+		g_numInst++;
+
+		if (inst.m_protoIdx == -1)
+		{
+			hres.tuv.x = tbounds.x;
+			hres.iInst = iInst;
+			hres.iMesh = -1;
+			return;
+		}
+
+		// Transform the ray to this space
+		Ray lr = r;
+		lr.pos = mul(float4(r.pos, 1.f), inst.m_worldToObj).xyz;
+		lr.dir = mul(float4(r.dir, 0.f), inst.m_worldToObj).xyz;
+
+		bool shadowRayHit = false;
+		PtPrototype	proto = lv.m_protoArray->m_protos[inst.m_protoIdx];
+
+		for (uint iTree = 0; iTree < proto.m_numTrees; iTree++)
+		{
+			if (shadowRayHit)
+				break;
+
+			KdTree		tree = proto.m_kdTreeArray->m_kdTrees[iTree];
+			int			nodeIndex;
+
+			tbounds = RayVsAabb(lr, tree.m_minPos.xyz, tree.m_maxPos.xyz);
+			tbounds.x = max(tbounds.x, 0.f);
+
+			if (g_kdTraversalIdx <= g_kdSelTraversalIndex)
+			{
+				g_tboundsOut = tbounds;
+				g_treeIndex = iTree;
+			}
+
+			if (tbounds.x < hres.tuv.x && tbounds.y > 0.f)
+			{
+				StartKdTree();
+
+				float tmax = tbounds.y + kEpsilon;
+				while (tbounds.x < tmax)
+				{
+					uint pstart = 0;
+					uint pcount = 0;
+
+					nodeIndex = KdGetNextLeaf(lr, tree, tbounds, pstart, pcount);
+					if (nodeIndex != kInvalidNode)
+					{
+						if (RayVsPrims(lr, lv, tree, pstart, pcount, hres))
+						{
+							hres.iInst = iInst;
+							//hres.norm = mul(float4(hres.norm, 0.f), inst.m_objToWorld).xyz;
+							if (lr.shadowRay)
+							{
+								shadowRayHit = true;
+								break;
+							}
+						}
+
+						// Continue searching if we can find closer geometry
+#ifdef DEBUG
+						if (g_traversalMode == kTravStack && g_testMode == kTestBox)
+						{
+							if (hres.tuv.x < tbounds.y)
+							{
+								tbounds.y = hres.tuv.x;
+							}
+							continue;		
+						}
+						else
+						{
+							if (hres.tuv.x > tbounds.y)
+							{
+								tbounds.x = tbounds.y;
+								tbounds.y = tmax;
+								continue;		
+							}
+						}
+#elif defined STACK
+						if (hres.tuv.x < tbounds.y)
+						{
+							tbounds.y = hres.tuv.x;
+						}
+						continue;		
+#else
+						if (hres.tuv.x > tbounds.y)
+						{
+							tbounds.x = tbounds.y;
+							tbounds.y = tmax;
+							continue;		
+						}
+#endif
+					}
+					break;
+				}
+				EndKdTree();
+			}
+		}
+	}
+}
+
+void RayVsInstance(Ray r, PtLevel lv, uint iInst, inout HitResult hres)
+{
+#ifndef DEBUG
+    RayVsInstanceKd(r, lv, iInst, hres);
+#else
+	switch (g_accelType)
+	{
+		case kAccelLinearInst:
+		case kAccelKdTreeInst:
+			RayVsInstanceLinear(r, lv, iInst, hres);
+			break;
+
+		case kAccelLinearInstKd:
+		case kAccelKdTreeInstKd:
+			RayVsInstanceKd(r, lv, iInst, hres);
+			break;
+	}
+#endif
+}
+
+// ----------------------------------------------------------------------------
+HitResult	RayVsLevelLinear(Ray r, PtLevel lv, uint start, uint end)
+{
+	HitResult	hres = InitHitResult();
+
+	for (uint iInst = start; iInst < end; iInst++)
+	{
+		RayVsInstance(r, lv, iInst, hres);
+	}
+
+	return hres;
+}
+
+HitResult	RayVsLevelKdTree(Ray r, PtLevel lv, uint start, uint end)
+{
+	KdTree		tree = *lv.m_kdTree;
+	HitResult	hres = InitHitResult();
+	float2		tbounds;
+	int			nodeIndex;
+
+	tbounds = RayVsAabb(r, tree.m_minPos.xyz, tree.m_maxPos.xyz);
+	tbounds.x = max(tbounds.x, 0.f);
+	if (tbounds.x >= kMaxT)
+		return hres;
+
+	StartKdTree();
+	float tmax = tbounds.y + kEpsilon;
+
+	while (tbounds.x < tmax)
+	{
+		if (g_kdTraversalIdx <= g_kdSelTraversalIndex)
+		{
+			g_objectIndex = -1;
+			g_treeIndex = -1;
+		}
+
+		uint pstart = 0;
+		uint pcount = 0;
+
+		nodeIndex = KdGetNextLeaf(r, tree, tbounds, pstart, pcount);
+
+		// process diverging nodes by nodeIndex!
+		// We want all threads to process each touched node, so that we can update the mailboxes correctly.
+		// It doesn't require any more processing time so why not.
+
+		if (nodeIndex != kInvalidNode)
+		{
+			ulong exec = __s_read_exec();		
+			do
+			{
+				uint	firstActiveLane = __s_ff1_i32_b64(exec);							// Pick the first active lane index
+				uint	laneStart = __v_readlane_b32(pstart, firstActiveLane);	// Get the node index from the first active lane
+				uint	laneCount = __v_readlane_b32(pcount, firstActiveLane);	// Get the node index from the first active lane
+
+				uint	primStart = laneStart;
+				uint	primEnd = primStart + laneCount;
+
+				for (uint iPrim = primStart; iPrim < primEnd; iPrim++)
+				{
+					uint objIndex = tree.m_indices[iPrim];
+
+					if (g_kdTraversalIdx <= g_kdSelTraversalIndex)
+					{
+						g_kdTraversalValue = -1;
+						g_objectIndex = objIndex;
+					}
+					g_kdTraversalIdx++;
+
+					{
+						bool drawInst = CheckInstanceMbox(objIndex);
+#ifdef DEBUG
+						if ((drawInst || !g_useMailbox) && (objIndex >= start && objIndex < end))
+#else
+						if (drawInst)
+#endif
+						{
+							RayVsInstance(r, lv, objIndex, hres);
+						}
+					}
+				}
+
+				uint	maskKey = pstart << 16 | pcount;
+				uint	laneMaskKey = __v_readlane_b32(maskKey, firstActiveLane);		// Get the node index from the first active lane
+				ulong	laneMask = __v_cmp_eq_u32(maskKey, laneMaskKey);				// Create a mask for all lanes that reference that node
+				exec &= ~laneMask;														// Clear all processed lanes in exec mask
+			} while (exec != 0);														// When all lanes are processed, exec will be zero and we can exit
+
+			// Continue searching if we can find closer geometry
+#ifdef DEBUG
+			if (g_traversalMode == kTravStack && g_testMode == kTestBox)
+			{
+				if (hres.tuv.x < tbounds.y)
+				{
+					tbounds.y = hres.tuv.x;
+				}
+				continue;		
+			}
+			else
+			{
+				if (hres.tuv.x > tbounds.y)
+				{
+					tbounds.x = tbounds.y;
+					tbounds.y = tmax;
+					continue;		
+				}
+			}
+#elif defined STACK
+			if (hres.tuv.x < tbounds.y)
+			{
+				tbounds.y = hres.tuv.x;
+			}
+			continue;		
+#else
+			if (hres.tuv.x > tbounds.y)
+			{
+				tbounds.x = tbounds.y;
+				tbounds.y = tmax;
+				continue;		
+			}
+#endif
+		}
+		break;
+	}
+	return hres;
+}
+
+// ----------------------------------------------------------------------------
+void	RayVsLight(Ray r, PtLevel lv, uint iInst, inout HitResult hres)
+{
+	float4 sphere = lv.m_lightSpheres[iInst];
+	PtLight light = lv.m_lights[iInst];
+
+	// Sphere cast pre test
+	float2 tbounds = RayVsSphere(r, sphere);
+	tbounds.x = max(tbounds.x, 0.f);
+
+	if (tbounds.x < hres.tuv.x && tbounds.y > 0.f)
+	{
+		// Transform the ray to this space
+		Ray lr = r;
+		lr.pos = mul(float4(r.pos, 1.f), light.m_worldToObj).xyz;
+		lr.dir = mul(float4(r.dir, 0.f), light.m_worldToObj).xyz;
+
+		bool hit = false;
+		float3 tuv;
+
+		switch (light.m_type)
+		{
+			case kLightPoint:
+				hres.tuv.x = tbounds.x;
+				hit = true;
+				break;
+			case kLightArea:
+				// test ray vs. unit quad
+				tuv = RayVsUnitQuad(lr);
+				if (tuv.x < hres.tuv.x)
+				{
+					hres.tuv.x = tuv;
+					hit = true;
+				}
+				break;
+		}
+
+		if (hit)
+		{
+			hres.iInst = iInst;
+			hres.isLight = true;
+		}
+	}
+}
+
+void	RayVsLightsLinear(Ray r, PtLevel lv, uint start, uint end, inout HitResult hres)
+{
+	for (uint iInst = start; iInst < end; iInst++)
+	{
+		RayVsLight(r, lv, iInst, hres);
+	}
+}
+
+// ----------------------------------------------------------------------------
+void		InitRaycast(uint groupIdx, 
+						uint accelType,
+						uint useMailbox,
+						uint startPrim,
+						uint endPrim)
+{
+	g_threadId = groupIdx;
+
+	g_accelType = accelType;
+	g_useMailbox = useMailbox;
+	g_kdStartPrim = startPrim;
+	g_kdEndPrim = endPrim;
+
+	g_numSph = 0;
+	g_numInst = 0;
+	g_numTri = 0;
+	g_objectIndex = -1;
+	g_treeIndex = -1;
+
+	// init mailbox
+	g_mboxInstance[g_threadId*4+0] = 0;
+	g_mboxInstance[g_threadId*4+1] = 0;
+	g_mboxInstance[g_threadId*4+2] = 0;
+	g_mboxInstance[g_threadId*4+3] = 0;
+}
+
+
+HitResult	RayVsScene(Ray r, PtLevel lv, bool doLight)
+{
+	HitResult	hres = InitHitResult();
+	{
+		uint start = 0;
+		uint end = lv.m_numInst;
+
+#ifndef DEBUG
+	    hres = RayVsLevelKdTree(r, lv, start, end);
+#else
+		switch (g_accelType)
+		{
+			case kAccelLinearInst:
+			case kAccelLinearInstKd:
+				hres = RayVsLevelLinear(r, lv, start, end);
+				break;
+			case kAccelKdTreeInst:
+			case kAccelKdTreeInstKd:
+				hres = RayVsLevelKdTree(r, lv, start, end);
+				break;
+		}
+#endif
+	}
+
+	// Ray cast vs. lights after
+	if (doLight)
+	{
+		uint start = 0;
+		uint end = lv.m_numLights;
+
+		RayVsLightsLinear(r, lv, start, end, hres);
+	}
+	return hres;
+}
+
+#endif

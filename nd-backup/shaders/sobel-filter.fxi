@@ -1,0 +1,34 @@
+// Sobel filter.
+// https://en.wikipedia.org/wiki/Sobel_operator
+float EdgeDetect(in float value[])
+{
+	// | -1  0  1 |
+	// | -2  0  2 |
+	// | -1  0  1 |
+	const float gx = (value[2] - value[0]) + 2.0f * (value[5] - value[3]) + (value[8] - value[6]);
+
+	// | -1 -2 -1 |
+	// |  0  0  0 |
+	// |  1  2  1 |
+	const float gy = (value[6] - value[0]) + 2.0f * (value[7] - value[1]) + (value[8] - value[2]);
+
+	// G = sqrt( G_x^2 + G_y^2 )
+	return sqrt(gx * gx + gy * gy) * 0.2f;
+}
+
+template<typename T, typename Func>
+float ApplySobelFilter( in const float2 texCoord , in const float2 invSize , in Texture2D<T> tex , in SamplerState sampler , Func sobel_intensity, in const float2 depthParams )
+{
+	float converage[9];
+	converage[0] = sobel_intensity( texCoord + (-1.0f, -1.0f) * invSize, tex, sampler, depthParams );
+	converage[1] = sobel_intensity( texCoord + ( 0.0f, -1.0f) * invSize, tex, sampler, depthParams );
+	converage[2] = sobel_intensity( texCoord + ( 1.0f, -1.0f) * invSize, tex, sampler, depthParams );
+	converage[3] = sobel_intensity( texCoord + (-1.0f,  0.0f) * invSize, tex, sampler, depthParams );
+	converage[4] = sobel_intensity( texCoord + ( 0.0f,  0.0f) * invSize, tex, sampler, depthParams );
+	converage[5] = sobel_intensity( texCoord + ( 1.0f,  0.0f) * invSize, tex, sampler, depthParams );
+	converage[6] = sobel_intensity( texCoord + (-1.0f,  1.0f) * invSize, tex, sampler, depthParams );
+	converage[7] = sobel_intensity( texCoord + ( 0.0f,  1.0f) * invSize, tex, sampler, depthParams );
+	converage[8] = sobel_intensity( texCoord + ( 1.0f,  1.0f) * invSize, tex, sampler, depthParams );
+
+	return EdgeDetect(converage);
+}

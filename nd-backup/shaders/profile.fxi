@@ -1,0 +1,259 @@
+
+//#define ENABLE_CS_PROFILING	// WARNING: TURNING THIS ON MAY CRASH THE GPU IN FINAL WITHOUT DEBUG MEM
+
+#ifndef PROFILE_MARKER_COUNT
+#define PROFILE_MARKER_COUNT 0
+#endif
+
+#if defined(ENABLE_CS_PROFILING) && (PROFILE_MARKER_COUNT > 0)
+#define ENABLE_CS_PROFILING_MARKERS
+#endif
+
+
+#ifdef ENABLE_CS_PROFILING
+
+#define PROFILE_MAX_WAVEFRONTS		32
+
+RWStructuredBuffer<uint>	pProfileDebug								: register(u14);
+RWStructuredBuffer<uint>	pProfileDebugSimple							: register(u15);
+groupshared uint g_profileMarkerIndex[PROFILE_MAX_WAVEFRONTS];
+groupshared uint g_profileMarkerStart[PROFILE_MAX_WAVEFRONTS];
+groupshared uint g_profileTGX;
+groupshared uint g_profileTGY;
+groupshared uint g_profileSimpleCUOffset;
+
+// Must match the defines in profile-compute-structs.h
+#define PROFILE_DISPATCH_HEADER_SIZE		6
+#define PROFILE_TG_HEADER_SIZE				4
+#define PROFILE_WF_TIMER_SIZE				4
+#define PROFILE_TG_START(tg, wfCount)		(PROFILE_DISPATCH_HEADER_SIZE + tg*(PROFILE_TG_HEADER_SIZE + PROFILE_WF_TIMER_SIZE*wfCount))
+#define PROFILE_TG_WF_TIMER_START(wf)		(PROFILE_TG_HEADER_SIZE + wf*PROFILE_WF_TIMER_SIZE)
+#define PROFILE_MARKER_SIZE					4
+
+#define PROFILE_MARKER_WHITE				0
+#define PROFILE_MARKER_RED					1
+#define PROFILE_MARKER_ORANGE				2
+#define PROFILE_MARKER_YELLOW				3
+#define PROFILE_MARKER_GREEN				4
+#define PROFILE_MARKER_CYAN					5
+#define PROFILE_MARKER_BLUE					6
+#define PROFILE_MARKER_MAGENTA				7
+
+
+// Must match defines in profile-draw.cpp
+#define PROFILE_CMP_SIG_SIMPLE_START			0xA6A6A6A6
+#define PROFILE_CMP_SIG_SIMPLE_END				0xB6B6B6B6
+#define PROFILE_CMP_SIG_START					0xA0A0A0A0
+#define PROFILE_CMP_SIG_END_WF					0xB1B1B1B1
+#define PROFILE_CMP_SIG_END_TG					0xB2B2B2B2
+#define PROFILE_CMP_SIG_END_TG3					0xB3B3B3B3
+#define PROFILE_CMP_SIG_MARKER					0xE5E5E5E5
+
+
+// Basic profiling where all threadgroups/wavefronts write to the same location, which gives a start/end time for the dispatch
+#define PROFILE_START(groupThreadIndex)															\
+	if ((groupThreadIndex & 0x3F) == 0)															\
+	{																							\
+		const uint2 timerStart = GetTimer();													\
+		const uint cuid = GetCUID();															\
+		const uint cuidOffset = ((cuid&0x1F) < 3) ? 0 : 6;										\
+		if (pProfileDebugSimple[cuidOffset] != PROFILE_CMP_SIG_SIMPLE_START)					\
+		{																						\
+			pProfileDebugSimple[cuidOffset] = PROFILE_CMP_SIG_SIMPLE_START;						\
+			pProfileDebugSimple[cuidOffset+2] = timerStart.x;									\
+			pProfileDebugSimple[cuidOffset+3] = timerStart.y;									\
+		}																						\
+	}																							\
+
+#define PROFILE_END(groupThreadIndex)															\
+	if ((groupThreadIndex & 0x3F) == 0)															\
+	{																							\
+		const uint2 timerStart = GetTimer();													\
+		const uint cuid = GetCUID();															\
+		const uint cuidOffset = ((cuid&0x1F) < 3) ? 0 : 6;										\
+		pProfileDebugSimple[cuidOffset+1] = PROFILE_CMP_SIG_SIMPLE_END;							\
+		pProfileDebugSimple[cuidOffset+4] = timerStart.x;										\
+		pProfileDebugSimple[cuidOffset+5] = timerStart.y;										\
+	}																							\
+
+// Full profiling for a dispatch with a single threadgroup, with start/end times for each wavefront. Supports adding profiling markers.
+#define PROFILE_START_WF(groupThreadIndex, totalThreadCount)									\
+	if ((groupThreadIndex & 0x3F) == 0)															\
+	{																							\
+		const uint wavefront = groupThreadIndex >> 6;											\
+		const uint totalWavefronts = totalThreadCount >> 6;										\
+		if (groupThreadIndex == 0)																\
+		{																						\
+			pProfileDebug[PROFILE_DISPATCH_HEADER_SIZE] = PROFILE_CMP_SIG_START;				\
+			pProfileDebug[PROFILE_DISPATCH_HEADER_SIZE+1] = GetCUID();							\
+			pProfileDebug[PROFILE_DISPATCH_HEADER_SIZE+2] = totalWavefronts;					\
+			pProfileDebug[PROFILE_DISPATCH_HEADER_SIZE+3] = 0;									\
+		}																						\
+		const uint2 timerStart = GetTimer();													\
+		const uint index = PROFILE_DISPATCH_HEADER_SIZE + PROFILE_TG_WF_TIMER_START(wavefront);	\
+		pProfileDebug[index+0] = timerStart.x;													\
+		pProfileDebug[index+1] = timerStart.y;													\
+		g_profileMarkerStart[wavefront] = pProfileDebug[4] + PROFILE_MARKER_SIZE*wavefront*PROFILE_MARKER_COUNT;	\
+		g_profileMarkerIndex[wavefront] = 0;													\
+	}																							\
+
+#define PROFILE_END_WF(groupThreadIndex)														\
+	if ((groupThreadIndex & 0x3F) == 0)															\
+	{																							\
+		const uint2 timerEnd = GetTimer();														\
+		const uint wavefront = groupThreadIndex >> 6;											\
+		const uint index = PROFILE_DISPATCH_HEADER_SIZE + PROFILE_TG_WF_TIMER_START(wavefront);	\
+		pProfileDebug[index+2] = timerEnd.x;													\
+		pProfileDebug[index+3] = timerEnd.y;													\
+		if (groupThreadIndex == 0)																\
+		{																						\
+			pProfileDebug[PROFILE_DISPATCH_HEADER_SIZE] = PROFILE_CMP_SIG_END_WF;				\
+		}																						\
+	}																							\
+
+// Full profiling for a dispatch with multiple thread groups of a single dimension, with start/end times for each wavefront. Supports adding profiling markers.
+#define PROFILE_START_TG(groupThreadIndex, threadgroupIndex, totalThreadCount)					\
+	if ((groupThreadIndex & 0x3F) == 0)															\
+	{																							\
+		const uint totalWavefronts = totalThreadCount >> 6;										\
+		const uint wavefront = groupThreadIndex >> 6;											\
+		const uint profileMarkerStart = pProfileDebug[4];										\
+		g_profileMarkerStart[wavefront] = profileMarkerStart + PROFILE_MARKER_SIZE*(threadgroupIndex*totalWavefronts*PROFILE_MARKER_COUNT + wavefront*PROFILE_MARKER_COUNT);	\
+		g_profileMarkerIndex[wavefront] = 0;													\
+		const uint numProfiledThreadgroups = pProfileDebug[1];									\
+		if (threadgroupIndex < numProfiledThreadgroups)											\
+		{																						\
+			const uint threadgroupStartIndex = PROFILE_TG_START(threadgroupIndex, totalWavefronts);	\
+			if (groupThreadIndex == 0)															\
+			{																					\
+				pProfileDebug[threadgroupStartIndex+0] = PROFILE_CMP_SIG_START;					\
+				pProfileDebug[threadgroupStartIndex+1] = GetCUID();								\
+				pProfileDebug[threadgroupStartIndex+2] = totalWavefronts;						\
+				pProfileDebug[threadgroupStartIndex+3] = threadgroupIndex;						\
+			}																					\
+			const uint2 timerStart = GetTimer();												\
+			const uint index = threadgroupStartIndex + PROFILE_TG_WF_TIMER_START(wavefront);	\
+			pProfileDebug[index+0] = timerStart.x;												\
+			pProfileDebug[index+1] = timerStart.y;												\
+		}																						\
+	}																							\
+
+#define PROFILE_END_TG(groupThreadIndex, threadgroupIndex, totalThreadCount)					\
+	if ((groupThreadIndex & 0x3F) == 0)															\
+	{																							\
+		const uint numProfiledThreadgroups = pProfileDebug[1];									\
+		if (threadgroupIndex < numProfiledThreadgroups)											\
+		{																						\
+			const uint totalWavefronts = totalThreadCount >> 6;									\
+			const uint wavefront = groupThreadIndex >> 6;										\
+			const uint threadgroupStartIndex = PROFILE_TG_START(threadgroupIndex, totalWavefronts);	\
+			const uint2 timerEnd = GetTimer();													\
+			const uint index = threadgroupStartIndex + PROFILE_TG_WF_TIMER_START(wavefront);	\
+			pProfileDebug[index+2] = timerEnd.x;												\
+			pProfileDebug[index+3] = timerEnd.y;												\
+			if (groupThreadIndex == 0)															\
+			{																					\
+				pProfileDebug[threadgroupStartIndex] = PROFILE_CMP_SIG_END_TG;					\
+			}																					\
+		}																						\
+	}																							\
+
+// Full profiling for a dispatch with multiple thread groups of any dimension, with start/end times for each wavefront. Supports adding profiling markers.
+#define PROFILE_START_TG3(groupThreadIndex, threadgroupIndex3, totalThreadCount)				\
+	if ((groupThreadIndex & 0x3F) == 0)															\
+	{																							\
+		g_profileTGX = pProfileDebug[2];														\
+		g_profileTGY = pProfileDebug[3];														\
+		const uint totalWavefronts = totalThreadCount >> 6;										\
+		const uint wavefront = groupThreadIndex >> 6;											\
+		const uint threadgroupIndex = threadgroupIndex3.z*g_profileTGX*g_profileTGY +			\
+			threadgroupIndex3.y*g_profileTGX + threadgroupIndex3.x;								\
+		const uint profileMarkerStart = pProfileDebug[4];										\
+		g_profileMarkerStart[wavefront] = profileMarkerStart + PROFILE_MARKER_SIZE*(threadgroupIndex*totalWavefronts*PROFILE_MARKER_COUNT + wavefront*PROFILE_MARKER_COUNT);	\
+		g_profileMarkerIndex[wavefront] = 0;													\
+		const uint numProfiledThreadgroups = pProfileDebug[1];									\
+		if (threadgroupIndex < numProfiledThreadgroups)											\
+		{																						\
+			const uint threadgroupStartIndex = PROFILE_TG_START(threadgroupIndex, totalWavefronts);	\
+			if (groupThreadIndex == 0)															\
+			{																					\
+				pProfileDebug[threadgroupStartIndex+0] = PROFILE_CMP_SIG_START;					\
+				pProfileDebug[threadgroupStartIndex+1] = GetCUID();								\
+				pProfileDebug[threadgroupStartIndex+2] = totalWavefronts;						\
+				pProfileDebug[threadgroupStartIndex+3] = threadgroupIndex;						\
+			}																					\
+			const uint2 timerStart = GetTimer();												\
+			const uint index = threadgroupStartIndex + PROFILE_TG_WF_TIMER_START(wavefront);	\
+			pProfileDebug[index+0] = timerStart.x;												\
+			pProfileDebug[index+1] = timerStart.y;												\
+		}																						\
+	}																							\
+
+#define PROFILE_END_TG3(groupThreadIndex, threadgroupIndex3, totalThreadCount)					\
+	if ((groupThreadIndex & 0x3F) == 0)															\
+	{																							\
+		const uint threadgroupIndex = threadgroupIndex3.z*g_profileTGX*g_profileTGY +			\
+			threadgroupIndex3.y*g_profileTGX + threadgroupIndex3.x;								\
+		const uint numProfiledThreadgroups = pProfileDebug[1];									\
+		if (threadgroupIndex < numProfiledThreadgroups)											\
+		{																						\
+			const uint totalWavefronts = totalThreadCount >> 6;									\
+			const uint wavefront = groupThreadIndex >> 6;										\
+			const uint threadgroupStartIndex = PROFILE_TG_START(threadgroupIndex, totalWavefronts);	\
+			const uint2 timerEnd = GetTimer();													\
+			const uint index = threadgroupStartIndex + PROFILE_TG_WF_TIMER_START(wavefront);	\
+			pProfileDebug[index+2] = timerEnd.x;												\
+			pProfileDebug[index+3] = timerEnd.y;												\
+			if (groupThreadIndex == 0)															\
+			{																					\
+				pProfileDebug[threadgroupStartIndex] = PROFILE_CMP_SIG_END_TG3;					\
+			}																					\
+		}																						\
+	}																							\
+
+#else
+
+#define PROFILE_START(groupThreadIndex)
+#define PROFILE_END(groupThreadIndex)
+#define PROFILE_START_WF(groupThreadIndex, totalThreadCount)
+#define PROFILE_END_WF(groupThreadIndex)
+#define PROFILE_START_TG(groupThreadIndex, threadgroupIndex, totalThreadCount)
+#define PROFILE_END_TG(groupThreadIndex, threadgroupIndex, totalThreadCount)
+#define PROFILE_START_TG3(groupThreadIndex, threadgroupIndex3, totalThreadCount)
+#define PROFILE_END_TG3(groupThreadIndex, threadgroupIndex3, totalThreadCount)
+
+#endif
+
+
+#ifdef ENABLE_CS_PROFILING_MARKERS
+
+#define PROFILE_MARKER(id, groupThreadIndex, end)											\
+	if ((groupThreadIndex & 0x3F) == 0)														\
+	{																						\
+		const uint wavefront = groupThreadIndex >> 6;										\
+		const uint markerNum = g_profileMarkerIndex[wavefront];								\
+		if (markerNum < PROFILE_MARKER_COUNT)												\
+		{																					\
+			const uint2 timerStart = GetTimer();											\
+			const uint index = g_profileMarkerStart[wavefront] + markerNum*PROFILE_MARKER_SIZE;		\
+			pProfileDebug[index] = PROFILE_CMP_SIG_MARKER;									\
+			pProfileDebug[index+1] = id|end;												\
+			pProfileDebug[index+2] = timerStart.x;											\
+			pProfileDebug[index+3] = timerStart.y;											\
+			g_profileMarkerIndex[wavefront] = markerNum + 1;								\
+		}																					\
+	}																						\
+
+#define PROFILE_MARKER_START(id, groupThreadIndex) PROFILE_MARKER(id, groupThreadIndex, 0x80000000)
+#define PROFILE_MARKER_END(id, groupThreadIndex) PROFILE_MARKER(id, groupThreadIndex, 0x40000000)
+#define PROFILE_MARKER_TICK(id, groupThreadIndex) PROFILE_MARKER(id, groupThreadIndex, 0xC0000000)
+
+#else
+
+#define PROFILE_MARKER_START(id, groupThreadIndex)
+#define PROFILE_MARKER_END(id, groupThreadIndex)
+#define PROFILE_MARKER_TICK(id, groupThreadIndex)
+
+#endif
+
+

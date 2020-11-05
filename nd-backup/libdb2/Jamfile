@@ -1,0 +1,40 @@
+SubDir TOP tools src tools libs libdb2 ;
+
+# HEADER FILES
+#
+local lstProjectHeaders = [ FDirName $(SEARCH_SOURCE) ] ;
+lstProjectHeaders += [ FDirName $(TOP) shared src ] ;
+lstProjectHeaders += [ FDirName $(TOP) shared src sharedmath pc include ] ;
+lstProjectHeaders += [ FDirName $(TOP) shared src scea_shared ] ;
+lstProjectHeaders += [ FDirName $(TOP) tools src ] ;
+ lstProjectHeaders += [ FDirName  $(TOP)  ] ;
+ lstProjectHeaders += [ FDirName $(TOP) tools src tools libs libxml2 include  ] ;
+ lstProjectHeaders += [ FDirName $(TOP)  common imsg  ] ;
+# SubIncludeOnce TOP tools src tools libs libbigdb ; # <SVM> there's no libbigdb
+#
+# SOURCE FILES
+#
+local lstProjectFiles ;
+lstProjectFiles += [ FindCPPFiles $(SEARCH_SOURCE) ] ;
+
+#
+# SOURCE FILES TO BE EXCLUDED FROM COMPILATION
+#
+local lstRemoveFiles = "" ;
+lstProjectFiles = [ FListSubtractRelative $(lstProjectFiles) : $(lstRemoveFiles) ] ;
+
+#
+# SETTINGS FOR THE PROJECT
+#
+EXTRA_HEADERS = $(lstProjectHeaders) ;
+EXCEPTION_HANDLING = TRUE ;
+MULTITHREADED = TRUE ;
+USE_PRECOMPILED_HEADER = FALSE ;
+
+	
+#
+# PROJECT TYPE
+#
+OS_CONFIGURATIONS = nt ;
+LibProject libdb2 : $(lstProjectFiles) ;
+

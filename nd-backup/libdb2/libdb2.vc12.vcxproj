@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <ItemGroup Label="ProjectConfigurations">
+
+	<ProjectConfiguration Include="Debug|x64">
+
+	  <Configuration>Debug</Configuration>
+
+	  <Platform>x64</Platform>
+
+	</ProjectConfiguration>
+
+	<ProjectConfiguration Include="Release|x64">
+
+	  <Configuration>Release</Configuration>
+
+	  <Platform>x64</Platform>
+
+	</ProjectConfiguration>
+
+  </ItemGroup>
+
+  <PropertyGroup Label="Globals">
+
+	<ProjectName>libdb2</ProjectName>
+
+	<ProjectGuid>{9067B86D-1771-17C7-32C1-162D5841DE35}</ProjectGuid>
+
+	<RootNamespace>libdb2</RootNamespace>
+
+	<Keyword>MakeFileProj</Keyword>
+
+  </PropertyGroup>
+
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+
+  <PropertyGroup Label="Configuration">
+
+	<ConfigurationType>Makefile</ConfigurationType>
+
+  </PropertyGroup>
+
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+
+  <ImportGroup Label="ExtensionSettings">
+
+  </ImportGroup>
+
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+
+	<Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+
+	<Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC71.props" />
+
+  </ImportGroup>
+
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+
+	<Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+
+	<Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC71.props" />
+
+  </ImportGroup>
+
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+
+	<Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+
+	<Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC71.props" />
+
+  </ImportGroup>
+
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+
+	<Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+
+	<Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC71.props" />
+
+  </ImportGroup>
+
+  <PropertyGroup Label="UserMacros" />
+
+  <PropertyGroup>
+
+	<_ProjectFileVersion>10.0.40219.1</_ProjectFileVersion>
+
+	<OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">c:/build/$(USERNAME)/code/$(GAMEBRANCH)/$(GAMENAME)/pc/default/debug/x86/</OutDir>
+
+	<IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">c:/build/tools/$/$(GAMEBRANCH)/bin/obj/$(ProjectName)/obj/obj/debug/x86/o/o/</IntDir>
+
+	<OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">c:/build/$(USERNAME)/code/$(GAMEBRANCH)/$(GAMENAME)/pc/default/release/x86/</OutDir>
+
+	<IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">c:/build/$(USERNAME)/code/$(GAMEBRANCH)/$(GAMENAME)/pc/default/obj/$(ProjectName)/obj/obj/release/x86/o/o/</IntDir>
+
+	<OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">c:/build/$(USERNAME)/code/$(GAMEBRANCH)/$(GAMENAME)/pc/default/debug/</OutDir>
+
+	<IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">c:/build/$(USERNAME)/code/$(GAMEBRANCH)/$(GAMENAME)/pc/default/obj/$(ProjectName)/obj/obj/debug/o/o/</IntDir>
+
+	<OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">c:/build/$(USERNAME)/code/$(GAMEBRANCH)/$(GAMENAME)/pc/default/release/</OutDir>
+
+	<IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">c:/build/$(USERNAME)/code/$(GAMEBRANCH)/$(GAMENAME)/pc/default/obj/$(ProjectName)/obj/obj/release/o/o/</IntDir>
+
+	<!--LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</LinkIncremental-->
+
+	<CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">AllRules.ruleset</CodeAnalysisRuleSet>
+
+	<CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" />
+
+	<CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" />
+
+	<CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">AllRules.ruleset</CodeAnalysisRuleSet>
+
+	<CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" />
+
+	<CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" />
+
+	<CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">AllRules.ruleset</CodeAnalysisRuleSet>
+
+	<CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" />
+
+	<CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" />
+
+	<CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Release|x64'">AllRules.ruleset</CodeAnalysisRuleSet>
+
+	<CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Release|x64'" />
+
+	<CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Release|x64'" />
+
+	<NMakeBuildCommandLine Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(NDIBIN)\ninja.exe -C $(TOOLSSRCDIR)\ninja -f $(ProjectName).$(Configuration).ninja</NMakeBuildCommandLine>
+
+	<NMakeBuildCommandLine Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(NDIBIN)\ninja.exe -C $(TOOLSSRCDIR)\ninja -f $(ProjectName).$(Configuration).ninja</NMakeBuildCommandLine>
+
+	<NMakeBuildCommandLine Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(NDIBIN)\ninja.exe -C $(TOOLSSRCDIR)\ninja -f $(ProjectName).$(Configuration).ninja</NMakeBuildCommandLine>
+
+	<NMakeBuildCommandLine Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(NDIBIN)\ninja.exe -C $(TOOLSSRCDIR)\ninja -f $(ProjectName).$(Configuration).ninja</NMakeBuildCommandLine>
+
+	<NMakeCleanCommandLine Condition="'$(Platform)'=='Win32'">$(NDIBIN)\ninja.exe -C $(TOOLSSRCDIR)\ninja -f $(ProjectName).$(Configuration).ninja</NMakeCleanCommandLine>
+
+	<NMakeCleanCommandLine Condition="'$(Platform)'=='x64'">$(NDIBIN)\ninja.exe -C $(TOOLSSRCDIR)\ninja -f $(ProjectName).$(Configuration).ninja</NMakeCleanCommandLine>
+
+		<NMakeIncludeSearchPath>../../../../../scea_shared;../../../../../sharedmath/pc/include;../../../../../;../../../../../tools/src/tools/libs/libdb2;../../../../../shared/src;../../../../../shared/src/sharedmath/pc/include;../../../../../shared/src/scea_shared;../../../../../tools/src;../../../../../;../../../../../tools/src/tools/libs/libxml2/include;../../../../../common/imsg</NMakeIncludeSearchPath>
+
+		<NMakePreprocessorDefinitions>NOMINMAX;_CRT_SECURE_NO_DEPRECATE;DSMITH;WIN32;NDI_TOOL;_WIN32_CRUNTIME_DLL;_LIB;HAVOKVER=0x2011;HAVOKDESTRUCTION=1</NMakePreprocessorDefinitions>
+
+  </PropertyGroup>
+
+  <ItemGroup>
+
+	<None Include="Jamfile" />
+
+	<None Include="db2-database-element.cpp" />
+
+	<None Include="db2-query-element.cpp" />
+
+	<None Include="main_test.cpp" />
+
+	<None Include="db2-bundle.cpp" />
+
+	<None Include="db2-database.cpp" />
+
+	<None Include="db2-friendly-types.cpp" />
+
+	<None Include="db2-actor.cpp" />
+
+	<None Include="perforce-checker.cpp" />
+
+	<None Include="db2-element-facade.cpp" />
+
+	<None Include="stdafx.cpp" />
+
+	<None Include="db2-anim.cpp" />
+
+	<None Include="db2-cutscene.h" />
+
+	<None Include="perforce-checker.h" />
+
+	<None Include="db2-facade.h" />
+
+	<None Include="db2-commontypes.h" />
+
+	<None Include="db2-database-element.h" />
+
+	<None Include="db2-bundle.h" />
+
+	<None Include="db2-level.h" />
+
+	<None Include="db2-query-element.h" />
+
+	<None Include="db-query-facades.h" />
+
+	<None Include="db2-actor.h" />
+
+	<None Include="stdafx.h" />
+
+	<None Include="db2-anim.h" />
+
+	<None Include="db2-database.h" />
+
+	<None Include="db2-database-element-impl.h" />
+
+  </ItemGroup>
+
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+
+  <ImportGroup Label="ExtensionTargets">
+
+  </ImportGroup>
+
+</Project>
+

@@ -1,0 +1,2840 @@
+#ifndef PARTICLE_RAY_TRACE_CS_DEFINES_H
+#define PARTICLE_RAY_TRACE_CS_DEFINES_H
+
+
+#include "global-funcs.fxi"
+
+#include "deferred-include.fxi"
+
+#define VOLUMETRICS_NO_SAMPLERS 1
+#include "new-volumetrics.fxi"
+
+#include "stencil-util.fxi"
+#include "particle-cs.fxi"
+#include "texture-table.fxi"
+
+#define USE_GRADIENT_QUAD_CONTROL 1
+#define USE_DEBUG_CHECKS 0
+#define USE_COOUPANCY_TESTS 1
+#define USE_CACHED_RES_DROP_INDEX 1
+#define PACK_COLOR 1
+#define NUM_PIXELS_COVERED_X 4
+#define READ_DEST_COLOR_DATA_RIGHT_AWAY 1
+#define READ_DEST_DEPTH_DATA_RIGHT_AWAY 1
+
+#define FROXELS_DYNAMIC_DENSITY_PACKING 0
+
+#define FROXELS_REGION_DENSITY_MID_POINT (pSrt->m_regionDensityMidPoint)
+//0.50196078f
+
+#define SORT_INTERSECTIONS_INTO_BUCKETS 1
+
+#define COMBINE_MULTIPLE_PARTS_IN_CLASSIFY 0
+
+//#define USE_POW_COMPRESSION_FOR_FINAL_ACCUM_COLOR 1
+//#define USE_POW_COMPRESSION_FOR_FINAL_ACCUM_ALPHA 1
+
+//#ifndef VOLUMETRICS_DEPTH_VARIANCE_CHECKS
+//#define VOLUMETRICS_DEPTH_VARIANCE_CHECKS 1
+//#endif
+
+#define FROXELS_SUN_SCATTERING_IN_ACCUMULATE 1
+
+
+#ifndef FROXEL_DISPATCH_INDIRECT
+#define FROXEL_DISPATCH_INDIRECT 0
+#endif
+
+#ifndef FOG_TEXTURE_DENSITY_ONLY
+#define FOG_TEXTURE_DENSITY_ONLY FROXEL_DISPATCH_INDIRECT
+#endif
+
+#ifndef FROXELS_ACCUMULATE_WITH_PROBES
+#define FROXELS_ACCUMULATE_WITH_PROBES FROXEL_DISPATCH_INDIRECT
+#endif
+
+
+#ifndef OPTIMIZE_SUN_LIGHT_CACHE
+#define OPTIMIZE_SUN_LIGHT_CACHE FOG_TEXTURE_DENSITY_ONLY
+#endif
+
+#ifndef OPTIMIZE_SUN_LIGHT
+#define OPTIMIZE_SUN_LIGHT FOG_TEXTURE_DENSITY_ONLY
+#endif
+
+#ifndef OPTIMIZE_FROXEL_PROPERTIES
+#define OPTIMIZE_FROXEL_PROPERTIES 1
+#endif
+
+
+#ifndef USE_EXPANDED_COMPRESSED_PROBE
+#define USE_EXPANDED_COMPRESSED_PROBE 1
+#endif
+
+#ifndef FROXELS_USE_EXP_SHADOWS_FOR_SPOT_LIGHTS
+#define FROXELS_USE_EXP_SHADOWS_FOR_SPOT_LIGHTS 1
+//#define FROXELS_USE_EXP_SHADOWS_FOR_SPOT_LIGHTS 0
+#endif
+
+#define FROXELS_USE_EXP_SHADOWS_FOR_HEIGHT_MAP 1
+
+#define FROXELS_SPOT_HALF_RANGE 20.0
+#define FROXELS_EXP_CONSTANT 100.0
+#define FROXELS_ALWAYS_REVERSE_SHADOWS_FOR_SPOT_LIGHTS 1
+
+
+// we cover 100 meters 
+#define kShadowMapCacheDepth 100.0
+
+// make sure to match in C++ code
+#define FROXELS_ALLOW_DEBUG 0
+
+// make sure to match in C++ code
+#define FROXELS_DEBUG_IN_SHADOW_CACHE_TEXTURE 0
+
+// make sure to match in C++ code
+#define FROXEL_NUM_LISTS 7
+
+// make sure to match in C++ code
+#define VOLUMETRICS_MAX_SS_LIGHTS 32
+#define VOLUMETRICS_MAX_SS_PARTS 4
+#define VOLUMETRICS_MAX_CONE_SLICES 8
+#define VOLUMETRICS_COMPRESS_SS_LIGHTS 1
+
+//#define FogFroxelGridSizeNativeRes 32
+//#define FogFroxelGridSizeNativeRes 16
+
+#ifndef FROXELS_DYNAMIC_RES
+#define FROXELS_DYNAMIC_RES 0
+#endif
+
+#define FROXEL_LIGHT_MASK_SHADOWED (1 << 0)
+#define FROXEL_LIGHT_MASK_POINT_LIGHT (1 << 4)
+#define FROXEL_LIGHT_MASK_SPOT_LIGHT (1 << 5)
+#define FROXEL_LIGHT_MASK_ORTHO_LIGHT (1 << 6)
+#define FROXEL_LIGHT_MASK_USE_DEPTH_VARIANCE_DARKENING (1 << 7)
+#define FROXEL_LIGHT_MASK_USE_EXPANDED_FROXEL_SAMPLING (1 << 8)
+#define FROXEL_LIGHT_MASK_USE_DEPTH_BUFFER_VARIANCE_SHADOWING (1 << 9)
+
+#define FROXEL_LIGHT_MASK_ALL_SHAPES (FROXEL_LIGHT_MASK_POINT_LIGHT | FROXEL_LIGHT_MASK_SPOT_LIGHT | FROXEL_LIGHT_MASK_ORTHO_LIGHT)
+#define FROXEL_SHADOW_MASK_ALL_TYPES (FROXEL_LIGHT_MASK_SHADOWED)
+
+#define FROXEL_PROPERTIES_SLICES_U 64
+
+#if FROXEL_PROPERTIES_SLICES_U == 64
+#define INDEX_OUTSIDE_PROPRTIES_SLICES(i) false
+#else
+#define INDEX_OUTSIDE_PROPRTIES_SLICES(i) (i >= FROXEL_PROPERTIES_SLICES_U)
+#endif
+#if FROXEL_DISPATCH_INDIRECT && !defined(FROXEL_RTL_V_1)
+
+#define FROXEL_RTL_V_1 1
+
+#endif
+
+#if FROXELS_DYNAMIC_RES
+
+
+#elif HIGH_RES
+
+#ifndef FROXEL_SIZE
+#define FogFroxelGridSizeNativeRes 16
+#else
+#define FogFroxelGridSizeNativeRes FROXEL_SIZE
+#endif
+
+#define SCREEN_NATIVE_RES_W_F 2560.0
+#define SCREEN_NATIVE_RES_H_F 1440.0
+#define SCREEN_NATIVE_RES_W_U 2560
+#define SCREEN_NATIVE_RES_H_U 1440
+
+#elif _4k_RES
+
+#ifndef FROXEL_SIZE
+#define FogFroxelGridSizeNativeRes 16
+#else
+#define FogFroxelGridSizeNativeRes FROXEL_SIZE
+#endif
+
+#define SCREEN_NATIVE_RES_W_F 3840.0
+#define SCREEN_NATIVE_RES_H_F 2160.0
+#define SCREEN_NATIVE_RES_W_U 3840
+#define SCREEN_NATIVE_RES_H_U 2160
+
+#elif _900p_RES
+
+#ifndef FROXEL_SIZE
+#define FogFroxelGridSizeNativeRes 10
+#else
+#define FogFroxelGridSizeNativeRes FROXEL_SIZE
+#endif
+
+#define SCREEN_NATIVE_RES_W_F 1600.0
+#define SCREEN_NATIVE_RES_H_F 900.0
+#define SCREEN_NATIVE_RES_W_U 1600
+#define SCREEN_NATIVE_RES_H_U 900
+
+#else
+
+#define SCREEN_NATIVE_RES_W_F 1920.0
+#define SCREEN_NATIVE_RES_H_F 1080.0
+#define SCREEN_NATIVE_RES_W_U 1920
+#define SCREEN_NATIVE_RES_H_U 1080
+
+#ifndef FROXEL_SIZE
+#define FogFroxelGridSizeNativeRes 12
+#else
+#define FogFroxelGridSizeNativeRes FROXEL_SIZE
+#endif
+
+#endif
+
+#if !FROXELS_DYNAMIC_RES
+
+#define NumFroxelsX (SCREEN_NATIVE_RES_W_U / FogFroxelGridSizeNativeRes)
+#define NumFroxelsY (SCREEN_NATIVE_RES_H_U / FogFroxelGridSizeNativeRes)
+#define NumFroxelsXY (NumFroxelsX * NumFroxelsY) // checked for neo
+
+#define NumFroxelsXRounded uint((SCREEN_NATIVE_RES_W_U + FogFroxelGridSizeNativeRes - 1) / FogFroxelGridSizeNativeRes)
+#define NumFroxelsYRounded uint((SCREEN_NATIVE_RES_H_U + FogFroxelGridSizeNativeRes - 1) / FogFroxelGridSizeNativeRes)
+
+#define NumFroxelsXRounded_F float(NumFroxelsXRounded)
+#define NumFroxelsYRounded_F float(NumFroxelsYRounded)
+
+#define PRECOMPUTE_RESOLUTION_W_F (SCREEN_NATIVE_RES_W_F/2.0) // checked for neo
+#define PRECOMPUTE_RESOLUTION_H_F (SCREEN_NATIVE_RES_H_F/2.0) // checked for neo
+
+#endif
+
+#ifndef DoFroxelsInLowResPass
+#define DoFroxelsInLowResPass 0
+#endif
+
+#ifndef FROXELS_NO_UPDATE_BEHIND_GEO
+#define FROXELS_NO_UPDATE_BEHIND_GEO 0
+#endif
+
+#ifndef FROXELS_NO_SUN_SHADOW_CHECK
+#define FROXELS_NO_SUN_SHADOW_CHECK 0
+#endif
+
+#define FROXELS_AMBIENT_TINT_IN_ACCUMULATE 1
+
+#define DO_TEMPORAL 1
+
+#define DO_JITTER_XY 1
+
+#define USE_TRANSMITANCE 1
+
+#define USE_CACHED_SHADOW 1
+#define USE_EXPONENT_MAP_IN_CACHED_SHADOW 1
+#define CACHED_SHADOW_EXP_BASE_2 0
+
+#define FROXELS_ALWAYS_REVERSE_SHADOWS_FOR_SUN_LIGHT 0
+
+#define PREMULTIPLY_DENSITY 0
+#define PREMULTIPLY_VOLUME 0
+
+#define USE_HEIGHT_FOG 1
+#define USE_SKY_FOG 1
+
+#define USE_MIP_SKY_FOG 1
+
+#define DO_NOISE_IN_FOG_CREATION 1
+
+#define USE_FOG_PROPERTIES 1
+
+#define USE_FOG_CONVERGE_BUFFER (FOG_TEXTURE_DENSITY_ONLY && 0)
+
+#define FROXEL_GRID_DENSITY_FACTOR 0.5
+
+#define USE_SRGB_FROXELS 0
+
+#define FROXELS_DYNAMIC_SRGB 1
+
+//#if !USE_SRGB_FROXELS
+//#define USE_MANUAL_POW_FROXELS 1
+//#else
+//#define USE_MANUAL_POW_FROXELS 0
+//#endif
+
+#define FROXELS_NUM_MAX_DEPTH_NEIGHBORS 2
+
+#define FROXELS_MAX_NUM_BLURRED_FROXELS (32 * 1024)
+
+#ifndef FROXELS_NO_CHECKS
+#define FROXELS_NO_CHECKS 0
+#endif
+
+//#define VolumetricScreenSpaceInfo Texture2D<uint4>
+//#define RWVolumetricScreenSpaceInfo RWTexture2D<uint4>
+
+#define VolumetricScreenSpaceInfo Texture2D<uint>
+#define RWVolumetricScreenSpaceInfo RWTexture2D<uint>
+float3 PackFroxelColor(float3 inColor, int hdrExp)
+{
+	//return inColor / FROXEL_GRID_HDR_FACTOR;
+	#if FROXEL_USE_DYNAMIC_HDR
+		float3 normValue = inColor * pow(2.0, -hdrExp);
+	#else
+		float3 normValue = inColor / FROXEL_GRID_HDR_FACTOR;
+	#endif
+
+	return normValue;
+
+}
+
+float PackFroxelColor(float inColor, int hdrExp)
+{
+	//return inColor / FROXEL_GRID_HDR_FACTOR;
+
+	#if FROXEL_USE_DYNAMIC_HDR
+		float normValue = inColor * pow(2.0, -hdrExp);
+	#else
+		float normValue = inColor / FROXEL_GRID_HDR_FACTOR;
+	#endif
+
+	return normValue;
+}
+
+float3 UnpackFroxelColor(float3 inColor, int hdrExp)
+{
+	//return inColor * FROXEL_GRID_HDR_FACTOR;
+
+	float3 normValue = inColor;
+
+	#if FROXEL_USE_DYNAMIC_HDR
+		return normValue * pow(2.0, hdrExp);
+	#else
+		return normValue * FROXEL_GRID_HDR_FACTOR;
+	#endif
+}
+
+float UnpackFroxelColor(float inColor, int hdrExp)
+{
+	//return inColor * FROXEL_GRID_HDR_FACTOR;
+
+	float normValue = inColor;
+
+	#if FROXEL_USE_DYNAMIC_HDR
+		return normValue * pow(2.0, hdrExp);
+	#else
+		return normValue * FROXEL_GRID_HDR_FACTOR;
+	#endif
+}
+
+
+float3 FroxelColorAddUpackedValueToPacked(float3 inColorPacked, float3 inColorUnpacked, int hdrExp)
+{
+	// Note if pack operation is not linear (like gamma) we can't just add, we need to unpack, add, pack
+	return inColorPacked + PackFroxelColor(inColorUnpacked, hdrExp);
+	//return PackFroxelColor(UnpackFroxelColor(inColorPacked, hdrExp) + inColorUnpacked, hdrExp);
+}
+
+float3 FroxelColorAddPackedValueToPackedScaled(float3 inColorPacked, float packedFactor, float3 inColorUnpacked, float unpackedFactor, int hdrExp, int hdrExpPrev)
+{
+	//float part = 0.125 / 255.0f;
+	float part = 0; // 0.125 / 2.0 / 255.0f;
+
+
+	//float part = min(pow(2.0, hdrExp) / 255.0f / 3.0, 1.0 / 8.0 / 255.0 / 3.0);
+	part = 1.0 / 8.0 / 255.0 / 3.0;
+
+	// Note if pack operation is not linear (like gamma) we can't just add, we need to unpack, add, pack
+	#if USE_SRGB_FROXELS
+		return inColorPacked * packedFactor + inColorUnpacked * unpackedFactor - float3(part, part, part);
+	#else
+		//return inColorPacked * packedFactor + inColorUnpacked * unpackedFactor - float3(part, part, part);
+
+		return PackFroxelColor(UnpackFroxelColor(inColorPacked, hdrExp) * packedFactor + UnpackFroxelColor(inColorUnpacked, hdrExpPrev) * unpackedFactor, hdrExp);
+	#endif
+}
+
+float PackFroxelDensity(float inDensity, float packingFactor)
+{
+	#if FROXELS_DYNAMIC_DENSITY_PACKING
+	return inDensity * packingFactor;
+	#else
+	return inDensity / FROXEL_GRID_DENSITY_FACTOR;
+	#endif
+}
+
+float UnpackFroxelDensity(float inDensity, float unpackingFactor)
+{
+	#if FROXELS_DYNAMIC_DENSITY_PACKING
+	return inDensity * unpackingFactor;
+	#else
+	return inDensity * FROXEL_GRID_DENSITY_FACTOR;
+	#endif
+}
+
+float FroxelDensityAddUnpackedValueToPacked(float inDensityPacked, float3 inDensityUnpacked, float packingFactor)
+{
+	// Note if pack operation is not linear (like gamma) we can't just add, we need to unpack, add, pack
+	return inDensityPacked + PackFroxelDensity(inDensityUnpacked, packingFactor);
+}
+
+uint SetTSharpToUnorm(inout RWTexture3D<float4> tSharp)
+{
+	uint4 tsharplo = __get_tsharplo(tSharp);
+	uint4 tsharphi = __get_tsharphi(tSharp);
+
+	// we want to modify bits 58:61, so that is low dword4, dword[1]
+
+
+	uint dataFmtMask = 0x3C000000;
+	uint prev = tsharplo.y & (dataFmtMask);
+
+	tsharplo.y = tsharplo.y & (~dataFmtMask); // unorm is all 0s so we just clear out the bits
+
+	tSharp = __create_texture< RWTexture3D<float4> >(tsharplo, tsharphi);
+
+	return prev;
+}
+
+uint IsTSharpSrgb(inout RWTexture3D<float4> tSharp)
+{
+	uint4 tsharplo = __get_tsharplo(tSharp);
+	uint4 tsharphi = __get_tsharphi(tSharp);
+
+	uint dataFmtMask = 0x3C000000;
+	// we want to modify bits 58:61, so that is low dword4, dword[1]
+	uint prev = tsharplo.y & (dataFmtMask);
+
+	return prev;
+}
+
+float ConverLinearToSrgb(float val)
+{
+	return val <= 0.0031308 ? val * 12.92 : 1.055 * pow(val, 1.0 / 2.4) - 0.055;
+}
+
+float3 ConverLinearToSrgb(float3 val)
+{
+	return float3(ConverLinearToSrgb(val.x), ConverLinearToSrgb(val.y), ConverLinearToSrgb(val.z));
+}
+
+#if FOG_TEXTURE_DENSITY_ONLY
+#if USE_FOG_CONVERGE_BUFFER
+#define FogTextureData float2
+#define RWTexture3D_Fog RWTexture3D<float2>
+#define Texture3D_Fog Texture3D<float2>
+#define FogDensityFromData(data) (data.x)
+#define FogColorFromData(data) (0)
+#else
+#define FogTextureData float
+#define RWTexture3D_Fog RWTexture3D<float>
+#define Texture3D_Fog Texture3D<float>
+#define FogDensityFromData(data) (data)
+#define FogColorFromData(data) (0)
+#endif
+#else
+#define FogTextureData float4
+#define RWTexture3D_Fog RWTexture3D<float4>
+#define Texture3D_Fog Texture3D<float4>
+#define FogDensityFromData(data) (data.a)
+#define FogColorFromData(data) (data.rgb)
+#endif
+
+FogTextureData ReadPackedValueFogTexture(RWTexture3D_Fog tSharp, uint3 coord)
+{
+	#if FOG_TEXTURE_DENSITY_ONLY
+		#if USE_FOG_CONVERGE_BUFFER
+			float2 value = tSharp[coord];
+			#if USE_MANUAL_POW_FROXELS
+				value.x = value.x * value.x;
+			#endif
+		#else
+			float value = tSharp[coord];
+			#if USE_MANUAL_POW_FROXELS
+				value = value * value;
+			#endif
+		#endif
+	#else
+		float4 value = tSharp[coord];
+		#if USE_MANUAL_POW_FROXELS
+			value.xyz = value.xyz * value.xyz;
+			value.w = value.w * value.w;
+		#endif
+	#endif
+
+	return value;
+}
+FogTextureData ReadPackedValueFogTexture(RWTexture3D_Fog tSharp, uint3 coord, out float densOrig)
+{
+	#if FOG_TEXTURE_DENSITY_ONLY
+		float value = tSharp[coord];
+		densOrig = value;
+		#if USE_MANUAL_POW_FROXELS
+			value = value * value;
+		#endif
+	#else
+		float4 value = tSharp[coord];
+		densOrig = value.a;
+		
+		#if USE_MANUAL_POW_FROXELS
+			value.xyz = value.xyz * value.xyz;
+			value.w = value.w * value.w;
+		#endif
+	#endif
+
+	return value;
+}
+
+FogTextureData ReadPackedValueFogTexture(Texture3D_Fog tSharpRO, uint3 coord)
+{
+	#if FOG_TEXTURE_DENSITY_ONLY
+		#if USE_FOG_CONVERGE_BUFFER
+			float2 value = tSharpRO[coord];
+
+			#if USE_MANUAL_POW_FROXELS
+				value.x = value.x * value.x;
+			#endif
+		#else
+			float value = tSharpRO[coord];
+
+			#if USE_MANUAL_POW_FROXELS
+				value = value * value;
+			#endif
+		#endif
+	#else
+
+		float4 value = tSharpRO[coord];
+	
+		#if USE_MANUAL_POW_FROXELS
+			value.xyz = value.xyz * value.xyz;
+			value.w = value.w * value.w;
+		#endif
+	#endif
+	return value;
+}
+
+
+FogTextureData SamplePackedValueFogTexture(Texture3D_Fog tSharpRO, SamplerState s, float3 uv3d)
+{
+	#if FOG_TEXTURE_DENSITY_ONLY
+		#if USE_FOG_CONVERGE_BUFFER
+			float2 value = tSharpRO.SampleLevel(s, uv3d, 0);
+			#if USE_MANUAL_POW_FROXELS
+				value.x = value.x * value.x;
+			#endif
+		#else
+			float value = tSharpRO.SampleLevel(s, uv3d, 0);
+			#if USE_MANUAL_POW_FROXELS
+				value = value * value;
+			#endif
+		#endif
+	#else
+		float4 value = tSharpRO.SampleLevel(s, uv3d, 0).rgba;
+		#if USE_MANUAL_POW_FROXELS
+			value.xyz = value.xyz * value.xyz;
+			value.w = value.w * value.w;
+		#endif
+	#endif
+
+	return value;
+}
+
+FogTextureData SamplePackedValueFogTexture(Texture3D_Fog tSharpRO, SamplerState s, float3 uv3d, out  float origDens)
+{
+	#if FOG_TEXTURE_DENSITY_ONLY
+		float value = tSharpRO.SampleLevel(s, uv3d, 0);
+		origDens = value;
+		#if USE_MANUAL_POW_FROXELS
+			value = value * value;
+		#endif
+	#else
+		float4 value = tSharpRO.SampleLevel(s, uv3d, 0).rgba;
+		origDens = value.a;
+		#if USE_MANUAL_POW_FROXELS
+			value.xyz = value.xyz * value.xyz;
+			value.w = value.w * value.w;
+		#endif
+	#endif
+
+	return value;
+}
+float4 ReadPackedValuePropertiesTexture(RWTexture3D<float4> tSharp, uint3 coord)
+{
+	float4 value = tSharp[coord];
+	
+	#if USE_MANUAL_POW_FROXELS
+		value.xyz = value.xyz * value.xyz;
+		value.w = value.w * value.w;
+	#endif
+
+	return value;
+}
+
+
+float4 SamplePackedValuePropertiesTexture(Texture3D<float4> tSharpRO, SamplerState s, float3 uv3d)
+{
+	float4 value = tSharpRO.SampleLevel(s, uv3d, 0).rgba;
+	#if USE_MANUAL_POW_FROXELS
+		value.xyz = value.xyz * value.xyz;
+		value.w = value.w * value.w;
+	#endif
+
+	return value;
+}
+
+void StorePackedValueFogTexture(RWTexture3D_Fog tSharpRW, uint3 coord, FogTextureData value)
+{
+	#if FOG_TEXTURE_DENSITY_ONLY
+		#if USE_FOG_CONVERGE_BUFFER
+			#if USE_MANUAL_POW_FROXELS
+				value.x = sqrt(value.x);
+			#endif
+		#else	
+			#if USE_MANUAL_POW_FROXELS
+				value = sqrt(value);
+			#endif
+		#endif
+	#else
+		#if USE_SRGB_FROXELS
+			uint prev = SetTSharpToUnorm(tSharp);
+			#if FROXELS_DYNAMIC_SRGB
+				if (prev != 0)
+			#endif
+				{
+					//value.xyz = pow(value.xyz, 1.0 / 2.2);
+					value.xyz = ConverLinearToSrgb(value.xyz);
+				}
+		#elif USE_MANUAL_POW_FROXELS
+			value.xyz = sqrt(value.xyz);
+			value.w = sqrt(value.w);
+		#endif
+	#endif
+
+	tSharpRW[coord] = value;
+}
+
+
+void StorePackedValueFogTexture(RWTexture3D_Fog tSharpRW, uint3 coord, FogTextureData value, float densFinal)
+{
+	#if FOG_TEXTURE_DENSITY_ONLY
+		#if USE_MANUAL_POW_FROXELS
+			value = sqrt(value);
+		#endif
+		value = densFinal;
+
+	#else
+		#if USE_SRGB_FROXELS
+			uint prev = SetTSharpToUnorm(tSharp);
+			#if FROXELS_DYNAMIC_SRGB
+				if (prev != 0)
+			#endif
+				{
+					//value.xyz = pow(value.xyz, 1.0 / 2.2);
+					value.xyz = ConverLinearToSrgb(value.xyz);
+				}
+		#elif USE_MANUAL_POW_FROXELS
+			value.xyz = sqrt(value.xyz);
+			value.w = sqrt(value.w);
+			value.w = densFinal;
+		#endif
+	#endif
+
+	tSharpRW[coord] = value;
+}
+
+#if FOG_TEXTURE_DENSITY_ONLY
+// adaptor function, to allow us not to modify a bunch fo shaders that compute float4
+void StorePackedValueFogTexture(RWTexture3D_Fog tSharprwaDAPT, uint3 coord, float4 _value)
+{
+	#if FOG_TEXTURE_DENSITY_ONLY
+		float value = _value.a;
+		#if USE_MANUAL_POW_FROXELS
+			value = sqrt(value);
+		#endif
+		#if USE_FOG_CONVERGE_BUFFER
+			tSharprwaDAPT[coord].x = value;
+		#else
+			tSharprwaDAPT[coord] = value;
+		#endif
+	#else
+		float4 value = _value;
+		#if USE_SRGB_FROXELS
+			uint prev = SetTSharpToUnorm(tSharp);
+			#if FROXELS_DYNAMIC_SRGB
+				if (prev != 0)
+			#endif
+				{
+					//value.xyz = pow(value.xyz, 1.0 / 2.2);
+					value.xyz = ConverLinearToSrgb(value.xyz);
+				}
+		#elif USE_MANUAL_POW_FROXELS
+			value.xyz = sqrt(value.xyz);
+			value.w = sqrt(value.w);
+		#endif
+		tSharprwaDAPT[coord] = value;
+	#endif
+
+	
+}
+#endif
+
+void StorePackedValuePropertiesTexture(RWTexture3D<float4> tSharp, uint3 coord, float4 value)
+{
+	#if USE_SRGB_FROXELS
+		uint prev = SetTSharpToUnorm(tSharp);
+		#if FROXELS_DYNAMIC_SRGB
+			if (prev != 0)
+		#endif
+			{
+				//value.xyz = pow(value.xyz, 1.0 / 2.2);
+				value.xyz = ConverLinearToSrgb(value.xyz);
+			}
+	#elif USE_MANUAL_POW_FROXELS
+		value.xyz = sqrt(value.xyz);
+		value.w = sqrt(value.w);
+	#endif
+
+	tSharp[coord] = value;
+}
+
+void StorePackedValuePropertiesTextureW(RWTexture3D<float4> tSharp, uint3 coord, float4 value)
+{
+	#if USE_SRGB_FROXELS
+		uint prev = SetTSharpToUnorm(tSharp);
+		#if FROXELS_DYNAMIC_SRGB
+			if (prev != 0)
+		#endif
+			{
+				//value.xyz = pow(value.xyz, 1.0 / 2.2);
+				value.xyz = ConverLinearToSrgb(value.xyz);
+			}
+	#elif USE_MANUAL_POW_FROXELS
+		value.xyz = sqrt(value.xyz);
+		value.w = sqrt(value.w);
+	#endif
+
+	tSharp[coord].w = value.w;
+}
+
+
+void StoreAccumAlphaPackedValueFogTexture(RWTexture3D_Fog tSharp, uint3 coord, float value)
+{
+	#if FOG_TEXTURE_DENSITY_ONLY
+		#if USE_MANUAL_POW_FROXELS
+			//tSharp[coord].a += value;
+		
+			tSharp[coord] = sqrt(tSharp[coord] * tSharp[coord] + value);
+		#else
+			tSharp[coord] += value;
+		#endif
+	#else
+		#if USE_SRGB_FROXELS
+			SetTSharpToUnorm(tSharp);
+		#endif
+
+		#if USE_MANUAL_POW_FROXELS
+			//tSharp[coord].a += value;
+		
+			tSharp[coord].a = sqrt(tSharp[coord].a * tSharp[coord].a + value);
+
+		#else
+			tSharp[coord].a += value;
+		#endif
+	#endif
+	
+}
+
+
+void StorePackedFinalFogAccumValue(RWTexture3D<float4> tSharp, uint3 coord, float4 value)
+{
+	#if USE_POW_COMPRESSION_FOR_FINAL_ACCUM_COLOR
+		value.xyz = sqrt(value.xyz);
+	#endif
+	#if USE_POW_COMPRESSION_FOR_FINAL_ACCUM_ALPHA
+		value.w = sqrt(value.w);
+	#endif
+
+	tSharp[coord] = value;
+}
+
+float4 ReadPackedFinalFogAccumValue(Texture3D<float4> tSharpRO, uint3 coord)
+{
+	float4 value = tSharpRO[coord];
+	#if USE_POW_COMPRESSION_FOR_FINAL_ACCUM_COLOR
+		value.xyz = value.xyz * value.xyz;
+	#endif
+	#if USE_POW_COMPRESSION_FOR_FINAL_ACCUM_ALPHA
+		value.w = value.w * value.w;
+	#endif
+	
+	return value;
+}
+
+float4 ReadPackedFinalFogAccumValue(RWTexture3D<float4> tSharpRO, uint3 coord)
+{
+	float4 value = tSharpRO[coord];
+	
+	#if USE_POW_COMPRESSION_FOR_FINAL_ACCUM_COLOR
+		value.xyz = value.xyz * value.xyz;
+	#endif
+	#if USE_POW_COMPRESSION_FOR_FINAL_ACCUM_ALPHA
+		value.w = value.w * value.w;
+	#endif
+
+	return value;
+}
+
+float4 PackFinalFogAccumValue(float4 value, float factor)
+{
+	value.xyz *= factor;
+	value.w = value.w;
+	
+	return value;
+}
+
+float4 UnpackFinalFogAccumValue(float4 value, float factor)
+{
+	value.xyz *= factor;
+	value.w = value.w;
+	
+	return value;
+}
+
+float4 SampleFinalFogAccumPackedValue(Texture3D<float4> tSharpRO, SamplerState s, float3 uv3d)
+{
+	float4 value = tSharpRO.SampleLevel(s, uv3d, 0).rgba;
+	
+	#if USE_POW_COMPRESSION_FOR_FINAL_ACCUM_COLOR
+		value.xyz = value.xyz * value.xyz;
+	#endif
+	#if USE_POW_COMPRESSION_FOR_FINAL_ACCUM_ALPHA
+		value.w = value.w * value.w;
+	#endif
+	
+	return value;
+}
+
+#define EACH_PARTICLE_FULL_SCREEN 0
+
+#define USE_READLANES_IN_LOOP 0
+#define USE_READLANES_FOR_PART_INST 0
+#define USE_READLANES_FOR_DEPTH_GRAD 0
+#define PACK_GRADIENT 1
+#define PACK_DEPTH 1
+#define CONSTANT_DEPTH 1
+#define PACK_POS_SS 1
+
+#define CACHE_PARTS_IN_GROUPSHARED 0
+
+#define STORE_COLORS_IN_LDS 0
+#define STORE_COLORS_PACKED 1
+
+
+#if NUM_PIXELS_COVERED_X > 1
+#define STORE_DEPTH_PACKED 0
+#else
+#define STORE_DEPTH_PACKED 0 // we never pack depth for single pixel coverage
+#endif
+
+
+#if USE_DEBUG_CHECKS
+// always allow it since it is controlled by a flag
+#define ALLOW_ALPHA_ACCUM_DISCARD 1
+#define DO_DEPTH 1
+#else
+// "Production" mode
+#define ALLOW_ALPHA_ACCUM_DISCARD 1
+#define DO_DEPTH 1
+#endif
+
+#if NUM_PIXELS_COVERED_X > 1
+#define DO_IF_NUM_PIX_MORE_THAN_1(action) action
+#else
+#define DO_IF_NUM_PIX_MORE_THAN_1(action)
+#endif
+
+#if NUM_PIXELS_COVERED_X > 2
+#define DO_IF_NUM_PIX_MORE_THAN_2(action) action
+#else
+#define DO_IF_NUM_PIX_MORE_THAN_2(action)
+#endif
+
+#if NUM_PIXELS_COVERED_X > 3
+#define DO_IF_NUM_PIX_MORE_THAN_3(action) action
+#else
+#define DO_IF_NUM_PIX_MORE_THAN_3(action)
+#endif
+
+
+
+
+#define FLAG_USE_TEXTURE (1 << 0)
+#define FLAG_SMOOTH_UPSCALE (1 << 1)
+#define FLAG_SHOW_MIP (1 << 2)
+#define FLAG_RENDER_STATS (1 << 3)
+#define FLAG_ALPHA_ACCUM_DISCARD (1 << 4)
+
+#define FLAG_ALPHA_ZERO_EARLY_DISCARD (1 << 5)
+
+#define FLAG_SHOW_OCCUPANCY (1 << 6)
+#define FLAG_ADD_ALPHA_BIAS (1 << 7)
+
+#define GROUP_SAMPLE_WIDTH_HEIGHT 8
+
+
+#define FORCE_SINGLE_THREAD_MEM_READS 0
+#define NUM_WAVES_IN_GROUP 16
+
+#define NUM_WAVES_IN_GROUP_W 4
+
+#define WAFEFRONT_QUAD_W_H 8
+
+
+#if CACHE_PARTS_IN_GROUPSHARED
+
+// 4x4
+//#define NUM_THREADS_IN_GROUP (WAFEFRONT_QUAD_W_H * WAFEFRONT_QUAD_W_H * 4 * 4)  // 32 wavefronts of 8x8
+//#define GROUP_W (WAFEFRONT_QUAD_W_H * 4)
+//#define GROUP_H (WAFEFRONT_QUAD_W_H * 4)
+//#define GROUP_NUM_WAVEFRONTS_IN_W 4
+
+// 2x2
+#define NUM_THREADS_IN_GROUP (WAFEFRONT_QUAD_W_H * WAFEFRONT_QUAD_W_H * 2 * 2)  // 32 wavefronts of 8x8
+#define GROUP_W (WAFEFRONT_QUAD_W_H * NUM_PIXELS_COVERED_X * 2) // 
+#define GROUP_H (WAFEFRONT_QUAD_W_H * 2)
+#define GROUP_NUM_WAVEFRONTS_IN_W 2
+
+#else
+
+#define NUM_THREADS_IN_GROUP (WAFEFRONT_QUAD_W_H * WAFEFRONT_QUAD_W_H)  // 32 wavefronts of 8x8
+#define GROUP_W (WAFEFRONT_QUAD_W_H * (NUM_PIXELS_COVERED_X > 1 ? 2 : 1))
+#define GROUP_H (WAFEFRONT_QUAD_W_H * (NUM_PIXELS_COVERED_X > 2 ? 2 : 1))
+#define GROUP_NUM_WAVEFRONTS_IN_W 1
+
+#endif
+// match occupancy precalculations to size of oen group, which can be just one wavefront
+
+// we multiply by 2 because occupancy cells work in screen resoltuion, not shader resolution (half res)
+#define OCCUPANCY_CELL_W_NATIVE_RES (GROUP_W * 2) // is scaled by NUM_PIXELS_COVERED_X
+#define OCCUPANCY_CELL_H_NATIVE_RES (GROUP_H * 2)
+
+
+#define usePrecomputeData 1
+
+
+struct PartQuadControl
+{
+#if CONSTANT_DEPTH
+	float constantDepth; // 1
+#else
+#if PACK_DEPTH
+	uint2 packedDepthGradient; // 4th short is ignored
+#else
+	float depth00;
+	float depth10;
+	float depth01;
+#endif
+#endif
+
+#if PACK_GRADIENT
+	uint3 packedGradient; // 4
+#else
+	float2 uv00; // corner UV
+	float2 uv10; // how much it changes over x
+	float2 uv01; // how much it changes over y
+#endif
+
+#if PACK_COLOR
+	uint2 packedColor; // 6
+#endif
+
+#if !USE_GRADIENT_QUAD_CONTROL
+	//float2 uv11;
+#endif
+
+
+#if PACK_POS_SS
+	uint packedPosSsxy; // 7
+#else
+	float2  posSsxy; // position in screen space
+#endif
+
+	float scaleXAbs; // 8
+
+	// Making this structure exactly 32 B so that two of them fit nicely in 64B cache line
+
+
+#if 0
+
+
+#if !PACK_COLOR
+	uint2 pad;
+#endif
+
+#if PACK_GRADIENT
+	uint3 pad0; // 11
+#endif
+#if CONSTANT_DEPTH
+	uint2 pad_for_constant_depth_0; // 13
+#else
+#if PACK_DEPTH
+	uint pad_for_depth_0;
+#endif
+#endif
+
+#if PACK_POS_SS
+	uint pad1; // 14
+#endif
+
+	uint2 pad2; // 16
+
+
+#endif
+};
+
+struct CachedPartQuadControl
+{
+	float2 uv00; // corener UV
+	float2 uv10; // how much it changes over x
+	float2 uv01; // how much it changes over y
+
+
+#if PACK_GRADIENT
+	uint packedUv10uv01;
+#endif
+	float depth00;
+	float depth10;
+	float depth01;
+
+	uint2 packedColor;
+};
+
+struct LDSPartQuadControl
+{
+#if PACK_GRADIENT
+	uint3 packedGradient;
+
+#else
+	float2 uv00; // corener UV
+	float2 uv10; // how much it changes over x
+	float2 uv01; // how much it changes over y
+#endif
+
+#if PACK_GRADIENT
+	uint packedUv10uv01;
+#endif
+	float depth00;
+	float depth10;
+	float depth01;
+};
+
+// this struct fits in one cache line
+struct ParticleQuadOccupancy
+{
+	uint m_locationXY;
+	int m_resDropIndex;
+	uint occupancy[6];
+};
+
+// this struct fits in one cache line
+struct ParticleQuadOccupancyUlong
+{
+	uint m_locationXY;
+	int m_resDropIndex;
+	ulong m_occupancy64[3];
+};
+
+struct ParticleArraySrt
+{
+	Texture2D<float4>		m_textures[1024];
+};
+
+struct DummySrt
+{
+	ParticleArraySrt *m_pSrt;
+};
+
+struct ParticleRayTraceSrt
+{
+	RWTexture2D<float4>		m_destTexture0;
+	RWTexture2D<float4>		m_destTextureLowerRes;
+	RWTexture2D<float4>		m_destTextureHighRes;
+	Texture2D<float4>		m_spriteTexture;
+	Texture2D<float4>		m_spriteAlpha;
+	Texture2D<float>		m_depthTexture;
+	Texture2D<float4>		m_srcTextureLowerRes;
+	Texture2D<float4>		m_srcTextureHalfRes;
+
+	//Texture3D<float4>		m_shTexture0;
+	//Texture3D<float4>		m_shTexture1;
+	//Texture3D<float4>		m_shTexture2;
+	StructuredBuffer<ParticleInstance> m_particleInstances;
+	Buffer<uint>						m_particleIndicesOrig;
+	StructuredBuffer<PartQuadControl> m_particleQuadControlsRO;
+	RWStructuredBuffer<PartQuadControl> m_particleQuadControls;
+	StructuredBuffer<ParticleQuadOccupancyUlong> m_particleOccupancyRO_0;
+	RWStructuredBuffer<ParticleQuadOccupancy> m_particleOccupancy_0;
+	StructuredBuffer<ParticleQuadOccupancyUlong> m_particleOccupancyRO_1;
+	RWStructuredBuffer<ParticleQuadOccupancy> m_particleOccupancy_1;
+	StructuredBuffer<ParticleQuadOccupancyUlong> m_particleOccupancyRO_2;
+	RWStructuredBuffer<ParticleQuadOccupancy> m_particleOccupancy_2;
+	
+	//Texture2D<float4>		m_spriteNormal;
+	SamplerState			m_linearSampler;
+	uint				m_numParts;
+	uint2				m_posOffset;
+	uint				m_pad00;
+
+	float4x4				g_mVP;
+	float4x4				g_mVPInv;
+	float4					m_sh3dOrigin;
+	float4					m_sh3dTestLightDir;
+	float4					m_sh3dControls;
+
+	float3					m_altWorldOrigin;
+	float					m_alphaThreshold;
+
+	float2					m_depthParams;
+	uint					m_resolution;
+	int						m_mipLevel;
+
+	uint					m_flags;
+	float					m_time;
+	float					m_alphaResDropThreshold;
+	uint					m_gdsOffset_0;
+	
+	
+	uint					m_gdsOffset_1;
+	uint					m_gdsOffset_2;
+	uint					m_gdsOffset_3;
+	uint					m_gdsOffset_4;
+
+	float4					g_particleFogControls0;
+
+	//DummySrt				m_dummySrt;
+
+};
+
+
+struct ParticleRayTraceReadOnlySrt
+{
+	RWTexture2D<float4>		m_destTexture0;
+	RWTexture2D<float4>		m_destTextureLowerRes;
+	RWTexture2D<float4>		m_destTextureHighRes;
+	Texture2D<float4>		m_spriteTexture;
+	Texture2D<float4>		m_spriteAlpha;
+	Texture2D<float>		m_depthTexture;
+	Texture2D<float4>		m_srcTextureLowerRes;
+	Texture2D<float4>		m_srcTextureHalfRes;
+
+	//Texture3D<float4>		m_shTexture0;
+	//Texture3D<float4>		m_shTexture1;
+	//Texture3D<float4>		m_shTexture2;
+	StructuredBuffer<ParticleInstance> m_particleInstances;
+	Buffer<uint>						m_particleIndicesOrig;
+	StructuredBuffer<PartQuadControl> m_particleQuadControlsRO;
+	StructuredBuffer<PartQuadControl> m_particleQuadControls;
+	StructuredBuffer<ParticleQuadOccupancyUlong> m_particleOccupancyRO;
+	StructuredBuffer<ParticleQuadOccupancyUlong> m_particleOccupancy;
+
+	StructuredBuffer<ParticleQuadOccupancyUlong> m_particleOccupancyRO_1;
+	RWStructuredBuffer<ParticleQuadOccupancy> m_particleOccupancy_1;
+	StructuredBuffer<ParticleQuadOccupancyUlong> m_particleOccupancyRO_2;
+	RWStructuredBuffer<ParticleQuadOccupancy> m_particleOccupancy_2;
+	
+	//Texture2D<float4>		m_spriteNormal;
+	SamplerState			m_linearSampler;
+	uint				m_numParts;
+	uint2				m_posOffset;
+	uint				m_pad00;
+	float4x4				g_mVP;
+	float4x4				g_mVPInv;
+	float4					m_sh3dOrigin;
+	float4					m_sh3dTestLightDir;
+	float4					m_sh3dControls;
+	float3					m_altWorldOrigin;
+	float					m_alphaThreshold;
+	
+	float2					m_depthParams;
+	uint					m_resolution;
+	int						m_mipLevel;
+	
+	uint					m_flags;
+	float					m_time;
+	float					m_alphaResDropThreshold;
+	uint					m_gdsOffset_0;
+
+	uint					m_gdsOffset_1;
+	uint					m_gdsOffset_2;
+	uint					m_gdsOffset_3;
+	uint					m_gdsOffset_4;
+
+	float4					g_particleFogControls0;
+
+	//DummySrt				m_dummySrt;
+};
+
+
+struct ShadowCacheAngleSlice
+{
+	float3 m_sampleDirectionVs; // direction along on of the frustum planes. along this direction we will sample shadow map and cache it
+	float m_logStep;
+
+	float3 m_shadowMapReferenceVectorVs;  // vector used to calculate how far along the sampling vector we are given a view space position
+	float m_sampleDirToReferenceDirRatio; // when we are stepping along the sampling direction, how much are we moving in reference direction
+
+	float2 m_sliceVector0Vs; // slice vectors of start and end of intersection of slice and view frustum
+	float2 m_sliceVector1Vs; // these vectors have been divided by z component
+
+	
+};
+
+struct ShadowMapSetup
+{
+	float3 m_corner;
+	float3 m_x;
+	float3 m_z;
+	float3 m_y;
+};
+
+
+struct VolumetricsCreateShadowCacheSrt
+{
+	StructuredBuffer<ShadowCacheAngleSlice> m_shadowSlicesRO;
+	RWStructuredBuffer<ShadowCacheAngleSlice> m_shadowSlicesRW;
+	
+	Texture2DArray<float>		m_shadowBuffer;
+	Texture2D<float>			m_shadowMap;
+
+#if FROXELS_DEBUG_IN_SHADOW_CACHE_TEXTURE
+	RWTexture2D<float4>		m_volumetricsShadowCacheRW;
+	Texture2D<float4>		m_volumetricsShadowCacheRO;
+	RWTexture2D<float4>		m_volumetricsShadowCacheTempRW;
+	Texture2D<float4>		m_volumetricsShadowCacheTempRO;
+#else
+	RWTexture2D<float2>		m_volumetricsShadowCacheRW;
+	Texture2D<float2>		m_volumetricsShadowCacheRO;
+	RWTexture2D<float2>		m_volumetricsShadowCacheTempRW;
+	Texture2D<float2>		m_volumetricsShadowCacheTempRO;
+#endif
+
+
+	StructuredBuffer<ShadowCacheAngleSlice> m_shadowSlicesPrevRO; //
+#if FROXELS_DEBUG_IN_SHADOW_CACHE_TEXTURE
+	Texture2D<float4>		m_volumetricsShadowCachePrevRO; //
+#else
+	Texture2D<float2>		m_volumetricsShadowCachePrevRO; //
+#endif
+
+	//Texture2D<float4>		m_spriteNormal;
+	SamplerState			m_linearSampler;
+	SamplerState			m_pointSampler;
+
+	ShadowMapSetup		m_shadowSetupVs;
+	ShadowMapSetup		m_shadowSetupInvVs;
+
+	float3 m_lightDirectionVs;
+	uint m_numAngleSlices;
+
+	float4 m_lightColorIntensity;
+	
+
+	float m_startAngle;
+	float m_angleStep; // angle range / num angle slices
+	float m_endAngle;
+	uint m_lookingAtLight;
+
+
+	float3 m_samplingPlaneZVs; // +Z component of sampling plane
+	float m_logStep;
+
+	float3 m_samplingPlaneXVs; // left (+X) component of sampling plane
+	uint m_numCascadedLevels;
+
+	float m_expShadowMapMultiplier;
+	float m_expShadowMapConstant;
+	float m_shadowDistOffset;
+	float m_shadowConvergeFactor;
+
+	int m_jitterCounter;
+	float m_smartShadowOffsetStatic;
+	float m_smartShadowOffsetFroxelDepth;
+	float m_smartOffsetAngleStart;
+	float m_smartOffsetAngleRangeInv;
+	float m_sunBeyondEvaluation;
+	float m_uvSqueeze;
+	float m_pad105;
+
+
+	// previous frame sunlight data
+	
+	float3				m_samplingPlaneZVsPrev; //
+	float3				m_samplingPlaneXVsPrev; //
+	float3				m_lightDirectionVsPrev; //
+	uint				m_lookingAtLightPrev; //
+	float				m_startAnglePrev; //
+	float				m_angleStepInvPrev; //
+	
+	float				m_numAngleSlicesMinus1Prev; //
+	float3				m_camPosPrev; //
+
+
+	float4x4				m_mVP;
+	float4x4				m_mVPInv;
+
+	float4x4				m_mVInv; //
+	float4x4				m_mVInvxLastFrameV; // 
+	float4x4				m_mPLastFrame; // 
+	float4x4				m_mV; // 
+	
+
+	float4					m_viewFrustumPlanes[4];
+	float4					m_cascadedLevelDist[kMaxNumCascaded/4];
+	float					m_cascadedLevelDistFloats[kMaxNumCascaded];
+	float4					m_shadowMat[kMaxNumCascaded * 6];
+	
+	float2					m_depthParams;
+
+	// debug params
+	int						m_forcedCascadeIndex;
+
+};
+
+
+
+struct ParticleRayTraceLowResClassificationSrt
+{
+	RWTexture2D<float4>		m_destTexture0;
+	RWTexture2D<float4>		m_destTextureLowerRes;
+	RWTexture2D<float4>		m_destTextureHighRes;
+					
+	Texture2D<float>		m_depthTexture;
+	Texture2D<float4>		m_srcTextureLowerRes;
+	Texture2D<float4>		m_srcTextureHalfRes;
+
+	RWTexture3D_Fog		m_destFogFroxels;
+
+	Texture2D<float4>		m_spriteTexture;
+	Texture2D<float4>		m_spriteAlpha;
+	SamplerState			m_linearSampler;
+
+	StructuredBuffer<PartQuadControl>					m_particleQuadControlsRO; // 16
+	StructuredBuffer<ParticleQuadOccupancyUlong>		m_particleOccupancy64RO; // 16
+	RWStructuredBuffer<ParticleQuadOccupancyUlong>		m_particleOccupancy640RW; // 16
+	RWStructuredBuffer<ParticleQuadOccupancyUlong>		m_particleOccupancy641RW; // 16
+
+	float2				m_depthParams;
+	uint				m_numParts;
+	float				m_alphaThreshold;
+					
+	uint				m_resolution;
+	uint				m_flags;
+	float				m_alphaResDropThreshold;
+	uint				m_gdsOffset0;
+
+	uint				m_gdsOffset1;
+	float				m_fogOverallDensityMultiplier;
+	float				m_fogAccumResistance;
+	float				m_fogTileVolumeFactor;
+
+	float				m_particleMaxAccumDensity;
+	float				m_particleFogContribution;
+	float				m_fogGridOffset;
+	int					m_fogExposure;
+
+	float				m_densityPackFactor;
+	float				m_densityUnackFactor;
+	float2				m_pad1338;
+
+	uint3				m_fogGridSize;
+	uint				m_frameNumber;
+
+	float4x4				g_mVP;
+	float4x4				g_mVPInv;
+	float4x4				m_mLastFrameVP;
+	float4x4				m_mLastFrameVPInv;
+	float4x4				m_mP;
+	float4x4				m_mPInv;
+	
+	float2				m_fogJitterXYUnorm;
+	float				m_ndcFogJitterZ;
+	float				m_numFroxelsXInv;
+	
+	float2				m_froxelFogJitterXY;
+	uint2				m_numFroxelsXY;
+	
+	//float2				m_ndcFogJitterPrev;
+
+
+	float4				m_zoom;
+};
+
+#ifndef PROBE_DATA_ALREADY_DEFINED
+struct CompressedProbe
+{
+	float		m_colorScale;						// 4
+	int3		m_shCompressed0;					// 28
+	int4		m_shCompressed1;				
+	uint2		m_occlusion;
+
+	#if USE_EXPANDED_COMPRESSED_PROBE
+	int m_addlData;
+	#endif
+};
+
+struct SmallCompressedProbe
+{
+	float	m_colorScale;
+
+	// need m_shCompressed0.x first 8 bits
+	// need m_shCompressed0.y first 8 bits
+	// need m_shCompressed0.z first 8 bits
+	// need m_shCompressed1.w last 8 bits
+	uint m_shCompressed;
+
+	uint2	m_occlusion;
+
+#if USE_EXPANDED_COMPRESSED_PROBE
+	int m_addlData;
+#endif
+};
+
+#define kNumProbeTrees 64
+#endif
+
+
+struct HeightMapSetup
+{
+	float2 m_corner;
+	float2 m_x;
+	float2 m_z;
+	float m_bottom;
+	float m_height;
+};
+
+struct LayerFog
+{
+	float				m_fogContribution;
+	float				m_fogStart;
+	float				m_fogRange;
+	float				m_fogAddlThickness;
+	float				m_fogHorizontalStartDist;
+	float				m_fogHorizontalEndDist;
+};
+
+struct FroxelGroupDispatch
+{
+	uint m_pos;  // [9 bits] 0..511 for x + [8] 0..255 for y + [6] 0..63 for z
+};
+
+struct FogRegionSettings
+{
+	float m_fogRegionAddlDensity;
+	float m_fogRegionAmbientTintR;
+	float m_fogRegionAmbientTintG;
+	float m_fogRegionAmbientTintB;
+};
+
+struct FogSubRegionData
+{
+	uint m_numPlanes;
+	uint m_internalPlaneBits;
+	float m_fadeOutRadius;
+	float4 m_bsphere;
+	float4 m_probe;
+	FogRegionSettings m_settings;
+};
+
+struct VolumetrciSSLight
+{
+	float4 m_data0;
+	float4 m_data1;
+	#if !VOLUMETRICS_COMPRESS_SS_LIGHTS
+	float4 m_data2;
+	float4 m_data3;
+	#endif
+};
+
+// this data stores per tile data, but all data needed per froxel
+
+#if FOG_TEXTURE_DENSITY_ONLY
+struct VolumetrciSSLightFroxelData
+{
+	float4 m_data0[64];
+	float4 m_data1[64];
+
+	//VolumetrciSSLight m_lights[VOLUMETRICS_MAX_SS_LIGHTS];
+};
+struct VolumetrciSSPartFroxelData
+{
+	float4 m_data0[64];
+	float4 m_data1[64];
+	
+	//VolumetrciSSLight m_lights[VOLUMETRICS_MAX_SS_PARTS];
+};
+#else
+struct VolumetrciSSLightFroxelData
+{
+	VolumetrciSSLight m_lights[VOLUMETRICS_MAX_SS_LIGHTS];
+};
+struct VolumetrciSSPartFroxelData
+{
+	VolumetrciSSLight m_lights[VOLUMETRICS_MAX_SS_PARTS];
+};
+#endif
+
+
+struct VolumetrciSSLightTileData
+{
+	uint m_intersectionMask;
+	uint m_lightTypeMask;
+};
+
+struct ExtraVolumetrciSSLightTileData
+{
+	float m_minZ;
+	float m_maxZ;
+	ulong m_lightOccupancyBits;
+};
+// these are the flags set in light source description. don't confuse them with flags we store per tile when we sort tiles for dispatch indirect
+#define NEW_VOL_LIGHT_FLAG_USE_DEPTH_VARIANCE_DARKENING (1 << 5)
+#define NEW_VOL_LIGHT_FLAG_USE_EXPANDED_FROXEL_SAMPLING (1 << 6)
+#define NEW_VOL_LIGHT_FLAG_USE_DEPTH_BUFFER_VARIANCE_SHADOWING (1 << 7)
+
+struct NewVolumetricsLightDesc
+{
+	float m_posWs[3];
+	float m_coneAngle;
+
+	float m_depthShift;
+	float3 m_unitColor;
+	
+	// not used. should be?
+	//float m_intensity;
+
+	float m_penumbraAnglePercent;
+	float m_penumbraIntensity;
+	float m_penumbraFalloff;
+	uint m_localShadowTextureIdx;
+
+	uint m_flags;
+	float m_startDistance;
+	float m_startDistanceRange;
+	float m_backIntensityMultiplier; // intensity when looking away from light
+
+	float4 m_altWorldToLightMatrix[3];
+
+	float m_lightDarkeningDepthVarMaxProb;
+	float m_lightDarkeningDepthVarProbBlendRange;
+	float m_lightDarkeningDepthMaxVar;
+	float m_lightDarkeningDepthVarBlendRange;
+
+	float m_expandedFroxelSize;
+	float m_lightShadowGammaCenter;
+	float m_lightShadowGammaPower;
+	float m_pad1446;
+
+	// this data is only accessed on cpu, keep it at the end of the struct to not thrash the gpu caches
+	float m_lightDilateDistFar;
+	float m_lightDilateFarPercent;
+	float m_lightDilateDistClose;
+	float m_lightDilateClosePercent;
+};
+
+struct VolumetricFogVolume
+{
+	float3 m_viewPos;
+	float m_radius;
+	float3 m_color;
+	float m_opacity;
+	float m_density;
+	float3 m_pad;
+};
+
+struct LoggedProbeData
+{
+	float4 m_data0;
+	float4 m_data1;
+};
+
+
+struct LoggedProbeMasterData
+{
+	float3 m_posWs;
+	float m_posValid;
+
+	float m_r;
+	float3 m_pad;
+};
+
+
+
+
+// general srt used for most fog calculation shaders
+struct VolumetricsFogSrt
+{
+	Texture3D_Fog		m_srcFogFroxels;
+	Texture3D_Fog		m_srcFogFroxelsPrev;
+	//Texture3D<float4>		m_srcFogAccumFroxels0;
+
+	RWTexture3D_Fog		m_destFogFroxels;
+	RWTexture3D_Fog		m_destFogFroxelsPrev;
+	//RWTexture3D<float4>		m_destFogAccumFroxels0;
+	RWTexture3D<float4>		m_destFogFroxelsTemp;
+	RWTexture3D<float4>		m_destFogFroxelsDebug;
+	RWTexture3D<float4>		m_destFogFroxelsDebug1;
+	
+	Texture3D<float4>		m_srcProbeCacheFroxels;
+	Texture3D<float4>		m_srcProbeCacheFroxelsPrev;
+	
+	RWTexture3D<float4>		m_destProbeCacheFroxels;
+	RWTexture3D<float4>		m_destProbeCacheFroxelsPrev;
+	
+	Texture2D<float>		m_srcShadowInfoSurface;
+	Texture2D<float>		m_depthTexture;
+	Texture2D<float>		m_depthTextureHalfRes;
+	Texture2D<float2>		m_primaryDepthVarianceHalfRes;
+	Texture2D<float4>		m_skyTexture;
+
+	
+	
+	Texture3D<float4>		m_srcPropertiesFroxels;
+	#if SPLIT_FROXEL_TEXTURES
+	Texture3D<float4>		m_srcPropertiesFroxelsPrev_unused;
+	#else
+	Texture3D<float4>		m_srcPropertiesFroxelsPrev;
+	#endif
+
+	RWTexture3D<float4>		m_destPropertiesFroxels;
+	#if SPLIT_FROXEL_TEXTURES
+	RWTexture3D<float4>		m_destPropertiesFroxelsPrev_unused;
+	#else
+	RWTexture3D<float4>		m_destPropertiesFroxelsPrev;
+	#endif
+
+	#if SPLIT_FROXEL_TEXTURES
+	#if FROXELS_USE_WATER
+
+		Texture3D<float3>		m_srcMiscFroxels;
+		Texture3D<float3>		m_srcMiscFroxelsPrev;
+
+		RWTexture3D<float3>		m_destMiscFroxels;
+		RWTexture3D<float3>		m_destMiscFroxelsPrev;
+	#else
+		Texture3D<float2>		m_srcMiscFroxels;
+		Texture3D<float2>		m_srcMiscFroxelsPrev;
+
+		RWTexture3D<float2>		m_destMiscFroxels;
+		RWTexture3D<float2>		m_destMiscFroxelsPrev;
+	#endif
+	
+
+	#else
+	Texture3D<float>		m_srcMiscFroxels;
+	Texture3D<float>		m_srcMiscFroxelsPrev_Invalid;
+
+	RWTexture3D<float>		m_destMiscFroxels;
+	RWTexture3D<float>		m_destMiscFroxelsPrev_Invalid;
+	#endif
+
+
+
+	//Texture2D<uint2>	m_srcVolumetricsScreenSpaceInfoCombined;
+	VolumetricScreenSpaceInfo		m_srcVolumetricsScreenSpaceInfo;
+	VolumetricScreenSpaceInfo		m_srcVolumetricsScreenSpaceInfoPrevFrame;
+	Texture2D<uint>		m_srcVolumetricsScreenSpaceInfoOrig;
+	Texture2D<uint>		m_srcVolumetricsScreenSpaceInfoOrigPrev;
+	Texture2D<uint2>		m_srcVolumetricsReprojectedScreenSpaceInfo;
+	Texture2DArray<float2>		m_srcVolumetricsDepthInfo;
+
+	//RWTexture2D<uint2>		m_destVolumetricsScreenSpaceInfoCombined;
+	RWVolumetricScreenSpaceInfo		m_destVolumetricsScreenSpaceInfo;
+	RWVolumetricScreenSpaceInfo		m_destVolumetricsScreenSpaceInfoPrevFrame;
+	RWTexture2D<uint>		m_destVolumetricsScreenSpaceInfoOrig;
+	RWTexture2D<uint>		m_destVolumetricsScreenSpaceInfoOrigPrev;
+	RWTexture2D<uint2>		m_destVolumetricsReprojectedScreenSpaceInfo;
+	RWTexture2DArray<float2>		m_destVolumetricsDepthInfo;
+	Texture2DArray<float2>		m_srcVolumetricsDepthInfoPrev;
+	RWTexture2DArray<float>		m_destShadowSpotExpArray;
+	RWTexture2DArray<float2>	m_destShadowSpotDepthVarArray;
+
+	
+	SamplerState			m_linearSampler;
+	SamplerState			m_pointSampler;
+	SamplerComparisonState	m_shadowSampler;
+
+	StructuredBuffer<ShadowCacheAngleSlice> m_shadowSlicesRO;
+
+#if FROXELS_DEBUG_IN_SHADOW_CACHE_TEXTURE
+	Texture2D<float4>		m_volumetricsShadowCacheRO;
+#else
+	Texture2D<float2>		m_volumetricsShadowCacheRO;
+#endif
+
+	LocalShadowTable*			m_pLocalShadowTextures;
+	uint2						m_pad267;
+	Texture2DArray<float>		m_shadowSpotExpArray;
+	Texture2DArray<float2>		m_shadowSpotDepthVarArray;
+
+	Texture3D<float4>		m_noiseTexture;
+	Texture3D<float4>		m_skyNoiseTexture;
+	Texture3D<float4>		m_skyColorNoiseTexture;
+
+	StructuredBuffer<ShadowCacheAngleSlice> m_shadowSlicesPrevRO;
+#if FROXELS_DEBUG_IN_SHADOW_CACHE_TEXTURE
+	Texture2D<float4>		m_volumetricsShadowCachePrevRO;
+#else
+	Texture2D<float2>		m_volumetricsShadowCachePrevRO;
+#endif
+
+	Texture3D<float3>		m_causticsTexture;
+
+	
+	StructuredBuffer<FroxelGroupDispatch>	m_srcDispatchList0;
+	RWStructuredBuffer<FroxelGroupDispatch>	m_destDispatchList0;
+	StructuredBuffer<FroxelGroupDispatch>	m_srcDispatchList1;
+	RWStructuredBuffer<FroxelGroupDispatch>	m_destDispatchList1;
+	StructuredBuffer<FroxelGroupDispatch>	m_srcDispatchList2;
+	RWStructuredBuffer<FroxelGroupDispatch>	m_destDispatchList2;
+	StructuredBuffer<FroxelGroupDispatch>	m_srcDispatchList3;
+	RWStructuredBuffer<FroxelGroupDispatch>	m_destDispatchList3;
+	StructuredBuffer<FroxelGroupDispatch>	m_srcDispatchList4;
+	RWStructuredBuffer<FroxelGroupDispatch>	m_destDispatchList4;
+	StructuredBuffer<FroxelGroupDispatch>	m_srcDispatchList5;
+	RWStructuredBuffer<FroxelGroupDispatch>	m_destDispatchList5;
+	StructuredBuffer<FroxelGroupDispatch>	m_srcDispatchList6;
+	RWStructuredBuffer<FroxelGroupDispatch>	m_destDispatchList6;
+	StructuredBuffer<FroxelGroupDispatch>	m_srcDispatchList7_PointOnlyNoShadow;
+	RWStructuredBuffer<FroxelGroupDispatch>	m_destDispatchList7_PointOnlyNoShadow;
+	StructuredBuffer<FroxelGroupDispatch>	m_srcDispatchList8_PointSpotNoShadow;
+	RWStructuredBuffer<FroxelGroupDispatch>	m_destDispatchList8_PointSpotNoShadow;
+	StructuredBuffer<FroxelGroupDispatch>	m_srcDispatchList9_PointSpotWithShadow;
+	RWStructuredBuffer<FroxelGroupDispatch>	m_destDispatchList9_PointSpotWithShadow;
+
+
+
+	StructuredBuffer<FroxelGroupDispatch>	m_srcDispatchListEarly0;
+	RWStructuredBuffer<FroxelGroupDispatch>	m_destDispatchListEarly0;
+	StructuredBuffer<FroxelGroupDispatch>	m_srcDispatchListEarly1;
+	RWStructuredBuffer<FroxelGroupDispatch>	m_destDispatchListEarly1;
+	StructuredBuffer<FroxelGroupDispatch>	m_srcDispatchListEarly2_NoLights;
+	RWStructuredBuffer<FroxelGroupDispatch>	m_destDispatchListEarly2_NoLights;
+	
+	StructuredBuffer<FroxelGroupDispatch>	m_srcDispatchListBlur;
+	RWStructuredBuffer<FroxelGroupDispatch>	m_destDispatchListBlur;
+	
+	StructuredBuffer<FroxelGroupDispatch>	m_srcDispatchLists[FROXEL_NUM_LISTS];
+
+	StructuredBuffer<uint2>				m_probeNodesRO;
+	StructuredBuffer<float4>			m_probePosRO;
+	StructuredBuffer<CompressedProbe>	m_probesRO;
+	StructuredBuffer<SmallCompressedProbe>	m_probesSmallRO;
+	StructuredBuffer<float4>			m_probePosROFloats;
+	
+
+	StructuredBuffer<float4>			m_fogPlanes;
+	StructuredBuffer<FogSubRegionData>				m_fogSubRegionData;
+
+
+	Buffer<uint>						m_hTileRO;
+	RWStructuredBuffer<LoggedProbeData>	m_debugProbeData;
+	RWStructuredBuffer<LoggedProbeMasterData>	m_debugProbeMasterData;
+	RWStructuredBuffer<ParticleFeedBackData> m_particleFeedBackData;
+	RWStructuredBuffer<ParticleFeedBackHeaderData> m_particleFeedBackHeaderData;
+
+	//RWTexture3D<float4>					m_rwt_probeShs[SH9_NUM_TEXTURES];
+	//RWTexture3D<float>					m_rwt_probeScale;
+
+	Texture2D<float>		m_shadowMap;
+
+	Texture2D<float2>		m_heightMaps[4];
+
+
+	VolumetricsCreateShadowCacheSrt *m_volumetricsSrt;
+	ParticleComputeSrt		*m_pVolumetricLightsComputeSrt;
+
+	StructuredBuffer<NewVolumetricsLightDesc> m_newVolLightDescRO;
+
+	RWStructuredBuffer<VolumetrciSSLightTileData>	m_volumetricSSLightsTileBuffer;
+	RWStructuredBuffer<VolumetrciSSLightFroxelData>	m_volumetricSSLightsFroxelBuffer;
+
+	RWStructuredBuffer<ExtraVolumetrciSSLightTileData>	m_volumetricSSLightsTileBufferExtra;
+	StructuredBuffer<ExtraVolumetrciSSLightTileData>	m_volumetricSSLightsTileBufferExtraRO;
+
+	RWTexture3D<float>		m_triangleTexture;
+	RWTexture3D<float>		m_triangleTextures[VOLUMETRICS_MAX_CONE_SLICES];
+	RWTexture2D<float>		m_circleTexture;
+	
+
+	StructuredBuffer<VolumetrciSSLightTileData>	m_volumetricSSLightsTileBufferRO;
+	StructuredBuffer<VolumetrciSSLightFroxelData>	m_volumetricSSLightsFroxelBufferRO;
+	Texture3D<float>		m_triangleTextureRO;
+	Texture3D<float>		m_triangleTexturesRO[VOLUMETRICS_MAX_CONE_SLICES];
+	Texture2D<float>		m_circleTextureRO;
+	
+	StructuredBuffer<VolumetricFogVolume> m_volPartsRO;
+	
+	RWStructuredBuffer<VolumetrciSSLightTileData>	m_volumetricSSPartsTileBuffer;
+	RWStructuredBuffer<VolumetrciSSPartFroxelData>	m_volumetricSSPartsFroxelBuffer;
+
+	RWStructuredBuffer<ExtraVolumetrciSSLightTileData>	m_volumetricSSPartsTileBufferExtra;
+	StructuredBuffer<ExtraVolumetrciSSLightTileData>	m_volumetricSSPartsTileBufferExtraRO;
+
+	StructuredBuffer<VolumetrciSSLightTileData>		m_volumetricSSPartsTileBufferRO;
+	StructuredBuffer<VolumetrciSSPartFroxelData>	m_volumetricSSPartsFroxelBufferRO;
+
+
+	RWTexture2D<float>		m_circlePart0Texture;
+	Texture2D<float>		m_circlePart0TextureRO;
+
+	RWTexture2D<float>		m_circlePart1Texture;
+	Texture2D<float>		m_circlePart1TextureRO;
+
+	float4x4				m_mVP;
+	float4x4				m_mVPInv;
+	float4x4				m_mAltVPInv;
+	float4x4				m_mV;
+	float4x4				m_mVInv;
+
+	float4x4				m_mLastFrameVP;
+
+	float4x4				m_mLastFrameP;
+	float4x4				m_mLastFrameVInv;
+
+	float2					m_lastFrameDepthParams;
+	float					m_sunFogStartDistance;
+	float					m_sunFogUnderWaterStartDistance;
+
+	float4x4				m_mVInvxLastFrameV;
+	float4x4				m_mLastFrameV;
+	
+	float4					m_viewSpaceXyParams;
+	
+	uint3				m_fogGridSize;
+	float				m_zoomX;
+
+	uint3				m_probeCacheGridSize;
+	float				m_probeCacheCellRealToNdcScale;
+
+	float				m_probeCacheZScale;
+	float				m_fogGridOffset;
+	float				m_fogStartDistance;
+	float				m_fogGridOffsetPrev;
+
+	float				m_minDepth;
+	int					m_fogDensityExposure;
+	int					m_fogDensityExposurePrev;
+	int					m_numNeighborSteps;
+
+	float3				m_altWorldPos;
+	float				m_ndcFogJitterZ05;
+
+	float2				m_fogJitterXYUnorm;
+	float				m_ndcFogJitterZ;
+	float				m_numFroxelsXInv;
+	float2				m_froxelFogJitterXY;
+	uint2				m_numFroxelsXY;
+	
+
+	float2				m_depthParams;
+	uint				m_froxelSizeU;
+	uint				m_numFroxelsGroupsInSlice;
+
+	float2				m_numFroxelsXYPrevF;
+	uint2				m_pad465;
+
+
+	// used in lighting preprocessing
+	uint				m_numVolLights;
+	uint				m_screenWU;
+	float				m_lastCascadeDist;
+	float				m_pad441;
+
+	float3				m_topLeftCornerVS;
+	float2				m_tileSizeVS;
+	uint				m_numPartVolumes;
+	float				m_volumeDensityMultiplier;
+	float3				m_volumeColor;
+	float				m_volumeDensityOpacityBlendinStart;
+	float				m_volumeDensityOpacityBlendinFull;
+
+
+	float				m_noiseScale;
+	float3				m_noiseOffset;
+
+	
+	float				m_noiseStartDist;
+	float				m_noiseEndDist;
+	uint				m_noiseApplyToBaseDensity;
+	float				m_noiseDetailRelativeScale;
+	float				m_noiseDetailOpacityStart;
+	float				m_noiseDetailOpacityMult;
+	float2				m_pad691;
+
+	float				m_noiseBlendScaleRangeMin;
+	float				m_noiseBlendScaleRangeMax;
+	float				m_noiseBlendScaleMin;
+	float				m_skyFogNoiseInfluenceThreshold;
+
+
+	// Sky fog noise
+	float				m_skyNoiseScale;
+	float3				m_skyNoiseOffset;
+
+	float				m_skyNoiseBlendScaleRangeMin;
+	float				m_skyNoiseBlendScaleRangeMax;
+	float				m_skyNoiseBlendScaleMin;
+	float				m_pad415;
+	// end of Sky fog noise
+
+	// Layer-0 fog noise
+	float				m_layer0NoiseScale;
+	float3				m_layer0NoiseOffset;
+
+	float				m_layer0NoiseBlendScaleRangeMin;
+	float				m_layer0NoiseBlendScaleRangeMax;
+	float				m_layer0NoiseBlendScaleMin;
+	float				m_pad333;
+	// end of Layer-0 fog noise
+
+	// Sky color fog noise
+	float				m_skyColorNoiseScale;
+	float3				m_skyColorNoiseOffset;
+
+	float				m_skyColorNoiseBlendScaleRangeMin;
+	float				m_skyColorNoiseBlendScaleRangeMax;
+	float				m_skyColorNoiseBlendScaleMin;
+	float				m_skyColorNoiseStartDist;
+	float				m_skyColorNoiseEndDist;
+	uint				m_skyColorNoiseMaxSamples;
+	float				m_skyColorNoiseSamplesPerM;
+	float				m_pad523;
+
+	// end of Sky color fog noise
+
+	// listen mode noise
+	float				m_lmNoiseScale;
+	float3				m_lmNoiseOffset;
+
+	float				m_lmNoiseBlendScaleRangeMin;
+	float				m_lmNoiseBlendScaleRangeMax;
+	float				m_lmNoiseBlendScaleMin;
+	float				m_pad1395;
+
+	// run-time light data
+
+	// triangle (should not be needed at the end)
+	float m_triangleFalloffPower;
+	float m_triangleConePower;
+	float m_triangleTooCloseDist;
+	float m_triangleFalloffStart;
+	uint m_trianglezCoordOffset;
+
+	// circle
+	float m_circleFalloffPower;
+	float m_circleFalloffStart;
+	float m_circleFalloffEnd;
+
+	float m_circlePart0FalloffPower;
+	float m_circlePart0FalloffStart;
+	float m_circlePart0FalloffEnd;
+	
+	float m_circlePart1FalloffPower;
+	float m_circlePart1FalloffStart;
+	float m_circlePart1FalloffEnd;
+
+	float m_reverseShadow;
+	float m_pad320;
+
+	// data
+    float m_maxSliceConeIntensity;
+    float m_penumbraAnglePercent;
+	float m_penumbraIntensity;
+	float m_penumbraFalloffRange;
+	
+	float m_coreIntensityThreshold;
+	float m_coreIntensityPower;
+	float m_rtBehingGeoVarianceStart;
+	float m_rtBehingGeoVarianceRange;
+
+	float m_intensityFogStartDistance;
+	float3 m_pad497;
+
+	// end of run-time data
+
+	float m_runtimeConvergeDif0;
+	float m_runtimeConvergeDif1;
+	float m_runtimeConvergeScale0;
+	float m_runtimeConvergeScale1;
+
+	float m_runtimeConvergeVal0;
+	float m_runtimeConvergeVal1;
+	float m_runtimeTemporalOff;
+	float m_runtimeTemporalMaxConvRate;
+
+
+
+	int					m_runTimeFogExposure;
+	int					m_runTimeFogExposurePrev;
+	int					m_fogExposure;
+	int					m_fogExposurePrev;
+
+	float				m_densityPackFactor;
+	float				m_densityUnpackFactor;
+	float				m_densityUnpackFactorPrev;
+	float				m_densityPackFactorPrev;
+
+
+	float				m_runtimeGridOffset;
+	float				m_runtimeNeighborJitterFactor;
+	float				m_runTimeBlur;
+	uint				m_probeSampleInAccumulate;
+
+	float				m_thickFogCheckStart;
+	float				m_thickFogCheckRange;
+	float				m_thickFogRTContribution;
+	float				m_thickFogCheckEndDist;
+
+
+	// sun light data
+
+	float3				m_samplingPlaneZVs;
+	float3				m_samplingPlaneXVs;
+	float3				m_lightDirectionVs;
+	float3				m_lightColorIntensity;
+
+	uint				m_lookingAtLight;
+	float				m_startAngle;
+	float				m_angleStepInv;
+	float				m_numAngleSlicesMinus1;
+
+	float				m_expShadowMapMultiplier;
+	float				m_expShadowMapConstant;
+	float2				m_scatterParams;
+
+	float				m_sunConvergeDif;
+	float				m_sunConvergeScale;
+	float				m_sunMaxConvRate;
+	float				m_sunBeyondEvaluation;
+
+	float				m_shadowMaxDistAlongLightDir;
+	float				m_nearBrightnessDistSqr;
+	float				m_nearBrightness;
+	float				m_nearBrightnessHeightVs;
+		
+	float				m_sunConeCos;
+	float				m_sunAngleClampStart;
+	float				m_sunAngleClampPower;
+	float				m_nearBrightnessDist;
+	
+
+
+	float				m_sunEndDist;
+	float				m_sunHeightBlendOffset;
+	float				m_sunHeightBlendRangeInv;
+	float				m_nearBrightnessAdd;
+
+
+	float				m_sunLightContribution;
+	float				m_sunAddlDensity;
+	float				m_fogOverallDensityMultiplier; // applied after sun
+	float				m_revealedDataConvergeFactor;
+
+	float				m_sunWashOutFactor;
+	float				m_sunWashOutClamp;
+	float				m_underWaterNearBrightness;
+	float				m_underWaterRtPostMultiplier;
+
+	uint				m_numSunLightSteps;
+	float3				m_adjustedLightDirectionVs;
+
+	float3				m_lightDirectionVsForAccumulate;
+	float				m_pad650;
+
+	float				m_addlConvergence;
+	uint				m_densityConvergeGuarantee;
+	float2				m_padd446;
+
+
+	// previous frame sunlight data
+	
+	float3				m_samplingPlaneZVsPrev;
+	float3				m_samplingPlaneXVsPrev;
+	float3				m_lightDirectionVsPrev;
+	uint				m_lookingAtLightPrev;
+	float				m_startAnglePrev;
+	float				m_angleStepInvPrev;
+	
+	float				m_numAngleSlicesMinus1Prev;
+	float3				m_camPosPrev;
+
+	float				m_probeExtractMin;
+	float				m_probeExtractRange;
+	float				m_probeExtractThreshold;
+	float				m_pad1063;
+	
+	float				m_sunBehindGeoDepthVarianceMultStart;
+	float				m_sunBehindGeoDepthVarianceMultEnd;
+	float				m_sunBehindGeoDepthVarianceStaticOffsetStart;
+	float				m_sunBehindGeoDepthVarianceStaticOffsetEnd;
+	float				m_sunBehindGeoDepthVarianceFroxelOffset;
+	float3 m_pad1600;
+
+	// under water data
+	float3 m_underWaterAmbientTint;
+	float m_pad1493;
+
+	float				m_underWaterDensity;
+	float				m_startHeight;
+	float				m_waterDensityBlendInRange; // accessed in accumulation too
+	float				m_waterOffset;
+
+	// accessed in accumulation
+	float3				m_fogColor;
+	float3				m_absorbCoefficients;
+	float				m_absorbHeightIntensity;
+	float				m_absorbMaxHeight;
+	float				m_absorbDistanceIntensity;
+	float				m_absorbMaxDist;
+	float				m_underWaterSunIntensity;
+	float				m_underWaterHeightShift; // becomes 1.0 or -1.0 for one frame and then 0
+
+
+	float				m_causticsZ;
+	float				m_rtLightFogStartDistance;
+	float3				m_rtAbsorbCoefficients;
+	float				m_rtAbsorbMaxDist;
+	float2				m_pad471;
+
+	// accumulation pass data
+	float				m_extinctionCoeffcient;
+	float				m_guaranteedBgVisible;
+	float				m_accumulationGamma;
+	float				m_accumulationGammaCurve;
+
+	float3				m_overallFogTint;
+	float				m_renderStartDistance;
+
+	float				m_fakeLightDensity;
+	float				m_accumFactor; // for compression
+	float				m_nearFogCurve;
+	float				m_nearFogScale;
+
+	float3				m_causticsSamplingZWs;
+	float3				m_causticsSamplingXWs;
+	float2				m_causticsCamPosXZ;
+
+	float				m_causticsRange;
+	float				m_causticsStepsPer1m;
+	float				m_causticsSunMult;
+	float				m_causticsRtMult;
+
+	float				m_regionDensityMidPoint;
+	float3				m_pad1720;
+
+	// stuff that used to be in earlier passes but now is in accumulation for modulate fogs
+	float				m_rtPostMultiplier; // is 0 or 1
+	float				m_ambientFogStartDistance;
+	float				m_underWaterAmbientFogStartDistance;
+	float				m_thickFogAmbientStartDistance;
+
+	// end accumulation pass data
+
+	// runtime light data
+	float				m_spotLightExpShadowConstant;
+	float				m_spotLightExpShadowRangeInv;
+	float				m_spotLightShadowMaxSteps;
+	float				m_minStartDistanceRange;
+
+	float				m_spotShadowOffsetAlongDir;
+	uint				m_numLocalShadows;
+	float2				m_pad704;
+
+
+	float				m_fogInitialDensity;
+	float				m_fogInitialDensityLimitHeight;
+	float				m_skyFogVerticalStartDist;
+	float				m_pad730;
+	
+
+	float				m_fogHeightStart;
+	float				m_fogHeightRange;
+	float				m_cameraMotion; // m_fogCameraHeightExp;
+	float				m_cameraPosY;
+
+	float				m_heightfogContribution;
+	float3				m_ambientLightTint;
+	float3				m_skyFogAmbientLightTint;
+	float				m_skyFogHorizontalEndDist;
+
+	float				m_skyFogContribution;
+	float				m_skyFogStart;
+	float				m_skyFogRange;
+	float				m_skyFogAddlThickness;
+
+	float				m_skyFogHorizontalStartDist;
+	float3				m_thickFogAmbientLightTint;
+
+	LayerFog			m_layerFog0; // 6 floats
+	uint				m_frameNumber;
+	float				m_fogSwitchToRegularShadowMapDist;
+	
+	ShadowMapSetup		m_shadowSetup;
+	HeightMapSetup		m_heightMapSetups[4];
+	
+	
+	float3				m_heightMapCenter;
+	float3				m_heightMapSize;
+	float				m_particleHeightMapFogFresnel;
+	float				m_particleHeightMapFogFresnelEndDist;
+	
+	float				m_particleHeightMapFogOffset;
+	float				m_heightMapExpRange;
+	float				m_heightMapExpConstant;
+	int					m_numHeightMaps;
+	float				m_particleHeightMapThickness;
+	float				m_particleHeightMapFogContribution;
+	float				m_particleHeightMapEndFadeDist;
+	float				m_particleHeightMapEndFadeRange;
+
+	int					m_numSubRegions;
+	int					m_pad681;
+	float3				m_camDir;
+	float3				m_camPos;
+
+	float3				m_leftPlaneNdc;
+	float3				m_btmPlaneNdc;
+	float3				m_rightPlaneNdc;
+	float3				m_topPlaneNdc;
+
+	uint				m_gdsOffset_0;
+	uint				m_gdsOffset_1;
+	uint				m_gdsOffset_2;
+	uint				m_gdsOffset_3;
+
+	uint				m_gdsOffset_4;
+	uint				m_gdsOffset_5;
+	uint				m_gdsOffset_6;
+	uint				m_gdsOffset_7;
+
+	uint				m_gdsOffset_8;
+	uint				m_gdsOffset_9;
+	uint				m_gdsOffset_10;
+	uint				m_gdsOffset_11;
+
+	uint				m_gdsOffset_blur;
+	uint3				m_pad799;
+
+	uint				m_jitterAmbientSampling;
+	uint3				m_pad1200;
+
+	float4				m_debugControls;
+	float4				m_debugControls2;
+	int4				m_debugProbes0;
+	float4				m_debugprobes1;
+
+	float				m_fixedDepth;
+	float3				m_pad575;
+
+
+	float				m_skyMipTextureBlendInDist;
+	float				m_skyMipNormalizationFactor;
+	float2				m_pad493;
+
+
+	uint								m_numNodeTrees;
+	float								m_maxBlurRadius;
+	float								m_ambientScale;
+	float								m_skyAngleOffset;
+
+	uint								m_rootIndices[kNumProbeTrees];
+
+	float4								m_centerPosLs[kNumProbeTrees];
+	float4								m_edgeLengthLs[kNumProbeTrees];
+	float4								m_wsToLsMatrices0[kNumProbeTrees];
+	float4								m_wsToLsMatrices1[kNumProbeTrees];
+	float4								m_wsToLsMatrices2[kNumProbeTrees];
+	float4								m_lsToWorldMatrices0[kNumProbeTrees];
+	float4								m_lsToWorldMatrices1[kNumProbeTrees];
+	float4								m_lsToWorldMatrices2[kNumProbeTrees];
+
+	CompressedProbe					m_defaultProbe;
+	SmallCompressedProbe			m_defaultProbeSmall;
+	uint							m_numProbeSampleSteps;
+	uint2							m_pad626;
+
+	uint							m_numLod0Trees;
+	float							m_probeOcclusionDiscardDistScalar;
+	float							m_probeCloseToRegionFactor;
+	float							m_probeDepthOffset;
+
+	float							m_floorDiscardTestXZRange;
+	float							m_floorDiscardTestHeightOffset;
+	float							m_ceilingDiscardTestXZRange;
+	float							m_ceilingDiscardTestHeightOffset;
+
+	float							m_probeOcclusionDiscardDistVector;
+	float							m_probeOcclusionDepthVarianceThreshold;
+	float							m_probeOcclusionDepthVarianceOffset;
+	float							m_probeColorVarianceThreshold;
+	
+
+	float3							m_defaultProbeTint;
+	float							m_darkBias;
+
+	float							m_occlusionGridCellSize;
+	float3							m_pad1479;
+};
+
+struct VolumetricsFogSrtWrap
+{
+	VolumetricsFogSrt *pSrt;
+	uint offset;
+};
+
+struct RayTraceParticleCompositeSrt
+{
+	RWTexture2D<float4>		dst_color;
+	Texture2D<float4>		src_color;
+	SamplerState			ssampler;
+	float4					params;
+};
+
+struct VolumetricsApplyFroxelsToDepthSrt
+{
+	RWTexture2D<float4>		m_destTexture0;
+	
+	Texture2D<float>		m_opaqueDepthTexture;
+	
+	Texture3D<float4>		m_srcFogFroxelsTemp;
+	Texture2D<float4>		m_skyTexture;
+	Texture2D<uint>			m_opaquePlusAlphaStencil;
+	Texture2D<float>		m_opaqueAlphaDepthTexture;
+	Texture2D<float2>		m_srcVolumetricsDepthInfo;
+
+	Texture2D<float>		m_reflectionDepthTexture;
+	
+
+	Texture3D<float3>		m_causticsTexture;
+
+	SamplerState			m_linearSampler;
+
+	SamplerState			m_pointSampler;
+
+	float2				m_screenSizeInv;
+	float2				m_depthParams;
+
+	float				m_fogOpacityFactorOverSky;
+	float				m_fogGridOffset;
+	float				m_accumFactor;
+	float				m_causticsZ;
+
+	float					m_startHeight;
+	float3					m_absorbSpeed;
+	float					m_bgAbsorbHeightIntensity;
+	float					m_bgAbsorbMaxHeight;
+	float					m_bgAbsorbDistanceIntensity;
+	float					m_bgAbsorbMaxDist;
+	float					m_fogCompositingDepthOffset;
+	float3					m_pad321;
+
+	float4				m_viewSpaceXyParams;
+
+	float4x4			m_mVInv;
+	float4x4			m_mVP;
+	
+
+	float m_horizonBlendHeight;
+	float m_horizonBlendHardness;
+	float m_horizonBlendTightness;
+	float m_horizonBlendTightnessRange;
+	
+	float3 m_horizonBlendColor;
+	float m_skyAngleOffset;
+
+	float m_horizonBlend2Height;
+	float m_horizonBlend2Hardness;
+	float m_horizonBlend2Tightness;
+	float m_horizonBlend2TightnessRange;
+	
+	float3 m_horizonBlend2Color;
+	float m_horizonBlend2SkyFactor;
+
+	float				m_horizonBlend2Intensity;
+	float				m_distFogStart;
+	float				m_distFogRange;
+	float				m_distFogGamma;
+	float3				m_distFogTint;
+	float				m_fixedDepth;
+
+	float				m_contrastMin;
+	float				m_contrastMax;
+	float				m_contrastStart;
+	float				m_contrastRange;
+
+	float4				g_reflectionSurfacePlane;
+	float4				g_worldReflectionMat_0;
+	float4				g_worldReflectionMat_1;
+	float4				g_worldReflectionMat_3;
+	float4				g_reflectionScreenViewParameter;
+	float4				g_reflectionScreenViewParameter1;
+	float4				g_reflectionViewWorldParameters[3];
+	float3				m_camPosWS;
+	float				m_maxDist;
+	
+	float				m_waterReflectionHackApplyStart;
+	float				m_waterReflectionHackApplyRangeInv;
+	float				m_waterReflectionHackApplyAmount;
+	float				m_waterReflectionHackMinBrightness;
+
+	uint				m_debugIsolateOverGeo;
+	uint				m_debugIsolateOverSky;
+};
+
+struct VolumetricsCompositeSrt
+{
+	RWTexture2D<float4>		m_destTexture;
+	Texture2D<float4>		m_destTextureRO;
+	Texture2D<float4>		m_srcTexture;
+	SamplerState			m_sampler;
+	float4					m_params;
+};
+
+
+struct VolumetricsColorHeightMapSrt
+{
+	//RWTexture2D<float4>		m_destTexture;
+	RWTexture2D<float2>		m_destTexture;
+	Texture2D<float>		m_srcTexture;
+	SamplerState		m_sampler;
+
+	float4				m_depthParams;
+	float2				m_params;
+	float				m_expRange;
+	float				m_expConstant;
+};
+
+
+struct Particle2D
+{
+	float2 m_x;
+	float2 m_pos;
+	float m_size;
+};
+
+
+#if !usePrecomputeData
+groupshared float2	l_sharedScreenUVs[256 * 4];
+#endif
+
+groupshared int		l_sharedIntersectRes[64];
+
+struct CachedParticleInst
+{
+	LDSPartQuadControl ctrl;
+};
+
+
+#if CACHE_PARTS_IN_GROUPSHARED
+groupshared CachedParticleInst l_sharedCachedParticleInst[256];
+#endif
+
+
+groupshared float		l_shared[64 * 64];
+groupshared float4		l_sharedPixels[64 * 64];
+
+
+void ProcessParticle(Particle2D p, int iPart, int iPixel, uint2 rayPos, ParticleRayTraceSrt *pSrt)
+{
+	float u = dot((rayPos - p.m_pos), p.m_x);
+	float v = dot((rayPos - p.m_pos), float2(-p.m_x.y, p.m_x.x));
+
+	if (abs(u) < p.m_size && abs(v) < p.m_size)
+	{
+		//pSrt->m_destTexture[rayPos] = float4(0.0f, 1.0f, 0.0f, 1.0f);
+		l_shared[iPixel * 64 + iPart] = 1;
+	}
+
+}
+
+struct PartRayTraceSetup
+{
+	uint iPart;
+	float resolution;
+
+	float2 pos0; // full screen space position
+
+	float2 uv00;
+	float2 uv10;
+	float2 uv01;
+	float2 uv;
+
+	float depth00;
+	float depth10;
+	float depth01;
+	float depth;
+
+	float4 instanceColor; // data straight from instance
+	uint2 packedColor; // color packed into uint2
+
+	float4 color;
+};
+
+
+
+void FillInUvParams(in CachedPartQuadControl ctrl, inout PartRayTraceSetup setup)
+{
+	setup.uv00 = ctrl.uv00;
+	setup.uv10 = ctrl.uv10;
+	setup.uv01 = ctrl.uv01;
+}
+
+void ComputeUv(inout PartRayTraceSetup setup)
+{
+	float2 factor2 = setup.pos0; // (pos / float2(1920.0f, 1080.0f));
+	setup.uv = setup.uv00 + setup.uv10 * factor2.x + setup.uv01 * factor2.y; // uv gradient pre multiplied by inverse of screen resolution
+}
+
+void FillInDepthParams(in CachedPartQuadControl ctrl, inout PartRayTraceSetup setup)
+{
+#if CONSTANT_DEPTH
+				setup.depth00 = ctrl.depth00;
+#else
+				setup.depth00 = ctrl.depth00;
+				setup.depth10 = ctrl.depth10;
+				setup.depth01 = ctrl.depth01;
+#endif
+}
+
+
+void ComputeDepth(inout PartRayTraceSetup setup)
+{
+#if CONSTANT_DEPTH
+	setup.depth = setup.depth00;
+#else
+	float2 factor2 = setup.pos0; // (pos / float2(1920.0f, 1080.0f));
+	setup.depth = setup.depth00 + setup.depth10 * factor2.x + setup.depth01 * factor2.y; // depth gradient pre multiplied by inverse of screen resolution
+#endif
+}
+
+void ComputeColor(inout PartRayTraceSetup setup)
+{
+#if PACK_COLOR
+		setup.color = float4(f16tof32(setup.packedColor.x), f16tof32(setup.packedColor.y), f16tof32(setup.packedColor.x >> 16), f16tof32(setup.packedColor.y >> 16));
+#else
+		
+#if USE_READLANES_FOR_PART_INST
+		float4(ReadLane(inst.color.x, iPart), ReadLane(inst.color.y, iPart), ReadLane(inst.color.z, iPart), ReadLane(inst.color.w, iPart)),
+#else
+		setup.color = setup.instanceColor;
+#endif
+#endif
+}
+
+
+void ForwardBlendColor(inout float4 dest, in float4 newcolor, uint flags)
+{
+#if USE_DEBUG_CHECKS
+	if (flags & FLAG_RENDER_STATS)
+	{
+		dest.xyz = dest.xyz + float3(1 / 255.0, 1 / 255.0, 1 / 255.0); // add color for frequency
+
+		dest.w = dest.w * (1.0 - newcolor.w); // keep alpha calculations so that we can still optimize
+		dest.w = saturate(dest.w);
+	}
+	else
+#endif
+	{
+		//if (iPart == 10) { c.xyz = float3(0, 0, 1); }
+
+		dest.xyz = (dest.xyz + dest.w * newcolor.w * newcolor.xyz);
+
+		dest.w = dest.w * (1.0 - newcolor.w);
+		dest.w = saturate(dest.w);
+	}
+}
+
+void ForwardBlendForwardBlendedColor(inout float4 dest, in float4 newcolor, ParticleRayTraceReadOnlySrt *pSrt)
+{
+#if USE_DEBUG_CHECKS
+	if (pSrt->m_flags & FLAG_RENDER_STATS)
+	{
+		dest.xyz = dest.xyz + newcolor.xyz; // add color for frequency
+
+		dest.w = dest.w * (1.0 - (1.0 - newcolor.w)); // keep alpha calculations so that we can still optimize
+		dest.w = saturate(dest.w);
+	}
+	else
+#endif
+	{
+		dest.xyz = (dest.xyz + dest.w * newcolor.xyz);
+
+		dest.w = dest.w * (1.0 - (1.0 - newcolor.w));
+		dest.w = saturate(dest.w);
+	}
+}
+
+
+bool DepthCheck(in PartRayTraceSetup setup, float screenDepth)
+{
+#if DO_DEPTH
+	return screenDepth > setup.depth;
+#else
+	return true;
+#endif
+	
+}
+
+#if STORE_COLORS_PACKED
+void StoreColor(inout uint2 dest, float4 color)
+{
+	dest = PackFloat2ToUInt(color.xy, color.zw);
+}
+#else
+void StoreColor(inout float4 dest, float4 color)
+{
+	dest = color;
+}
+#endif
+
+#if STORE_COLORS_PACKED
+void ReadColor(inout float4 color, uint2 src)
+{
+	color = float4(f16tof32(src.x), f16tof32(src.y), f16tof32(src.x >> 16), f16tof32(src.y >> 16));
+}
+uint4 ReadColorAsUint4(uint2 src)
+{
+	return uint4(asuint(f16tof32(src.x)), asuint(f16tof32(src.y)), asuint(f16tof32(src.x >> 16)), asuint(f16tof32(src.y >> 16)));
+}
+#else
+void ReadColor(inout float4 color, float4 src)
+{
+	color = src;
+}
+void ReadColorAsUint4(float4 src)
+{
+	return uint4(asuint(src.x), asuint(src.y), asuint(src.z), asuint(src.w));
+}
+#endif
+
+#if STORE_DEPTH_PACKED
+void StoreDepths(inout uint2 destDepths, float depth0, float depth1, float depth2, float depth3)
+{
+	destDepths = PackFloat2ToUInt(float2(depth0, depth1), float2(depth2, depth3));
+}
+#endif
+
+#if STORE_DEPTH_PACKED
+float GetDepth0(uint2 depths)
+{
+	return f16tof32(depths.x);
+}
+
+float GetDepth1(uint2 depths)
+{
+	return f16tof32(depths.y);
+}
+
+float GetDepth2(uint2 depths)
+{
+	return f16tof32(depths.x >> 16);
+}
+
+float GetDepth3(uint2 depths)
+{
+	return f16tof32(depths.y >> 16); 
+}
+#else
+
+#endif
+
+float LinearDepthToFroxelZCoord(float linDepth)
+{
+	return  linDepth / kGridDepth;  // [0, 1] accross 100m
+}
+
+
+// maps 0 .. kGridDepth
+float CameraLinearDepthToFroxelZSliceExp(float camLinDepth, float fogStartDist)
+{
+	#if NewVolumetricsUseOffset
+		float linDepth = camLinDepth >= fogStartDist ? camLinDepth - fogStartDist : 0;
+	#else
+		float linDepth = camLinDepth;
+	#endif
+
+
+	#if UseExponentialDepth
+		float slice = log2(linDepth+2) * kFroxelExponentFactor - kFroxelExponentFactor;
+		return slice;
+	#else
+		return linDepth;
+	#endif
+}
+
+float CameraLinearDepthToFroxelZSliceExpWithOffset(float camLinDepth, float fogStartDist)
+{
+	float linDepth = camLinDepth >= fogStartDist ? camLinDepth - fogStartDist : 0;
+
+	#if UseExponentialDepth
+		float slice = log2(linDepth+2) * kFroxelExponentFactor - kFroxelExponentFactor;
+		return slice;
+	#else
+		return linDepth;
+	#endif
+}
+
+// input is 0 .. kGridDepth
+float FroxelZSliceToCameraDistExp(float slice, float fogStartDist)
+{
+	float distAdd = 0;
+
+	#if NewVolumetricsUseOffset
+		distAdd = fogStartDist;
+	#endif
+
+	#if UseExponentialDepth
+	
+		return distAdd + exp2((slice + kFroxelExponentFactor) / kFroxelExponentFactor) - 2;
+	#else
+		return distAdd + slice; // default one slice is 1m
+	#endif
+}
+
+float FroxelZSliceToCameraDistExpWithOffset(float slice, float fogStartDist)
+{
+	float distAdd = 0;
+
+	distAdd = fogStartDist;
+
+	#if UseExponentialDepth
+	
+		return distAdd + exp2((slice + kFroxelExponentFactor) / kFroxelExponentFactor) - 2;
+	#else
+		return distAdd + slice; // default one slice is 1m
+	#endif
+}
+
+// input is 0 .. kGridDepth
+float DepthDerivativeAtSlice(float slice)
+{
+	return Ln2 * exp2((slice + kFroxelExponentFactor) / kFroxelExponentFactor) / kFroxelExponentFactor;
+}
+
+float SingleScattering( float3 viewWS, float3 lightDirWS, float fwVsBk, float sides )
+{
+	//float fwVsBk = 0.7;
+	//float sides = 0.25;
+	
+	float scatterFw = fwVsBk * (1-sides);
+	float scatterBk = (1 - fwVsBk) * (1-sides);
+	float scatterSides = sides * 0.5;
+
+	float backToSideMask = Pow3(saturate(dot(viewWS, lightDirWS))); // 3 is a magic number here for the power
+	float forwardToSideMask = Pow3(saturate(-1*dot(viewWS, lightDirWS)));
+	float scatter = (dot(viewWS, lightDirWS) < 0.0) ? lerp(scatterSides, scatterFw, forwardToSideMask) : lerp(scatterSides, scatterBk, backToSideMask);
+
+	return scatter;
+	
+}
+
+float GetNdcDepth(float linDepth, float2 params)
+{
+	float z = linDepth > 0.001 ? params.y / linDepth + params.x : 0.0f;
+
+	return z;
+}
+
+float GetNdcDepthSafe(float linDepth, float2 params)
+{
+	float z = params.y / linDepth + params.x;
+
+	return z;
+}
+
+
+
+SamplerState SetWrapSampleMode(SamplerState inSampler)
+{
+	uint4 ssharp = __get_ssharp(inSampler);
+	ssharp.x &= 0xfffffe00; // turn off 9 first bits to make xyz wrap mode
+	return __create_sampler_state(ssharp);
+}
+
+
+SamplerState SetClampSampleMode(SamplerState inSampler)
+{
+	uint4 ssharp = __get_ssharp(inSampler);
+	ssharp.x &= 0xfffffe00; // turn off 9 first bits to make xyz wrap mode
+	// and or with 3 2's
+	ssharp.x |= 0x00000092;
+	return __create_sampler_state(ssharp);
+}
+
+SamplerState SetSampleModeClampToBorder(SamplerState inSampler)
+{
+	uint4 ssharp = __get_ssharp(inSampler);
+	ssharp.x &= 0xfffffe00;
+	
+	//ssharp.x |= 0x000001b6;  // make first nine bits 6 6 6 for clamp to border mode
+	
+	// actually make a hybrid of wrap z and clamp to border x y
+	// bits:   000 110 110 : 0 6 6
+
+	ssharp.x |= 0x00000036;
+
+
+	return __create_sampler_state(ssharp);
+}
+
+SamplerState SetSampleModeClampToLastTexelZWrap(SamplerState inSampler)
+{
+	uint4 ssharp = __get_ssharp(inSampler);
+	ssharp.x &= 0xfffffe00;
+	
+	//ssharp.x |= 0x00000092;  // make first nine bits 2 2 2 for clamp to last texel   010 010 010
+	
+	
+	// actually make a hybrid of wrap z and clamp to border x y
+	// bits:   000 010 010 : 0 2 2
+
+	ssharp.x |= 0x00000012;
+
+
+	return __create_sampler_state(ssharp);
+}
+
+Texture3D<float4> PatchTSharpAddr(Texture3D<float4> inTex, uint newAddr)
+{
+	uint4 tlo = __get_tsharplo(inTex);
+	uint4 thi = __get_tsharphi(inTex);
+	tlo.x = newAddr;
+
+	return __create_texture<Texture3D<float4> >(tlo, thi);
+}
+
+RWTexture3D<float4> PatchTSharpAddr(RWTexture3D<float4> inTex, uint newAddr)
+{
+	uint4 tlo = __get_tsharplo(inTex);
+	uint4 thi = __get_tsharphi(inTex);
+	tlo.x = newAddr;
+
+	return __create_texture<RWTexture3D<float4> >(tlo, thi);
+}
+
+
+
+void ApplyColorAbsorbtion(VolumetricsFogSrt *pSrt, float3 tint, float3 absorbCoeff, float dist, float regionBlend, inout float3 inval)
+{
+	float3 val = inval * tint;
+	
+	float3 darkening = saturate(float3(1.0, 1.0, 1.0) - dist * absorbCoeff);
+
+	val = darkening * val;
+
+	//val.x *= pow(pSrt->m_absorbCoefficients.x, dist);
+	//val.y *= pow(pSrt->m_absorbCoefficients.y, dist);
+	//val.z *= pow(pSrt->m_absorbCoefficients.z, dist);
+	//inval = lerp(inval, max(val, pSrt->m_minFogColor), regionBlend);
+
+	inval = lerp(inval, val, regionBlend);
+}
+
+
+#endif

@@ -1,0 +1,10 @@
+[
+    {
+        "proj_name": "shaders",
+	
+		"fx_sources": [
+			"$(GAMESHADERDIR)"
+		]
+    }
+]
+

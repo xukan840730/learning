@@ -1,0 +1,342 @@
+#ifndef _HLSL2PSSL_H_ 
+#define _HLSL2PSSL_H_ 
+
+#define ENABLE_PSSL		1
+
+// ---------------------------- 
+// HLSL to PSSL conversion file 
+// ---------------------------- 
+// Sets a variable as being shared among all effects defined  
+#define groupshared thread_group_memory  
+
+// Set to a vertex shader output variable to note that this data should not be interpolated before going on to fragment shader.  Just as a Semantic is bound to a specific varying parameter this also affect all varying data parameter of a given stream 
+#define nointerpolation nointerp 
+
+// Turn off perspective-correction during interpolation 
+#define noperspective nopersp  
+
+// compile as a hardware switch statement  
+#define forcecase force_switch  
+
+// compile each case as indiviual hardware case subroutines with the switch as a series of subroutines 
+#define call call_subs  
+
+// Back-Facing primitive indicator  
+#define VFACE VERTEXFACE 
+
+// 2D Screen pixel location  
+#define VPOS SCREENPOS 
+
+// Transformed Position 
+#define POSITIONNT POSITION_TRANSFORMED 
+
+// Vertex Identifier 
+#define SV_VertexID S_VERTEX_ID  
+
+// Instance Identifier 
+#define SV_InstanceID S_INSTANCE_ID 
+
+// Sample Index 
+#define SV_SampleIndex S_SAMPLE_INDEX  
+
+// Primitive Identifier  
+#define SV_PrimitiveID S_PRIMITIVE_ID  
+
+// Specific Geometry Shader Index passed to the Geometry Shader as input 
+#define SV_GSInstanceID S_GSINSTANCE_ID 
+
+// Control Point Identifier passed to the hull shader and also to domain shader  
+#define SV_OutputControlPointID  S_OUTPUT_CONTROL_POINT_ID
+
+// The tessellation amount on for each patch edge available to the hull and domain shader 
+#define SV_TessFactor  S_EDGE_TESS_FACTOR
+
+// The tesselation amount for a patch surface available to the hull and domain shader 
+#define SV_InsideTessFactor S_INSIDE_TESS_FACTOR
+
+// The uv location that the domain shader is to work on 
+#define SV_DomainLocation S_DOMAIN_LOCATION 
+
+// The per group dimension Global thread Offset 
+#define SV_DispatchThreadID S_DISPATCH_THREAD_ID
+#define SV_DispatchThreadId S_DISPATCH_THREAD_ID
+
+// The per dimension offset within a dispatch call 
+#define SV_GroupID S_GROUP_ID  
+
+// Computed flat index of a thread within a group 
+#define SV_GroupIndex S_GROUP_INDEX 
+
+// Offset of a thread within a group per group dimension 
+#define SV_GroupThreadID S_GROUP_THREAD_ID 
+#define SV_GroupThreadId S_GROUP_THREAD_ID
+
+// If a primitive is front facing 
+#define SV_IsFrontFace S_FRONT_FACE 
+
+// Output Coverage 
+#define SV_Coverage S_COVERAGE 
+
+// Clip Distance ( default of 0 ) 
+#define SV_ClipDistance S_CLIP_DISTANCE 
+
+// Cull Distance ( default of 0 ) 
+#define SV_CullDistance S_CULL_DISTANCE 
+
+// Clip Distance 0 
+#define SV_ClipDistance0 S_CLIP_DISTANCE0
+
+// Cull Distance 0 
+#define SV_CullDistance0 S_CULL_DISTANCE0
+
+// Clip Distance 1 
+#define SV_ClipDistance1 S_CLIP_DISTANCE1
+
+// Cull Distance 1 
+#define SV_CullDistance1 S_CULL_DISTANCE1 
+
+// Render Target Array Index 
+#define SV_RenderTargetArrayIndex S_RENDER_TARGET_INDEX
+
+// for Render Target Arrays output 
+#define SV_Target S_TARGET_OUTPUT 
+
+// for Render Target 0 output 
+#define SV_Target0 S_TARGET_OUTPUT0
+
+// for Render Target 1 output 
+#define SV_Target1 S_TARGET_OUTPUT1 
+
+// for Render Target 2 output 
+#define SV_Target2 S_TARGET_OUTPUT2
+
+// for Render Target 3 output 
+#define SV_Target3 S_TARGET_OUTPUT3
+
+// for Render Target 4 output 
+#define SV_Target4 S_TARGET_OUTPUT4
+
+// for Render Target 5 output 
+#define SV_Target5 S_TARGET_OUTPUT5
+
+// for Render Target 6 output 
+#define SV_Target6 S_TARGET_OUTPUT6
+
+// for Render Target 7 output 
+#define SV_Target7 S_TARGET_OUTPUT7
+
+// Viewport Array Index 
+#define SV_ViewPortArrayIndex S_VIEWPORT_INDEX
+
+// SV HLSL DX9 backward comparitiblity mapped simply to typical semantics in PSSL 
+#define SV_DEPTH S_DEPTH_OUTPUT
+#define SV_Depth S_DEPTH_OUTPUT
+#define SV_DepthGreaterEqual S_DEPTH_GE_OUTPUT
+#define SV_DepthLessEqual S_DEPTH_LE_OUTPUT
+
+// SV HLSL DX9 backward comparitiblity mapped simply to typical semantics in PSSL 
+#define SV_POSITION S_POSITION
+#define SV_Position S_POSITION
+
+// "patch type of domain shader (tri, quad, isoline)" 
+#define domain DOMAIN_PATCH_TYPE
+
+// maximum tessellation factor for a given hull shader 
+#define maxtessfactor MAX_TESS_FACTOR
+
+// number of control points that can be produced by one thread of a HULL shader 
+#define outputcontrolpoints OUTPUT_CONTROL_POINTS
+
+// output tesselator primitive type 
+#define outputtopology OUTPUT_TOPOLOGY_TYPE
+
+// the tessellation type for the HULL Shader 
+#define partitioning  PARTITIONING_TYPE
+
+// the function name in the hull shader that will be used to produce patch constant data 
+#define patchconstantfunc PATCH_CONSTANT_FUNC
+
+// used for geometry shader instancing 
+#define instance INSTANCE
+
+// the 3D thread description for a single thread group 
+#define numthreads NUM_THREADS
+
+// the count of the elements of each patch 
+#define patchsize PATCH_SIZE
+
+// maximum number of vertices produced in a single geometry shader execution 
+#define maxvertexcount MAX_VERTEX_COUNT
+
+// force early depth stencil
+#define earlydepthstencil FORCE_EARLY_DEPTH_STENCIL
+
+// returns number of render-target samples 
+#define renderTargetSampleCount sampleCount
+
+// "returns the sample position (x,y) for sample index x" 
+#define renderTargetSamplePosition samplePosition
+
+// Array of 1D Texture Buffers 
+#define Texture1DArray Texture1D_Array
+
+// Array of 2D Texture Buffers 
+#define Texture2DArray Texture2D_Array
+
+// Array of Cube Map Textures  
+#define TextureCubeArray TextureCube_Array
+
+// Multisampled 2D Texture 
+#define Texture2DMS MS_Texture2D
+
+// Array of Multisampled 2D Textures  
+#define Texture2DMSArray MS_Texture2D_Array 
+
+// "Readonly Generic Buffer Type that all other Resource buffers are derived (Byte, Texture*, Regular, RW*)" 
+#define Buffer DataBuffer
+
+// "Writeable Generic Buffer Type that all other Resource buffers are derived (Byte, Texture*, Regular, RW*)" 
+#define RWBuffer RW_DataBuffer
+
+// Readonly Buffer of raw bytes of data that indexes by Bytes 
+#define ByteAddressBuffer ByteBuffer
+
+// Readable and Writeable Buffer of raw bytes of data that indexes by Bytes 
+#define RWByteAddressBuffer  RW_ByteBuffer
+
+// Readonly Buffer of user defined structures and indexes by structure.  Read Only buffers with fixed/regular structure sizes through out the buffer stream 
+#define StructuredBuffer RegularBuffer
+
+// Writeable Regular Buffer 
+#define RWStructuredBuffer RW_RegularBuffer
+
+// Readable and Writeable 1D Texture 
+#define RWTexture1D  RW_Texture1D
+
+// Readable and Writeable 2D Texture  
+#define RWTexture2D  RW_Texture2D
+
+// Readable and Writeable 3D Texture  
+#define RWTexture3D  RW_Texture3D
+
+// Readable and Writeable Array of 1D Textures 
+#define RWTexture1DArray  RW_Texture1D_Array
+
+// Readable and Writeable Array of 2D Textures  
+#define RWTexture2DArray  RW_Texture2D_Array
+
+// Structured Buffer with special Append Method 
+#define AppendStructuredBuffer  AppendRegularBuffer
+
+// Structured Buffer with special Consume Method  
+#define ConsumeStructuredBuffer  ConsumeRegularBuffer
+
+// Fast access buffer for shaders generally for storing constants 
+#define cbuffer ConstantBuffer
+
+// Shader buffer for storing constants that allow for better indexed data accesses  
+#define tbuffer TextureBuffer
+
+// Sampler states
+#define sampler SamplerState
+
+// 
+#define countbits	CountSetBits
+
+// Performs an Atomic Add 
+#define InterlockedAdd  AtomicAdd
+
+// Performs an Atomic Min  
+#define InterlockedMin  AtomicMin
+
+// Performs an Atomic Max 
+#define InterlockedMax  AtomicMax
+
+// Performs an Atomic Or 
+#define InterlockedOr  AtomicOr
+
+// Performs an Atomic And 
+#define InterlockedAnd  AtomicAnd
+
+// Performs an Atomic Xor 
+#define InterlockedXor  AtomicXor
+
+// Performs an Atomic comparison between the input and value and result  
+#define InterlockedCompareStore  AtomicCmpStore
+
+// Performs an Atomic comparison of the input to the compare val and exchanges the the result 
+#define InterlockedCompareExchange  AtomicCmpExchange
+
+// Performs an Atomic exchange 
+#define InterlockedExchange  AtomicExchange
+
+// Stream of triangles with Append and RestartStrip Methods  
+#define TriangleStream  TriangleBuffer
+
+// Stream of points with Append and RestartStrip Methods  
+#define PointStream  PointBuffer
+
+// Stream of lines with Append and RestartStrip Methods  
+#define LineStream  LineBuffer
+
+// GS Input Prim Type 
+#define triangle  Triangle
+
+// GS Input Prim Type 
+#define point  Point
+
+// GS Input Prim Type 
+#define line  Line
+
+// Adjacency tri list or tri strip 
+#define triangleadj  AdjacentTriangle
+
+// Adjacency line list or line strip 
+#define lineadj  AdjacentLine
+
+// Blocks all threads in a group until all shared group memory accesses have completed 
+#define GroupMemoryBarrier  ThreadGroupMemoryBarrier
+
+// Blocks all threads in a group until all shared group memory accesses have completed and all threads have reached that point 
+#define GroupMemoryBarrierWithGroupSync  ThreadGroupMemoryBarrierSync
+
+//  
+#define AllMemoryBarrier  MemoryBarrier
+
+//  
+#define AllMemoryBarrierWithGroupSync  MemoryBarrierSync
+
+//  
+#define DeviceMemoryBarrier  SharedMemoryBarrier
+
+//  
+#define DeviceMemoryBarrierWithGroupSync  SharedMemoryBarrierSync
+
+// For accessing the individual miplevels of a TextureBuffer Type 
+#define mips  MipMaps
+
+// Allows for direct increment of the buffer counter 
+#define IncrementCounter IncrementCount 
+
+// Allows for direct decrement of the buffer counter 
+#define DecrementCounter  DecrementCount
+
+// "Samples a teuture from level 0, but use a comparison value to reject Samples " 
+#define SampleCmpLevelZero  SampleCmpLOD0
+
+// Sample from particular mipmap level  
+#define SampleLevel  SampleLOD
+
+// Samples a texture using a specified gradient influence on the Sample location calculation  
+#define SampleGrad  SampleGradient
+
+// Returns the computed lod 
+#define CalculateLevelOfDetail  GetLOD
+
+// "Returns the computed lod, but unclamped" 
+#define CalculateLevelOfDetailUnclamped  GetLODUnclamped
+
+// Return the position of a specified Sample 
+#define GetSamplePosition  GetSamplePoint
+
+#endif 
