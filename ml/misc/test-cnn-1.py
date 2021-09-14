@@ -63,8 +63,8 @@ class Categorize_Long(DisplayedTransform):
 
 # convert DataBlock to transforms and Datasets
 tfms = [[PILImageBW.create], [parent_label, Categorize_Long]]
-files = get_image_files(path, folders = ['train', 'valid'])
-splits = GrandparentSplitter()(files)
+files = get_image_files(path)
+splits = GrandparentSplitter(train_name='train', valid_name='valid')(files)
 
 dsets = Datasets(files, tfms, splits=splits)
 
@@ -75,11 +75,11 @@ dls = dsets.dataloaders(
 
 # check dls.loaders[1].dataset
 
-xb, yb = first(dls.valid)
-print(xb.shape)
-print('yb_shape:', yb.shape, ' yb_dtype:', yb.dtype)
-
-xb,yb = to_cpu(xb),to_cpu(yb)
+# xb, yb = first(dls.valid)
+# print(xb.shape)
+# print('yb_shape:', yb.shape, ' yb_dtype:', yb.dtype)
+#
+# xb,yb = to_cpu(xb),to_cpu(yb)
 
 def conv(ni, nf, ks=3, act=True):
     res = nn.Conv2d(ni, nf, stride=2, kernel_size=ks, padding=ks//2)
@@ -95,7 +95,7 @@ simple_cnn = sequential(
     Flatten(),
 )
 
-print('simple_cnn shape: ', simple_cnn(xb).shape)
+# print('simple_cnn shape: ', simple_cnn(xb).shape)
 
 
 learn = Learner(dls, simple_cnn, loss_func=F.cross_entropy, metrics=accuracy)
